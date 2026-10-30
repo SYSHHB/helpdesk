@@ -543,6 +543,15 @@ html,body{max-width:100%;overflow-x:clip}
 .alist .ai,.alist .ai p,.alist .ai div{white-space:normal}
 .alist .ai .ct{white-space:pre-wrap}
 .alist .ev2{background:color-mix(in srgb,var(--text) 5%,transparent)}
+.trow.has-new{box-shadow:0 0 0 2px color-mix(in srgb,var(--s-open) 60%,transparent)}
+.nbadge{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:800;color:#fff;background:var(--s-open);border-radius:999px;padding:2px 10px;margin-bottom:6px;width:max-content;letter-spacing:.02em}
+.nbadge i{width:7px;height:7px;border-radius:50%;background:#fff;animation:nbpulse 1.4s infinite}
+@keyframes nbpulse{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.nbadge i{animation:none}}
+.nsnip{display:block;margin-top:6px;padding:6px 10px;border-left:3px solid var(--s-open);background:color-mix(in srgb,var(--s-open) 10%,transparent);border-radius:6px;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:400}
+.nav button.nv{position:relative}
+.nbn{min-width:18px;height:18px;border-radius:9px;background:var(--s-open);color:#fff;font-size:.7rem;font-weight:800;display:inline-grid;place-items:center;padding:0 5px;margin-left:auto}
+@media screen and (max-width:820px){.nbn{position:absolute;top:2px;left:calc(50% + 6px);margin:0}}
 </style>
 </head>
 <body>
@@ -794,6 +803,7 @@ function syncBar(){
  return '<button class="alertbar" data-act="resync"><b>Live updates paused</b><span>'+esc(S.syncErr)+'. Showing the last saved data. Tap to reload.</span></button>';
 }
 function startSubs(){
+ seenMap();
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
@@ -831,6 +841,7 @@ function go(v){
  clearKeep();render();window.scrollTo(0,0);enter();
 }
 function openTicket(id){
+ markSeen(id);
  S.sel=id;S.view="ticket";S.bell=false;S.sheet=false;clearKeep();subComments(id);render();window.scrollTo(0,0);enter();
 }
 
@@ -902,7 +913,7 @@ function renderChrome(){
  if(!S.me||root.dataset.mode!=="app")return;
  var nav=$("#nav");if(!nav)return;
  nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>IT Helpdesk System</div>'+
-  navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span></button>'}).join("")+
+  navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span>'+((i[0]==="tickets"&&isStaff())||(i[0]==="dashboard"&&!isStaff())?navBadge():'')+'</button>'}).join("")+
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
  var dark=(document.documentElement.dataset.theme==="dark")||(!document.documentElement.dataset.theme&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
@@ -946,8 +957,8 @@ function pill(s){return '<span class="pill s-'+esc(s)+'">'+esc(stLbl(s))+'</span
 function prio(p){var l=(PRIORITIES.filter(function(x){return x[0]===p})[0]||[0,0,1])[2];return '<span class="prio l'+l+'"><b><i></i><i></i><i></i><i></i></b>'+esc(prLbl(p))+'</span>'}
 function barRow(label,n,max,color){return '<div class="bar"><span>'+esc(label)+'</span><span class="tr"><i style="width:'+(max?Math.round(n/max*100):0)+'%'+(color?';background:'+color:'')+'"></i></span><b>'+n+'</b></div>'}
 function ticketRow(t){
- return '<button class="trow s-'+esc(t.status)+'" data-act="open" data-id="'+esc(t.id)+'"><span class="tid">'+esc(t.id)+'</span>'+
- '<span class="ttl"><strong translate="no">'+esc(t.title)+'</strong><small>'+esc(t.createdByName)+(t.location?", "+esc(t.location):"")+(t.images&&t.images.length?", "+t.images.length+" photo"+(t.images.length>1?"s":""):"")+(isOverdue(t)?' <span class="over">Overdue</span>':'')+(isStale(t)?' <span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>':'')+'</small><span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+esc(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
+ return '<button class="trow s-'+esc(t.status)+(unseen(t)?' has-new':'')+'" data-act="open" data-id="'+esc(t.id)+'"><span class="tid">'+esc(t.id)+'</span>'+
+ '<span class="ttl">'+newBadge(t)+'<strong translate="no">'+esc(t.title)+'</strong><small>'+esc(t.createdByName)+(t.location?", "+esc(t.location):"")+(t.images&&t.images.length?", "+t.images.length+" photo"+(t.images.length>1?"s":""):"")+(isOverdue(t)?' <span class="over">Overdue</span>':'')+(isStale(t)?' <span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>':'')+'</small>'+newSnip(t)+'<span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+esc(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
  pill(t.status)+prio(t.priority)+'<span class="tasg">'+esc(t.assignedName||"Unassigned")+'</span><span class="tdt">'+dual(t.createdAt)+'</span></button>';
 }
 
@@ -1054,7 +1065,7 @@ function pgNew(){
 function pgTicket(){
  var t=curTicket();
  if(!t)return '<div class="crumb"><button class="link" data-act="nav" data-v="tickets">Back to complaints</button></div><div class="panel empty"><b>Complaint not found</b>It may have been removed, or you may not have access to it.</div>';
- var staff=isStaff(),mineT=t.createdBy===S.me.username;
+ var staff=isStaff(),mineT=t.createdBy===S.me.username;markSeen(t.id);
  var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t))+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
  '<div><dt>Category</dt><dd>'+esc(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
  '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Target date</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
@@ -1222,7 +1233,7 @@ var F={
   if(!title||!desc){toast("Add a title and the details of the problem.",{kind:"warn"});return}
   var id=await nextTicketId(),now=Date.now();
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),status:"open",progress:0,
-   createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
+   lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
   try{
    await col("tickets/"+id+"/comments").add({type:"event",text:"Complaint submitted",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
    await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
@@ -1236,7 +1247,7 @@ var F={
   var t=curTicket();if(!t)return;var text=v.text.trim(),imgs=S.att.comment.map(function(x){return {k:x.k,id:x.id,n:x.n}});if(S.upBusy){toast("Wait for the photos to finish uploading.",{kind:"warn"});return}if(!text&&!imgs.length)return;
   var internal=!!v.internal&&isStaff();
   await col("tickets/"+t.id+"/comments").add({type:"comment",text:text,by:S.me.username,byName:S.me.name,role:S.me.role,ts:Date.now(),internal:internal,images:imgs});
-  var up={updatedAt:Date.now()};if(isStaff()&&!t.attendedAt){up.attendedAt=up.updatedAt;up.attendedBy=S.me.username;up.attendedByName=S.me.name}
+  var up=Object.assign({updatedAt:Date.now()},lastActPatch("comment",text||"Photo",internal));if(isStaff()&&!t.attendedAt){up.attendedAt=up.updatedAt;up.attendedBy=S.me.username;up.attendedByName=S.me.name}
   await S.db.doc("tickets/"+t.id).update(up);
   var snip=text.length>80?text.slice(0,80)+"…":text;
   if(internal){if(t.assignedTo&&t.assignedTo!==S.me.username)await notify(t.assignedTo,S.me.name+" added an internal note on "+t.id+": "+snip,t.id,"note")}
@@ -1260,7 +1271,7 @@ var F={
   if(due!==(t.due||null)){patch.due=due;ev.push(due?"Target date set to "+fmtG(fromYmd(due).getTime())+(hOK?" ("+fmtH(fromYmd(due).getTime())+")":""):"Target date cleared");sum.push(due?"target date "+fmtG(fromYmd(due).getTime()):"no target date");au.push(["ticket.due",due||"cleared"])}
   if(!Object.keys(patch).length&&!msg){toast("Nothing to update yet.",{kind:"warn"});return}
   if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
-  patch.updatedAt=now;
+  patch.updatedAt=now;Object.assign(patch,lastActPatch("update",msg||sum.join(", "),false));
   await S.db.doc("tickets/"+t.id).update(patch);
   for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
   if(msg)await col("tickets/"+t.id+"/comments").add({type:"comment",text:msg,by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+ev.length+1,internal:false});
@@ -1321,7 +1332,7 @@ var A={
  assignme:function(){var s=$("#u-asg");if(s)s.value=S.me.username},
  reopen:function(){return withBusy(async function(){
   var t=curTicket();if(!t)return;var now=Date.now();
-  await S.db.doc("tickets/"+t.id).update({status:"open",resolvedAt:null,progress:0,updatedAt:now});
+  await S.db.doc("tickets/"+t.id).update(Object.assign({status:"open",resolvedAt:null,progress:0,updatedAt:now},lastActPatch("update","Reopened the complaint",false)));
   await col("tickets/"+t.id+"/comments").add({type:"event",text:"Complaint reopened",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
   await notify(t.assignedTo||"staff",S.me.name+" reopened "+t.id+": "+t.title,t.id,"new");
   await log("ticket.reopen",t.id,t.title);
@@ -1381,7 +1392,7 @@ var A={
  focuscomment:function(){var ta=$("#c-text");if(ta){ta.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){ta.focus({preventScroll:true})},250)}},
  quick:function(el){return withBusy(async function(){
   var t=curTicket();if(!t||!isStaff())return;var st=el.dataset.s,now=Date.now();
-  var patch={status:st,updatedAt:now},ev=["Status changed from "+stLbl(t.status)+" to "+stLbl(st)];
+  var patch=Object.assign({status:st,updatedAt:now},lastActPatch("update","Status: "+stLbl(st),false)),ev=["Status changed from "+stLbl(t.status)+" to "+stLbl(st)];
   if(st==="resolved"){patch.resolvedAt=now;patch.progress=100}else if(st==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;patch.progress=100}else patch.resolvedAt=null;
   if(st==="progress"&&!t.assignedTo){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;ev.push("Assigned to "+S.me.name)}
   if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
@@ -1670,6 +1681,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Updated":"Dikemas kini","New reply":"Balasan baharu","New reply by email":"Balasan baharu melalui e-mel",
 "All":"Semua","Comments":"Komen","History":"Sejarah","Internal note":"Nota dalaman","By email":"Melalui e-mel","Public":"Umum","Internal":"Dalaman","Close on send":"Tutup selepas hantar","Type a comment…":"Taip komen…","Type a reply to the technician…":"Taip balasan kepada juruteknik…","No history yet.":"Belum ada sejarah.","No comments yet.":"Belum ada komen.","Newest first":"Terbaru dahulu","Oldest first":"Terlama dahulu","Send":"Hantar","Who can see it":"Siapa boleh melihatnya",
 "Comment by email":"Komen melalui e-mel","Email reply ignored":"Balasan e-mel diabaikan",", by email":", melalui e-mel",
 "Phone number":"Nombor telefon","Enter a valid phone number.":"Masukkan nombor telefon yang sah.","Brunei numbers can be typed without +673.":"Nombor Brunei boleh ditaip tanpa +673.","Call":"Telefon",
@@ -2377,7 +2389,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v20";
+var BUILD="2026-10-30 v21";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2522,7 +2534,7 @@ async function processInbox(){
    var ts=Date.parse(m.receivedDateTime||"")||Date.now(),who=acct?acct.name:(requester?t.createdByName:from);
    var role=acct?acct.role:"user",by=acct?acct.username:t.createdBy;
    await S.db.doc("tickets/"+t.id+"/comments/em-"+f.id.replace(/[^A-Za-z0-9_-]/g,"")).set({type:"comment",text:body,by:by,byName:who,role:role,ts:ts,internal:false,via:"email"});
-   await S.db.doc("tickets/"+t.id).update({updatedAt:Date.now()});
+   await S.db.doc("tickets/"+t.id).update({updatedAt:Date.now(),lastActAt:Date.now(),lastActBy:by,lastActByName:who,lastActKind:"email",lastActText:body.slice(0,140),lastActInternal:false});
    var snip=body.length>80?body.slice(0,80)+"…":body;
    if(staffSender&&!requester){mailSafe("comment",t,{by:who,msg:body})}
    else await S.db.doc("notifs/em-"+f.id.replace(/[^A-Za-z0-9_-]/g,"")).set({ts:Date.now(),to:t.assignedTo||"staff",text:who+" replied by email on "+t.id+": "+snip,ticketId:t.id,kind:"comment",by:"email",byName:who});
@@ -2592,6 +2604,36 @@ function composerHTML(t,reopen){
   (staff?'<label class="switch"><input type="checkbox" name="closeonsend" id="c-close" data-keep><span class="sl"></span><span class="sw-t">Close on send</span></label>':'')+
   '<button class="btn primary send" aria-label="Send"'+(S.busy?" disabled":"")+'>'+ico("send")+'</button></div>'+(reopen?'<div>'+reopen+'</div>':'')+'</form>';
 }
+
+/* ============ "new activity" indicators on complaint cards ============ */
+function seenMap(){
+ if(!S.me)return {_base:0};
+ if(!S.seenT||S.seenT._u!==S.me.username){
+  var k="hd.seenT."+S.me.username,m=null;
+  try{m=JSON.parse(ls.get(k)||"null")}catch(e){m=null}
+  if(!m){m={_base:Date.now()};ls.set(k,JSON.stringify(m))}
+  m._u=S.me.username;S.seenT=m;
+ }
+ return S.seenT;
+}
+function markSeen(id){if(!S.me||!id)return;var m=seenMap();m[id]=Date.now();try{ls.set("hd.seenT."+S.me.username,JSON.stringify(m))}catch(e){}}
+function unseen(t){
+ if(!S.me||!t||!t.lastActAt||t.lastActBy===S.me.username)return false;
+ if(t.lastActInternal&&!isStaff())return false;
+ var m=seenMap(),s=m[t.id]||m._base||0;
+ return t.lastActAt>s;
+}
+function lastActPatch(kind,text,internal){return {lastActAt:Date.now(),lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:kind,lastActText:String(text||"").slice(0,140),lastActInternal:!!internal}}
+function newBadge(t){
+ if(!unseen(t))return "";
+ var lab=t.lastActKind==="created"?"New complaint":t.lastActKind==="update"?"Updated":t.lastActKind==="email"?"New reply by email":"New reply";
+ return '<span class="nbadge"><i></i>'+lab+'</span>';
+}
+function newSnip(t){
+ if(!unseen(t)||!t.lastActText||t.lastActKind==="created")return "";
+ return '<span class="nsnip" translate="no"><b>'+esc(t.lastActByName||"")+':</b> '+esc(t.lastActText)+'</span>';
+}
+function navBadge(){var n=S.tickets.filter(unseen).length;return n?'<span class="nbn" translate="no">'+(n>99?"99+":n)+'</span>':""}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
