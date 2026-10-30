@@ -648,7 +648,7 @@ async function hashPw(pw,salt,ref){
 }
 async function nextTicketId(){
  for(var k=0;k<20;k++){
-  var n=await S.db.increment("settings/ticketcounter","n"),id="SYSHHB-IT-"+String(n).padStart(4,"0");
+  var n=await S.db.increment("settings/ticketcounter","n"),id=String(n).padStart(4,"0")+"-IT-SYSHHB";
   var ex=await S.db.doc("tickets/"+id).get();
   if(!ex.exists)return id;
  }
@@ -659,7 +659,7 @@ function genId(){var c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r="";for(var i=0;i<4;i
 /* ============ toasts, focus keeping ============ */
 function toast(msg,o){
  o=o||{};var box=document.getElementById("toasts");var el=document.createElement("button");
- el.className="toast "+(o.kind||"");el.textContent=T(msg);
+ el.className="toast "+(o.kind||"");el.textContent=fmtIds(T(msg));
  el.onclick=function(){if(o.special){S.f={status:"all",prio:"all",q:"",mine:false,special:o.special};go("tickets")}else if(o.ticket)openTicket(o.ticket);el.remove()};
  box.appendChild(el);setTimeout(function(){el.remove()},o.ms||6500);
 }
@@ -783,13 +783,13 @@ function validUser(u){return /^[a-z0-9._-]{3,24}$/.test(u)}
 /* ============ views: auth ============ */
 function authHTML(){
  var now=new Date(),h=hij(now);
- var hero='<section class="hero"><div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>Helpdesk</div>'+
+ var hero='<section class="hero"><div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>IT Helpdesk System</div>'+
  '<div class="twin"><div class="twin-col"><span class="num">'+now.getDate()+'</span><span class="lab">'+esc(gML.format(now))+'</span><span class="tag">Gregorian</span></div>'+
  (h?'<hr><div class="twin-col hij"><span class="num">'+h.d+'</span><span class="lab">'+esc(h.name+" "+h.y+"\u00a0H")+'</span><span class="tag">Hijri</span></div>':'<span></span><span></span>')+'</div>'+
  '<div class="greetrow"><p class="greet">'+greeting()+'</p><div class="clock" translate="no"><span id="hd-clock"></span></div></div><p class="lead">Report a problem, follow it from start to finish, and see updates from the technician handling it.</p></section>';
  var body,err=S.err?'<div class="err" role="alert">'+esc(S.err)+'</div>':'';
  var msLogo='<svg width="20" height="20" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>';
- if(S.loading)body='<p class="muted">Connecting…</p>';
+ if(S.loading)body='<p class="muted">Thank you for your patience</p>';
  else if(S.fatal)body='<div><h2>'+esc(S.fatalTitle||"Can’t continue")+'</h2></div><div class="err" role="alert">'+esc(S.fatal)+'</div><div class="stack"><button class="btn" data-act="mslogout">Use a different account</button><button class="btn" data-act="reload">Try again</button></div>';
  else if(S.pending)body='<div><h2>Complete your profile</h2><p class="muted mt">Choose your staff group once. An administrator can change it later.</p></div>'+
   '<form class="stack" data-form="profile"><label class="fld"><span>Full name</span><input id="a-name" name="name" required data-keep autocomplete="name" value="'+esc(S.pending.name)+'"></label>'+
@@ -824,7 +824,7 @@ function bellHTML(){
 function renderChrome(){
  if(!S.me||root.dataset.mode!=="app")return;
  var nav=$("#nav");if(!nav)return;
- nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>Helpdesk</div>'+
+ nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>IT Helpdesk System</div>'+
   navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span></button>'}).join("")+
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
@@ -941,7 +941,7 @@ function filtered(){
   if(S.f.special==="overdue"&&!isOverdue(t))return false;
   if(S.f.special==="urgent"&&!(isActive(t)&&t.priority==="urgent"))return false;
   if(S.f.special==="stale"&&!isStale(t))return false;
-  if(q&&(t.id+" "+t.title+" "+t.description+" "+t.createdByName+" "+(t.location||"")+" "+t.category).toLowerCase().indexOf(q)<0)return false;
+  if(q&&(t.id+" "+fmtIds(t.id)+" "+t.title+" "+t.description+" "+t.createdByName+" "+(t.location||"")+" "+t.category).toLowerCase().indexOf(q)<0)return false;
   return true;
  }).sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0)});
 }
@@ -1058,7 +1058,7 @@ function pgCal(){
 }
 
 /* ============ page: audit ============ */
-function csvText(rows){return rows.map(function(r){return r.map(function(c){return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n")}
+function csvText(rows){return rows.map(function(r){return r.map(function(c){return '"'+fmtIds(String(c==null?"":c)).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n")}
 async function saveFile(name,text){
  try{
   var type=/\.csv$/i.test(name)?"text/csv":/\.html?$/i.test(name)?"text/html":"text/plain";
@@ -1069,7 +1069,7 @@ async function saveFile(name,text){
 }
 function auditFiltered(){
  var q=S.auditQ.trim().toLowerCase();
- return S.audit.filter(function(a){return !q||(a.actor+" "+a.actorName+" "+a.action+" "+(ACTIONS[a.action]||"")+" "+a.target+" "+a.detail).toLowerCase().indexOf(q)>=0});
+ return S.audit.filter(function(a){return !q||(a.actor+" "+a.actorName+" "+a.action+" "+(ACTIONS[a.action]||"")+" "+a.target+" "+fmtIds(a.target)+" "+a.detail).toLowerCase().indexOf(q)>=0});
 }
 function pgAudit(){
  var L=auditFiltered(),show=L.slice(0,S.auditN);
@@ -1587,6 +1587,8 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"IT Helpdesk System":"Sistem Helpdesk IT",
+"Thank you for your patience":"Terima kasih atas kesabaran anda",
 "# of your # complaints are still being handled.":"# daripada # aduan anda masih dikendalikan.",
 "Good morning":"Selamat pagi","Good afternoon":"Selamat petang","Good evening":"Selamat malam",
 "Email sent":"E-mel dihantar","Email failed":"E-mel gagal",
@@ -1782,6 +1784,7 @@ function TA(s){
  return s.replace(/, (\d+) submitted/g,", $1 dihantar").replace(/, (\d+) due/g,", $1 sampai tarikh sasaran");
 }
 function i18nApply(el){
+ if(el)idApply(el);
  if(LANG!=="ms"||!el)return;
  var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n,list=[];
  while((n=w.nextNode()))list.push(n);
@@ -2190,6 +2193,9 @@ async function inviteSafe(email,explicit){
 }
 
 /* ============ email notifications ============ */
+var BNDATE=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Brunei",day:"numeric",month:"short",year:"numeric"});
+var BNTM=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Brunei",hour:"2-digit",minute:"2-digit",hour12:false});
+function bnStamp(t){var d=new Date(t);return BNDATE.format(d)+", "+BNTM.format(d)+" BNT"}
 function Tm(x){return Object.prototype.hasOwnProperty.call(MS,x)?MS[x]:x}
 async function sendMail(to,subject,html){
  if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:to,subject:subject,html:html,ts:Date.now()});return}
@@ -2228,7 +2234,7 @@ function mailBlock(lang,kind,t,o){
  var cat=en?t.category:Tm(t.category),pri=en?prLbl(t.priority):Tm(prLbl(t.priority)),st=en?stLbl(t.status):Tm(stLbl(t.status));
  var h='<p style="margin:0 0 12px;font-size:15px">'+intro+'</p><table style="border-collapse:collapse;font-size:14px">'+
   row(L.id,esc(t.id))+row(L.title,esc(t.title))+row(L.cat,esc(cat))+row(L.pri,esc(pri))+(t.location?row(L.loc,esc(t.location)):"")+row(L.st,esc(st))+
-  (t.assignedName?row(L.tech,esc(t.assignedName)):"")+row(L.sub,fmtG(t.createdAt)+(hOK?" ("+esc(fmtH(t.createdAt))+")":""))+'</table>';
+  (t.assignedName?row(L.tech,esc(t.assignedName)):"")+row(L.sub,esc(bnStamp(t.createdAt))+(hOK?" ("+esc(fmtH(t.createdAt))+")":""))+'</table>';
  if(o.changes&&o.changes.length)h+='<p style="margin:14px 0 4px;font-weight:700">'+L.chg+'</p><ul style="margin:0;padding-left:20px;font-size:14px">'+o.changes.map(function(c){return '<li>'+esc(en?chEn(c):chMs(c))+'</li>'}).join("")+'</ul>';
  if(o.msg)h+='<p style="margin:14px 0 4px;font-weight:700">'+(kind==="comment"?L.cm:L.msg)+by+'</p><div style="border-left:4px solid #1D8A3A;background:#F0F4EC;padding:10px 14px;font-size:14px;white-space:pre-wrap">'+esc(o.msg)+'</div>';
  if(t.description&&kind==="new")h+='<p style="margin:14px 0 4px;font-weight:700">'+(en?"Details":"Butiran")+'</p><div style="border-left:4px solid #A89464;background:#F0F4EC;padding:10px 14px;font-size:14px;white-space:pre-wrap">'+esc(t.description)+'</div>';
@@ -2238,13 +2244,13 @@ function buildMail(kind,t,o){
  var sub={"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
  var link=pageUrl();
  var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
-  '<div style="background:#1D8A3A;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;font-size:18px;font-weight:700">SYSHHB IT Helpdesk</div>'+
+  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+esc(pageUrl()+"icons/icon-192.png")+'" width="44" height="44" alt="Yayasan" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk</td></tr></table>'+
   '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
   mailBlock("en",kind,t,o)+
-  '<p style="margin:18px 0"><a href="'+esc(link)+'" style="background:#1D8A3A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700">Open the helpdesk | Buka helpdesk</a></p>'+
+  '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;line-height:1.3;text-align:center">Open the helpdesk<br><span style="font-weight:400">Buka helpdesk</span></a></p>'+
   '<hr style="border:0;border-top:1px solid #D6DBC9;margin:18px 0">'+mailBlock("ms",kind,t,o)+
   '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic message. | Ini ialah mesej automatik.</p></div></div>';
- return {subject:"["+t.id+"] "+sub,html:html};
+ return {subject:fmtIds("["+t.id+"] "+sub),html:fmtIds(html)};
 }
 function addrFor(t){
  if(t.createdByMail)return t.createdByMail;
@@ -2276,7 +2282,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v9";
+var BUILD="2026-10-30 v13";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2322,6 +2328,15 @@ document.addEventListener("click",function(e){
 /* ============ installable app ============ */
 if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
  window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("service worker",e)})});
+}
+
+/* ============ complaint number format: 0000-IT-SYSHHB ============ */
+function fmtIds(x){return String(x==null?"":x).replace(/SYSHHB-IT-(\d{4,})/g,"$1-IT-SYSHHB")}
+function idApply(el){
+ var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n,list=[];
+ while((n=w.nextNode()))list.push(n);
+ list.forEach(function(n){var p=n.parentElement;if(!p||p.tagName==="SCRIPT"||p.tagName==="STYLE"||p.tagName==="TEXTAREA")return;var v=n.nodeValue;if(v.indexOf("SYSHHB-IT-")>=0)n.nodeValue=fmtIds(v)});
+ if(el.querySelectorAll)el.querySelectorAll("[title],[aria-label]").forEach(function(e){["title","aria-label"].forEach(function(at){var v=e.getAttribute(at);if(v&&v.indexOf("SYSHHB-IT-")>=0)e.setAttribute(at,fmtIds(v))})});
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
