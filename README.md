@@ -158,16 +158,33 @@ later. Set up the flow once:
 1. In OneDrive, inside `SYSHHB-Helpdesk`, create a folder called `outbox`.
 2. Sign in to make.powerautomate.com as it.helpdesk@syayasan.edu.bn. **Create > Automated cloud
    flow**. Name it `Helpdesk emails`. Trigger: **When a file is created (properties only)**
-   (OneDrive for Business). Folder: `/SYSHHB-Helpdesk/outbox`.
+   (OneDrive for Business). Folder: click the folder icon and pick **SYSHHB-Helpdesk > outbox** from the list (do not type the path).
 3. Add **Get file content** (OneDrive for Business). File: the trigger's **Id**.
 4. Add **Compose**. Input (expression): `json(body('Get_file_content'))`.
 5. Add **Send an email (V2)** (Office 365 Outlook):
    - To: expression `outputs('Compose')?['to']`
    - Subject: expression `outputs('Compose')?['subject']`
    - Body: expression `outputs('Compose')?['html']`
-   - Show advanced options and set **Is HTML** to **Yes**.
+   - Each box must contain a blue chip made with the **fx** button, not typed text. If your version
+     of the action shows an **Is HTML** switch under advanced options, set it to Yes. If it does not,
+     the Body box is already an HTML editor and you can skip this.
 6. Add **Delete file** (OneDrive for Business). File: the trigger's **Id**.
 7. Save and turn the flow on. In `config.js` set `EMAIL_MODE: "outbox",` and commit.
 
 If an email does not arrive: check the Junk folder, then the flow's **Run history**. In "graph"
 mode the page shows an orange note when Microsoft refuses to send.
+
+---------------------------------------------------------------------------
+## Part 8. Install the helpdesk as an app on a phone
+
+The package includes `manifest.webmanifest`, `sw.js` and an `icons` folder. Upload all of them to
+the same place as `index.html` (the repository root). Keep the folder name `icons` exactly.
+
+Then on the phone, open the helpdesk address in **Edge or Chrome**:
+- Edge: tap the menu (three lines or dots) > **Add to phone** or **Install app**.
+- Chrome: tap the menu (three dots) > **Install app** (or **Add to Home screen**).
+The helpdesk then opens full screen from its own icon, like a normal app.
+
+If the menu only offers **Create shortcut**, the manifest files are not on GitHub yet, or the page
+has not reloaded since you uploaded them. Check that `https://YOURNAME.github.io/helpdesk/manifest.webmanifest`
+opens in the browser and shows text. Then close the tab, open the helpdesk again, and retry.
