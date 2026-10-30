@@ -2219,18 +2219,22 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
+var BUILD="2026-10-30 v4";
 async function testMail(){
- if(MAILMODE==="off"){toast("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\" or \"outbox\", then upload it to GitHub.",{kind:"warn",ms:12000});return}
+ var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
+ if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
+ S.mailResult={t:"Sending the test email…",bad:false,at:Date.now()};if(S.view==="accounts")renderContent();
  var t={id:"SYSHHB-IT-TEST",title:"Test email",category:"Other",priority:"medium",location:"",description:"This is a test email from the helpdesk.",status:"open",assignedName:"",createdAt:Date.now(),createdBy:S.me.username};
  var m=buildMail("new",t,{by:S.me.name});
  try{
   await sendMail(S.me.username,"[TEST] "+m.subject,m.html);
-  toast(MAILMODE==="outbox"?"Test email queued in the outbox folder. The Power Automate flow sends it within a few minutes. Check "+S.me.username+" and Junk.":"Microsoft accepted the test email for "+S.me.username+". Check your inbox and Junk folder.",{ms:12000});
- }catch(e){toast("Test email failed: "+((e&&e.message)||e),{kind:"bad",ms:20000})}
+  res(MAILMODE==="outbox"?"Test email was put in the OneDrive outbox folder. The Power Automate flow must send it. Check "+S.me.username+" and Junk.":"Microsoft accepted the test email for "+S.me.username+". Check your inbox and Junk folder.",false);
+ }catch(e){res("Test email FAILED: "+((e&&e.message)||e),true)}
 }
 function mailPanel(){
- var m=MAILMODE==="off"?"OFF":MAILMODE==="graph"?"ON (sent from the person who acts)":"ON (outbox and Power Automate)";
- return '<div class="note" translate="no" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>Email notifications:</b> '+m+'</span><button class="btn sm" data-act="testmail">Send a test email to me</button></div>';
+ var m=MAILMODE==="off"?"OFF":MAILMODE==="graph"?"ON, sent directly from the person who acts":"ON, outbox folder and Power Automate";
+ var r=S.mailResult?'<div style="flex:1 1 100%;padding:8px 10px;border-radius:8px;background:'+(S.mailResult.bad?'rgba(190,59,42,.14)':'rgba(29,138,58,.14)')+'"><b>Last test:</b> '+esc(S.mailResult.t)+'</div>':'';
+ return '<div class="note" translate="no" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>Email notifications:</b> '+esc(m)+'</span><button class="btn sm" data-act="testmail">Send a test email to me</button><span class="muted small">Version '+BUILD+'</span>'+r+'</div>';
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
