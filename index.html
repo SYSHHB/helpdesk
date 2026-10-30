@@ -460,7 +460,7 @@ var CATS=["Computer / laptop","Network / Wi-Fi","Printer / scanner","Projector /
 function normCat(c){return {"Projector / AV":"Projector / Screen","Account / access":"VM (Finance)","Software":"Other"}[c]||c}
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
-"account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","account.enable":"Account enabled","account.disable":"Account disabled",
+"account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
 "ticket.create":"Complaint submitted","ticket.status":"Status changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
@@ -1550,6 +1550,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Email sent":"E-mel dihantar","Email failed":"E-mel gagal",
 "Search by name, email or staff group":"Cari mengikut nama, e-mel atau kumpulan kakitangan","Search people":"Cari orang","All roles":"Semua peranan","All staff groups":"Semua kumpulan kakitangan","No group":"Tiada kumpulan",
 "Joined":"Tarikh sertai","New":"Baharu","Share access":"Kongsi akses","No one matches those filters.":"Tiada sesiapa sepadan dengan tapisan itu.","Role":"Peranan","Staff group":"Kumpulan kakitangan",
 "People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.":"Orang yang log masuk dengan akaun Microsoft sekolah buat kali pertama muncul di sini secara automatik sebagai Pengguna. Edit butiran mereka, tukar peranan, lumpuhkan atau padam mereka.",
@@ -2206,11 +2207,17 @@ function buildMail(kind,t,o){
 function mailSafe(kind,t,o){
  try{
   var to=String(t.createdBy||"").toLowerCase();
-  if(MAILMODE==="off"||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to))return;
+  if(MAILMODE==="off"){if(!S.mailOffWarned){S.mailOffWarned=1;toast("Email notifications are OFF, so no email was sent to the requester. Set EMAIL_MODE in config.js.",{kind:"warn",ms:9000})}return}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){log("email.failed",t.id,"No email address on this complaint ("+(t.createdBy||"empty")+")");toast("No email was sent: this complaint has no valid requester email address.",{kind:"warn",ms:9000});return}
   var m=buildMail(kind,t,o||{});
-  sendMail(to,m.subject,m.html).catch(function(e){
+  sendMail(to,m.subject,m.html).then(function(){
+   log("email.sent",t.id,to+" ("+kind+", "+MAILMODE+")");
+   toast(MAILMODE==="outbox"?"Email queued for "+to+" (sent by the Power Automate flow within a few minutes).":"Email sent to "+to+".",{ms:5000});
+  }).catch(function(e){
    console.warn("email failed",e);
-   if(!S.mailWarned){S.mailWarned=1;toast("The email notification could not be sent. "+(e&&e.message?e.message.slice(0,120):""),{kind:"warn",ms:9000})}
+   var msg=(e&&e.message)||String(e);
+   log("email.failed",t.id,to+": "+msg.slice(0,200));
+   toast("The email to "+to+" could not be sent. "+msg.slice(0,140),{kind:"warn",ms:12000});
   });
  }catch(e){console.warn(e)}
 }
