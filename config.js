@@ -31,7 +31,7 @@ window.HELPDESK_CONFIG = {
      "off"    no emails (use this until you finish the steps in README, part 7)
      "graph"  sent from the signed-in person's own mailbox (quickest; needs the Mail.Send permission)
      "outbox" sent from it.helpdesk@syayasan.edu.bn by a small Power Automate flow (needs the flow) */
-  EMAIL_MODE: "graph",
+  EMAIL_MODE: "outlook",
 
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
