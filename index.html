@@ -1044,15 +1044,33 @@ function pgAudit(){
 
 /* ============ page: accounts ============ */
 function pgAccounts(){
+ var F2=S.acctF=S.acctF||{q:"",role:"all",status:"all",dept:"all"};
  var ed=S.accounts.filter(function(a){return a.username===S.acctEdit})[0]||null;
- var rows=S.accounts.slice().sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(a.role==="admin"?-1:b.role==="admin"?1:a.role==="technician"?-1:1)}).map(function(a){
-  var self=a.username===S.me.username;
-  return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted small" translate="no">'+esc(a.username)+'</span>'+(a.dept?'<br><span class="muted small">'+esc(a.dept)+'</span>':'')+'</td><td>'+ROLES[a.role]+'</td><td>'+(a.active===false?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+'</td>'+
-  '<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button> '+(self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(a.active===false?"Enable":"Disable")+'</button> <button class="btn sm" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</td></tr>';
+ var q=F2.q.trim().toLowerCase(),week=Date.now()-7*DAY;
+ var groups=DEPTS.slice();S.accounts.forEach(function(a){if(a.dept&&groups.indexOf(a.dept)<0)groups.push(a.dept)});
+ var list=S.accounts.filter(function(a){
+  if(F2.role!=="all"&&a.role!==F2.role)return false;
+  if(F2.status==="active"&&a.active===false)return false;
+  if(F2.status==="disabled"&&a.active!==false)return false;
+  if(F2.dept==="none"&&a.dept)return false;
+  if(F2.dept!=="all"&&F2.dept!=="none"&&a.dept!==F2.dept)return false;
+  if(q&&(a.name+" "+a.username+" "+(a.dept||"")).toLowerCase().indexOf(q)<0)return false;
+  return true;
+ }).sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(a.role==="admin"?-1:b.role==="admin"?1:a.role==="technician"?-1:1)});
+ var rows=list.map(function(a){
+  var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week;
+  return '<tr><td><b>'+esc(a.name)+'</b> '+(isNew?'<span class="pill s-progress">New</span>':'')+'<br><span class="muted small" translate="no">'+esc(a.username)+'</span>'+(a.dept?'<br><span class="muted small">'+esc(a.dept)+'</span>':'')+'</td><td>'+ROLES[a.role]+'</td><td>'+(a.active===false?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+'</td><td class="muted small">'+(a.createdAt?fmtG(a.createdAt):"")+'</td>'+
+  '<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button> '+(self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(a.active===false?"Enable":"Disable")+'</button> ')+(G.mode!=="share"?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button> ':'')+(self?'':'<button class="btn sm" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</td></tr>';
  }).join("");
  var dom=CFG.ALLOWED_DOMAIN?'@'+CFG.ALLOWED_DOMAIN:'';
- return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time are added as Users. Add technicians and administrators here, or change and remove anyone.</p></div></div>'+
- '<div class="acctlayout"><div class="panel scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+ var nAdm=S.accounts.filter(function(a){return a.role==="admin"}).length,nTech=S.accounts.filter(function(a){return a.role==="technician"}).length,nUsr=S.accounts.length-nAdm-nTech;
+ var filt='<div class="filters"><input class="q" id="ac-q" data-filter="acq" data-keep type="search" value="'+esc(F2.q)+'" placeholder="Search by name, email or staff group" aria-label="Search people">'+
+  '<select data-filter="acrole" aria-label="Role"><option value="all"'+(F2.role==="all"?" selected":"")+'>All roles</option><option value="admin"'+(F2.role==="admin"?" selected":"")+'>Admin</option><option value="technician"'+(F2.role==="technician"?" selected":"")+'>Technician</option><option value="user"'+(F2.role==="user"?" selected":"")+'>User</option></select>'+
+  '<select data-filter="acstatus" aria-label="Status"><option value="all"'+(F2.status==="all"?" selected":"")+'>All statuses</option><option value="active"'+(F2.status==="active"?" selected":"")+'>Active</option><option value="disabled"'+(F2.status==="disabled"?" selected":"")+'>Disabled</option></select>'+
+  '<select data-filter="acdept" aria-label="Staff group"><option value="all"'+(F2.dept==="all"?" selected":"")+'>All staff groups</option>'+groups.map(function(d){return '<option value="'+esc(d)+'"'+(F2.dept===d?" selected":"")+'>'+esc(d)+'</option>'}).join("")+'<option value="none"'+(F2.dept==="none"?" selected":"")+'>No group</option></select></div>';
+ return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
+ '<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ '<div class="acctlayout"><div class="panel scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">No one matches those filters.</td></tr>')+'</tbody></table></div>'+
  '<form class="panel stack" data-form="account" id="acctform"><h2>'+(ed?"Edit account":"Add account")+'</h2>'+
  '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
  '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
@@ -1098,6 +1116,7 @@ var F={
    await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
    await log("ticket.create",id,prLbl(v.priority)+" priority, "+v.category+": "+title);
   }catch(e){console.warn("follow-up writes failed",e)}
+  mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username},{by:S.me.name});
   S.att.new=[];S.newPrio=null;toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
   clearKeep();openTicket(id);
  })},
@@ -1114,6 +1133,7 @@ var F={
    if(t.assignedTo&&t.assignedTo!==S.me.username)await notify(t.assignedTo,S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
   }else await notify(t.assignedTo||"staff",S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
   await log(internal?"comment.internal":"comment.public",t.id,snip);
+  if(!internal&&isStaff()&&t.createdBy!==S.me.username&&text)mailSafe("comment",t,{by:S.me.name,msg:text});
   S.att.comment=[];var ta=$("#c-text");if(ta)ta.value="";var ck=$("#c-int");if(ck)ck.checked=false;
  })},
  update:function(){return withBusy(async function(){
@@ -1137,6 +1157,13 @@ var F={
   if(patch.assignedTo&&patch.assignedTo!==S.me.username)await notify(patch.assignedTo,"You were assigned "+t.id+": "+t.title,t.id,"assign");
   for(var j=0;j<au.length;j++)await log(au[j][0],t.id,au[j][1]);
   if(msg)await log("update.message",t.id,msg.length>120?msg.slice(0,120)+"…":msg);
+  if(t.createdBy!==S.me.username){
+   var chg=[];if(patch.status)chg.push({k:"status",v:patch.status});if("progress" in patch&&!patch.status)chg.push({k:"progress",v:patch.progress});
+   if("assignedTo" in patch)chg.push(patch.assignedTo?{k:"assign",v:patch.assignedName}:{k:"unassign"});
+   if("due" in patch)chg.push(patch.due?{k:"due",v:patch.due}:{k:"nodue"});
+   var kind2=patch.status==="closed"?"closed":patch.status==="resolved"?"resolved":(chg.length?"update":"comment");
+   mailSafe(kind2,Object.assign({},t,patch),{by:S.me.name,changes:chg,msg:msg});
+  }
   document.querySelectorAll("#updpanel [data-keep]").forEach(function(el){el.removeAttribute("data-keep")});
   S.sheet=false;toast("Update saved. The requester has been notified.");
  })},
@@ -1150,6 +1177,7 @@ var F={
   var rec=Object.assign({},ex||{},{username:email,email:email,name:name,role:v.role,dept:(v.dept||"").trim(),active:ex?ex.active!==false:true,createdAt:ex?ex.createdAt:Date.now()});
   await ref.set(rec);
   await log(ex?"account.update":"account.create",email,ROLES[v.role]);
+  if(!ex)inviteSafe(email);
   S.acctEdit="";clearKeep();toast("Account saved.");
  })}
 };
@@ -1199,6 +1227,7 @@ var A={
  mslogin:function(){S.err="";if(msalApp)msalApp.loginRedirect({scopes:SCOPES,prompt:"select_account"})},
  mslogout:function(){if(msalApp){try{sessionStorage.clear()}catch(e){}msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()})}},
  reload:function(){location.reload()},
+ shareacct:function(el){return inviteSafe(el.dataset.u,true)},
  delacct:function(el){
   var u=el.dataset.u;if(!u||u===S.me.username)return;
   if(!window.confirm(T("Delete this account? The person can sign in again later and will be added as a normal user.")+"\n\n"+u))return;
@@ -1239,6 +1268,7 @@ var A={
   for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
   if(t.createdBy!==S.me.username)await notify(t.createdBy,t.id+" updated by "+S.me.name+": status is now "+stLbl(st),t.id,"update");
   await log("ticket.status",t.id,stLbl(t.status)+" to "+stLbl(st));
+  if(t.createdBy!==S.me.username){var ch2=[{k:"status",v:st}];if(patch.assignedTo)ch2.push({k:"assign",v:patch.assignedName});mailSafe(st==="closed"?"closed":st==="resolved"?"resolved":"update",Object.assign({},t,patch),{by:S.me.name,changes:ch2})}
   if(patch.assignedTo)await log("ticket.assign",t.id,S.me.name);
   document.querySelectorAll("#updpanel [data-keep]").forEach(function(x){x.removeAttribute("data-keep")});
   buzz([12,30,12]);toast(t.id+" is now "+stLbl(st)+".");
@@ -1519,6 +1549,10 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Search by name, email or staff group":"Cari mengikut nama, e-mel atau kumpulan kakitangan","Search people":"Cari orang","All roles":"Semua peranan","All staff groups":"Semua kumpulan kakitangan","No group":"Tiada kumpulan",
+"Joined":"Tarikh sertai","New":"Baharu","Share access":"Kongsi akses","No one matches those filters.":"Tiada sesiapa sepadan dengan tapisan itu.","Role":"Peranan","Staff group":"Kumpulan kakitangan",
+"People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.":"Orang yang log masuk dengan akaun Microsoft sekolah buat kali pertama muncul di sini secara automatik sebagai Pengguna. Edit butiran mereka, tukar peranan, lumpuhkan atau padam mereka.",
+"Everyone in the organisation already has access through the shared link.":"Semua orang dalam organisasi sudah mempunyai akses melalui pautan yang dikongsi.",
 "Sign in with Microsoft":"Log masuk dengan Microsoft","Use your school Microsoft account to report a problem or manage complaints.":"Gunakan akaun Microsoft sekolah anda untuk melaporkan masalah atau mengurus aduan.",
 "Complete your profile":"Lengkapkan profil anda","Choose your staff group once. An administrator can change it later.":"Pilih kumpulan kakitangan anda sekali sahaja. Pentadbir boleh mengubahnya kemudian.",
 "Continue":"Teruskan","Email":"E-mel","Staff group":"Kumpulan kakitangan","Delete":"Padam","Account deleted":"Akaun dipadam","Account deleted.":"Akaun dipadam.",
@@ -1809,7 +1843,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"){var l=docum
 
 /* ============ Microsoft sign-in and OneDrive storage ============ */
 var CFG=window.HELPDESK_CONFIG||{};
-var SCOPES=["User.Read","Files.ReadWrite.All"];
+var MAILMODE=String(CFG.EMAIL_MODE||"off").toLowerCase();
+var SCOPES=["User.Read","Files.ReadWrite.All"].concat(MAILMODE==="graph"?["Mail.Send"]:[]);
 var GR="https://graph.microsoft.com/v1.0";
 var msalApp=null;
 var G={drive:"",folder:"",base:"",mode:"",files:{},subs:[],timer:null,polling:false};
@@ -1956,28 +1991,30 @@ function writeDoc(path,mut,data){
   return out;
  });
 }
-async function imgRead(id){
- var r=await gf(ip("photos/"+id+".json")+"?select=id,@microsoft.graph.downloadUrl");
+async function rawRead(dir,id){
+ var rel=dir+"/"+id+".json";
+ var r=await gf(ip(rel)+"?select=id,@microsoft.graph.downloadUrl");
  if(r.status===404)return undefined;
  if(!r.ok)throw await gerr(r);
- var m=await r.json(),txt=await gDownload(m,"photos/"+id+".json");
+ var m=await r.json(),txt=await gDownload(m,rel);
  try{return JSON.parse(txt)}catch(e){return undefined}
 }
-function imgRef(path){
- var id=path.split("/").pop();
+function rawRef(dir,path){
+ var id=path.split("/").pop(),rel=dir+"/"+id+".json";
  return {path:path,id:id,
-  get:async function(){var d=await imgRead(id);return {id:id,exists:d!==undefined,data:function(){return d}}},
+  get:async function(){var d=await rawRead(dir,id);return {id:id,exists:d!==undefined,data:function(){return d}}},
   set:async function(d){
-   var r=await gf(ip("photos/"+id+".json")+":/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
+   var r=await gf(ip(rel)+":/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
    if(!r.ok)throw await gerr(r);
   },
   update:async function(){},
-  delete:async function(){await gf(ip("photos/"+id+".json"),{method:"DELETE"})},
+  delete:async function(){await gf(ip(rel),{method:"DELETE"})},
   acquire:async function(){return {acquired:true}}
  };
 }
 function mkRef(path){
- if(path.indexOf("images/")===0)return imgRef(path);
+ if(path.indexOf("images/")===0)return rawRef("photos",path);
+ if(path.indexOf("outbox/")===0)return rawRef("outbox",path);
  var id=path.split("/").pop();
  return {path:path,id:id,kind:"doc",
   get:async function(){await gLoad(filesFor(path)[0]);return docSnap(path)},
@@ -2095,6 +2132,91 @@ function setupBar(){
  if(G.mode!=="owner"||!isAdmin())return "";
  return '<div class="note" translate="no" style="margin-bottom:14px"><b>Storage is ready but not shared yet.</b><br>Add these two lines to <code>config.js</code> on GitHub, then share the OneDrive folder “'+esc(CFG.FOLDER_NAME||"SYSHHB-Helpdesk")+'” with your staff (see README).<br><code style="word-break:break-all">DRIVE_ID: "'+esc(G.drive)+'",<br>FOLDER_ID: "'+esc(G.folder)+'",</code></div>';
 }
+
+/* ============ sharing the folder from the Accounts page ============ */
+async function inviteToFolder(email){
+ var r=await gf("/drives/"+G.drive+"/items/"+G.folder+"/invite",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({requireSignIn:true,sendInvitation:false,roles:["write"],recipients:[{email:email}]})});
+ if(!r.ok)throw await gerr(r);
+}
+async function inviteSafe(email,explicit){
+ if(G.mode==="share"){if(explicit)toast("Everyone in the organisation already has access through the shared link.");return}
+ try{await inviteToFolder(email);toast("OneDrive folder shared with "+email+".")}
+ catch(e){console.warn(e);toast("Couldn’t share the OneDrive folder with "+email+" automatically. Share it in OneDrive instead.",{kind:"warn",ms:9000})}
+}
+
+/* ============ email notifications ============ */
+function Tm(x){return Object.prototype.hasOwnProperty.call(MS,x)?MS[x]:x}
+async function sendMail(to,subject,html){
+ if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:to,subject:subject,html:html,ts:Date.now()});return}
+ var r=await gf("/me/sendMail",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({message:{subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]},saveToSentItems:false})});
+ if(!r.ok)throw await gerr(r);
+}
+function chEn(c){
+ if(c.k==="status")return "Status: "+stLbl(c.v);
+ if(c.k==="progress")return "Progress: "+c.v+"%";
+ if(c.k==="assign")return "Assigned to: "+c.v;
+ if(c.k==="unassign")return "Technician removed";
+ if(c.k==="due")return "Target date: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
+ return "Target date cleared";
+}
+function chMs(c){
+ if(c.k==="status")return "Status: "+Tm(stLbl(c.v));
+ if(c.k==="progress")return "Kemajuan: "+c.v+"%";
+ if(c.k==="assign")return "Ditugaskan kepada: "+c.v;
+ if(c.k==="unassign")return "Juruteknik dibuang";
+ if(c.k==="due")return "Tarikh sasaran: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
+ return "Tarikh sasaran dikosongkan";
+}
+function mailBlock(lang,kind,t,o){
+ var en=lang==="en";
+ var L=en?{id:"Complaint ID",title:"Title",cat:"Category",pri:"Priority",loc:"Location",st:"Status",tech:"Technician",sub:"Submitted",chg:"What changed",msg:"Message from ",cm:"Comment from "}
+         :{id:"ID aduan",title:"Tajuk",cat:"Kategori",pri:"Keutamaan",loc:"Lokasi",st:"Status",tech:"Juruteknik",sub:"Dihantar",chg:"Apa yang berubah",msg:"Mesej daripada ",cm:"Komen daripada "};
+ var by=esc(o.by||""),intro={
+  "new":en?"We received your complaint. Please keep this number: <b>"+esc(t.id)+"</b>.":"Kami telah menerima aduan anda. Sila simpan nombor ini: <b>"+esc(t.id)+"</b>.",
+  "update":en?by+" updated your complaint.":by+" telah mengemas kini aduan anda.",
+  "comment":en?by+" commented on your complaint.":by+" memberi komen pada aduan anda.",
+  "resolved":en?by+" marked your complaint as resolved.":by+" menandakan aduan anda telah selesai.",
+  "closed":en?"Your complaint has been closed by "+by+". Thank you.":"Aduan anda telah ditutup oleh "+by+". Terima kasih."
+ }[kind];
+ var row=function(k,v){return '<tr><td style="padding:5px 12px 5px 0;color:#55665A;white-space:nowrap;vertical-align:top">'+k+'</td><td style="padding:5px 0"><b>'+v+'</b></td></tr>'};
+ var cat=en?t.category:Tm(t.category),pri=en?prLbl(t.priority):Tm(prLbl(t.priority)),st=en?stLbl(t.status):Tm(stLbl(t.status));
+ var h='<p style="margin:0 0 12px;font-size:15px">'+intro+'</p><table style="border-collapse:collapse;font-size:14px">'+
+  row(L.id,esc(t.id))+row(L.title,esc(t.title))+row(L.cat,esc(cat))+row(L.pri,esc(pri))+(t.location?row(L.loc,esc(t.location)):"")+row(L.st,esc(st))+
+  (t.assignedName?row(L.tech,esc(t.assignedName)):"")+row(L.sub,fmtG(t.createdAt)+(hOK?" ("+esc(fmtH(t.createdAt))+")":""))+'</table>';
+ if(o.changes&&o.changes.length)h+='<p style="margin:14px 0 4px;font-weight:700">'+L.chg+'</p><ul style="margin:0;padding-left:20px;font-size:14px">'+o.changes.map(function(c){return '<li>'+esc(en?chEn(c):chMs(c))+'</li>'}).join("")+'</ul>';
+ if(o.msg)h+='<p style="margin:14px 0 4px;font-weight:700">'+(kind==="comment"?L.cm:L.msg)+by+'</p><div style="border-left:4px solid #1D8A3A;background:#F0F4EC;padding:10px 14px;font-size:14px;white-space:pre-wrap">'+esc(o.msg)+'</div>';
+ if(t.description&&kind==="new")h+='<p style="margin:14px 0 4px;font-weight:700">'+(en?"Details":"Butiran")+'</p><div style="border-left:4px solid #A89464;background:#F0F4EC;padding:10px 14px;font-size:14px;white-space:pre-wrap">'+esc(t.description)+'</div>';
+ return h;
+}
+function buildMail(kind,t,o){
+ var sub={"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
+ var link=pageUrl();
+ var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
+  '<div style="background:#1D8A3A;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;font-size:18px;font-weight:700">SYSHHB IT Helpdesk</div>'+
+  '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
+  mailBlock("en",kind,t,o)+
+  '<p style="margin:18px 0"><a href="'+esc(link)+'" style="background:#1D8A3A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700">Open the helpdesk | Buka helpdesk</a></p>'+
+  '<hr style="border:0;border-top:1px solid #D6DBC9;margin:18px 0">'+mailBlock("ms",kind,t,o)+
+  '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic message. | Ini ialah mesej automatik.</p></div></div>';
+ return {subject:"["+t.id+"] "+sub,html:html};
+}
+function mailSafe(kind,t,o){
+ try{
+  var to=String(t.createdBy||"").toLowerCase();
+  if(MAILMODE==="off"||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to))return;
+  var m=buildMail(kind,t,o||{});
+  sendMail(to,m.subject,m.html).catch(function(e){
+   console.warn("email failed",e);
+   if(!S.mailWarned){S.mailWarned=1;toast("The email notification could not be sent. "+(e&&e.message?e.message.slice(0,120):""),{kind:"warn",ms:9000})}
+  });
+ }catch(e){console.warn(e)}
+}
+
+/* ---- accounts page filters ---- */
+document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
+document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;

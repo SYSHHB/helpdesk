@@ -27,6 +27,12 @@ window.HELPDESK_CONFIG = {
   DRIVE_ID: "b!R_lPWUdjfEuqzVrRupLxSE47Uqs5BWdEtWJhDv2jn1e619-HvmPEQrnstLIZc1T6",
   FOLDER_ID: "01O26XY4QKUSC3SK67LBDY4QRH2JYOPT5K",
 
+  /* Email notifications to the person who made the complaint:
+     "off"    no emails (use this until you finish the steps in README, part 7)
+     "graph"  sent from the signed-in person's own mailbox (quickest; needs the Mail.Send permission)
+     "outbox" sent from it.helpdesk@syayasan.edu.bn by a small Power Automate flow (needs the flow) */
+  EMAIL_MODE: "off",
+
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
 };

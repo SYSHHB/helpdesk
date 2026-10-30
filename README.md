@@ -92,6 +92,13 @@ After you commit, reload the site. The yellow note disappears and everyone can s
 - **Stop someone using it**: Accounts > Disable (they see "Account disabled").
 - **Remove someone**: Accounts > Delete. If they sign in again they come back as a normal User.
   Use Disable if you want to block them.
+- **People list**: everyone who signs in for the first time appears on **Accounts** automatically
+  (marked **New** for 7 days). Use the search box and the Role, Status and Staff group filters to
+  find people. Edit changes name, role or staff group. Delete removes the record.
+- **Giving access to the OneDrive folder**: with the organisation link (Step 5, Option A) everyone in
+  Yayasan already has access, so nothing else is needed. With Option B, the **Share access** button
+  on a row (and adding someone with Add account) shares the folder with them straight from the
+  website. It only works if you are signed in as the folder owner or someone allowed to share it.
 - Reports, audit log, complaint photos, notifications, English and Bahasa Melayu, Gregorian and
   Brunei Hijri calendars all work as before.
 
@@ -124,3 +131,43 @@ After you commit, reload the site. The yellow note disappears and everyone can s
 - "Microsoft returned 403/404": the person does not have edit permission to the folder
   (Step 5), or the link or IDs in `config.js` are wrong.
 - "Live updates paused": the page lost contact with OneDrive. Tap the red bar to reload.
+
+---------------------------------------------------------------------------
+## Part 7. Email notifications (optional)
+
+The person who made a complaint gets an email (English and Bahasa Melayu together) when:
+- they submit it (with the complaint ID and the details),
+- a technician or administrator changes the status, progress, technician or target date,
+- a technician or administrator replies with a comment (internal notes are never emailed),
+- the complaint is marked resolved or closed.
+
+Choose one way to send them in `config.js` (`EMAIL_MODE`).
+
+**Way 1: `"graph"` (quickest, about 5 minutes)**
+1. In Entra > your app > API permissions > Add a permission > Microsoft Graph > Delegated >
+   add **Mail.Send**. Click **Grant admin consent** if you see it.
+2. In `config.js` set `EMAIL_MODE: "graph",` and commit.
+3. Everyone signs in again once and accepts the new permission.
+The email is sent from the mailbox of the person who did the action (for example, the technician).
+When someone submits a complaint, the confirmation comes from their own address to themselves.
+
+**Way 2: `"outbox"` (emails come from it.helpdesk@syayasan.edu.bn)**
+No extra Microsoft permission is needed. The page drops each email into the OneDrive folder
+`SYSHHB-Helpdesk/outbox`, and a Power Automate flow sends it. Emails arrive about 1 to 3 minutes
+later. Set up the flow once:
+1. In OneDrive, inside `SYSHHB-Helpdesk`, create a folder called `outbox`.
+2. Sign in to make.powerautomate.com as it.helpdesk@syayasan.edu.bn. **Create > Automated cloud
+   flow**. Name it `Helpdesk emails`. Trigger: **When a file is created (properties only)**
+   (OneDrive for Business). Folder: `/SYSHHB-Helpdesk/outbox`.
+3. Add **Get file content** (OneDrive for Business). File: the trigger's **Id**.
+4. Add **Compose**. Input (expression): `json(body('Get_file_content'))`.
+5. Add **Send an email (V2)** (Office 365 Outlook):
+   - To: expression `outputs('Compose')?['to']`
+   - Subject: expression `outputs('Compose')?['subject']`
+   - Body: expression `outputs('Compose')?['html']`
+   - Show advanced options and set **Is HTML** to **Yes**.
+6. Add **Delete file** (OneDrive for Business). File: the trigger's **Id**.
+7. Save and turn the flow on. In `config.js` set `EMAIL_MODE: "outbox",` and commit.
+
+If an email does not arrive: check the Junk folder, then the flow's **Run history**. In "graph"
+mode the page shows an orange note when Microsoft refuses to send.
