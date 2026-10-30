@@ -724,7 +724,7 @@ function openTicket(id){
 
 /* ============ auth ============ */
 async function startSession(acct){
- S.me={username:acct.username,name:acct.name,role:acct.role,dept:acct.dept||""};
+ S.me={username:acct.username,name:acct.name,role:acct.role,dept:acct.dept||"",mail:acct.mail||acct.username};
  var k="hd.seen."+S.me.username,v=ls.get(k);
  if(v===null){S.lastSeen=Date.now();ls.set(k,String(S.lastSeen))}else S.lastSeen=+v||0;
  S.view=isStaff()?"dashboard":"dashboard";S.err="";
@@ -1098,7 +1098,7 @@ var F={
   if(!S.pending)return;
   var dept=(v.dept||"").trim(),name=(v.name||"").trim()||S.pending.name,e=S.pending.email;
   if(!dept)throw new Error("Choose your staff group.");
-  await S.db.doc("accounts/"+e).set({username:e,email:e,name:name,role:"user",dept:dept,active:true,createdAt:Date.now()});
+  await S.db.doc("accounts/"+e).set({username:e,email:e,mail:S.pending.mail||e,name:name,role:"user",dept:dept,active:true,createdAt:Date.now()});
   var a=(await S.db.doc("accounts/"+e).get()).data();
   S.pending=null;S.loading=false;
   await startSession(Object.assign({},a,{username:e}));
@@ -1110,7 +1110,7 @@ var F={
   if(!title||!desc){toast("Add a title and the details of the problem.",{kind:"warn"});return}
   var id=await nextTicketId(),now=Date.now();
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),status:"open",progress:0,
-   createdBy:S.me.username,createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
+   createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
   try{
    await col("tickets/"+id+"/comments").add({type:"event",text:"Complaint submitted",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
    await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
@@ -2119,10 +2119,13 @@ async function afterLogin(acct){
  try{
   await resolveStorage(email);
   S.db=makeDb();
+  var myMail=email;
+  try{var meR=await gf("/me?$select=mail,userPrincipalName");if(meR.ok){var mj=await meR.json();myMail=String(mj.mail||mj.userPrincipalName||email).toLowerCase()}}catch(e){console.warn(e)}
   await seedAndEnsure(email,name);
   var snap=await S.db.doc("accounts/"+email).get();
-  if(!snap.exists){S.pending={email:email,name:name};S.loading=false;render();return}
+  if(!snap.exists){S.pending={email:email,name:name,mail:myMail};S.loading=false;render();return}
   var a=snap.data();
+  if(a.mail!==myMail){a.mail=myMail;try{await S.db.doc("accounts/"+email).update({mail:myMail})}catch(e){console.warn(e)}}
   if(a.active===false){fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");return}
   S.loading=false;
   await startSession(Object.assign({},a,{username:email}));
@@ -2152,7 +2155,7 @@ function Tm(x){return Object.prototype.hasOwnProperty.call(MS,x)?MS[x]:x}
 async function sendMail(to,subject,html){
  if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:to,subject:subject,html:html,ts:Date.now()});return}
  var r=await gf("/me/sendMail",{method:"POST",headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({message:{subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]},saveToSentItems:false})});
+  body:JSON.stringify({message:{subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]},saveToSentItems:CFG.SAVE_SENT!==false})});
  if(!r.ok)throw await gerr(r);
 }
 function chEn(c){
@@ -2204,9 +2207,16 @@ function buildMail(kind,t,o){
   '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic message. | Ini ialah mesej automatik.</p></div></div>';
  return {subject:"["+t.id+"] "+sub,html:html};
 }
+function addrFor(t){
+ if(t.createdByMail)return t.createdByMail;
+ var a=S.accounts.filter(function(x){return x.username===t.createdBy})[0];
+ if(a&&a.mail)return a.mail;
+ if(S.me&&S.me.username===t.createdBy&&S.me.mail)return S.me.mail;
+ return t.createdBy;
+}
 function mailSafe(kind,t,o){
  try{
-  var to=String(t.createdBy||"").toLowerCase();
+  var to=String(addrFor(t)||"").toLowerCase();
   if(MAILMODE==="off"){if(!S.mailOffWarned){S.mailOffWarned=1;toast("Email notifications are OFF, so no email was sent to the requester. Set EMAIL_MODE in config.js.",{kind:"warn",ms:9000})}return}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){log("email.failed",t.id,"No email address on this complaint ("+(t.createdBy||"empty")+")");toast("No email was sent: this complaint has no valid requester email address.",{kind:"warn",ms:9000});return}
   var m=buildMail(kind,t,o||{});
@@ -2226,16 +2236,17 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v4";
+var BUILD="2026-10-30 v5";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
  S.mailResult={t:"Sending the test email…",bad:false,at:Date.now()};if(S.view==="accounts")renderContent();
  var t={id:"SYSHHB-IT-TEST",title:"Test email",category:"Other",priority:"medium",location:"",description:"This is a test email from the helpdesk.",status:"open",assignedName:"",createdAt:Date.now(),createdBy:S.me.username};
+ t.createdByMail=S.me.mail||S.me.username;
  var m=buildMail("new",t,{by:S.me.name});
  try{
-  await sendMail(S.me.username,"[TEST] "+m.subject,m.html);
-  res(MAILMODE==="outbox"?"Test email was put in the OneDrive outbox folder. The Power Automate flow must send it. Check "+S.me.username+" and Junk.":"Microsoft accepted the test email for "+S.me.username+". Check your inbox and Junk folder.",false);
+  await sendMail(S.me.mail||S.me.username,"[TEST] "+m.subject,m.html);
+  res(MAILMODE==="outbox"?"Test email was put in the OneDrive outbox folder. The Power Automate flow must send it. Check "+S.me.username+" and Junk.":"Microsoft accepted the test email for "+(S.me.mail||S.me.username)+". Check your inbox and Junk folder.",false);
  }catch(e){res("Test email FAILED: "+((e&&e.message)||e),true)}
 }
 function mailPanel(){
