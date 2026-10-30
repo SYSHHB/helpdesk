@@ -2013,15 +2013,20 @@ function makeDb(){
 
 /* ---- finding the shared OneDrive folder ---- */
 async function resolveStorage(email){
- if(CFG.DRIVE_ID&&CFG.FOLDER_ID){G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID;G.base="/drives/"+G.drive+"/items/"+G.folder;G.mode="config";return}
+ var admins=(CFG.ADMIN_EMAILS||[]).map(function(x){return x.toLowerCase()}),isAdm=admins.indexOf(email)>=0;
+ if(CFG.DRIVE_ID&&CFG.FOLDER_ID){
+  G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID;G.base="/drives/"+G.drive+"/items/"+G.folder;
+  var chk=await gf(G.base+"?select=id");
+  if(chk.ok){G.mode="config";return}
+  if(!isAdm)throw new Error("Can’t open the shared helpdesk folder ("+chk.status+"). Ask the administrator to check the sharing and the IDs in config.js.");
+ }
  if(CFG.FOLDER_SHARE_URL){
   G.base="/shares/u!"+b64url(CFG.FOLDER_SHARE_URL)+"/root";
   var r=await gf(G.base+"?select=id,name");
   if(!r.ok)throw await gerr(r);
   G.mode="share";return;
  }
- var admins=(CFG.ADMIN_EMAILS||[]).map(function(x){return x.toLowerCase()});
- if(admins.indexOf(email)<0)throw new Error("The helpdesk storage has not been set up yet. Please ask the administrator.");
+ if(!isAdm)throw new Error("The helpdesk storage has not been set up yet. Please ask the administrator.");
  var name=CFG.FOLDER_NAME||"SYSHHB-Helpdesk",enc=encodeURIComponent(name);
  var r2=await gf("/me/drive/root:/"+enc+"?select=id,parentReference");
  if(r2.status===404){

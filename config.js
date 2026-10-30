@@ -24,8 +24,8 @@ window.HELPDESK_CONFIG = {
      A) an organisation edit link to the folder */
   FOLDER_SHARE_URL: "",
   /*    B) or the two IDs that the first run shows to the administrator */
-  DRIVE_ID: "",
-  FOLDER_ID: "",
+  DRIVE_ID: "b!R_lPWUdjfEuqzVrRupLxSE47Uqs5BWdEtWJhDv2jn1e619-HvmPEQrnstLIZc1T6",
+  FOLDER_ID: "01O26XY4QKUSC3SK67LBDY4QRH2JYOPT5K",
 
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
