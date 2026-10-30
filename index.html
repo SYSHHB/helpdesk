@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SYSHHB IT Helpdesk</title>
+<title>SYSHHB IT Helpdesk System</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0E3B22">
 <meta name="mobile-web-app-capable" content="yes">
@@ -499,6 +499,9 @@ html,body{max-width:100%;overflow-x:clip}
 .glist .gn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-size:.8rem;font-weight:700}
 .glist button.on .gn{background:var(--brand);color:var(--brand-ink)}
 @media screen and (max-width:820px){.nav button.nv.nv-gstaff{display:none}#content[data-view="guide"] .page-h h1{display:none}}
+.wa{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,#25D366 20%,transparent);color:var(--text);font-size:.8rem;font-weight:650;text-decoration:none}
+.wa.call{background:var(--surface2)}
+.phone{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -783,7 +786,7 @@ function openTicket(id){
 
 /* ============ auth ============ */
 async function startSession(acct){
- S.me={username:acct.username,name:acct.name,role:acct.role,dept:acct.dept||"",mail:acct.mail||acct.username};
+ S.me={username:acct.username,name:acct.name,role:acct.role,dept:acct.dept||"",mail:acct.mail||acct.username,phone:acct.phone||""};
  var k="hd.seen."+S.me.username,v=ls.get(k);
  if(v===null){S.lastSeen=Date.now();ls.set(k,String(S.lastSeen))}else S.lastSeen=+v||0;
  S.view=isStaff()?"dashboard":"dashboard";S.err="";
@@ -812,10 +815,11 @@ function authHTML(){
  var msLogo='<svg width="20" height="20" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>';
  if(S.loading)body='<p class="muted">Thank you for your patience</p>';
  else if(S.fatal)body='<div><h2>'+esc(S.fatalTitle||"Can’t continue")+'</h2></div><div class="err" role="alert">'+esc(S.fatal)+'</div><div class="stack"><button class="btn" data-act="mslogout">Use a different account</button><button class="btn" data-act="reload">Try again</button></div>';
- else if(S.pending)body='<div><h2>Complete your profile</h2><p class="muted mt">Choose your staff group once. An administrator can change it later.</p></div>'+
+ else if(S.pending)body='<div><h2>Complete your profile</h2><p class="muted mt">Tell us your staff group and phone number, so technicians can contact you by WhatsApp.</p></div>'+
   '<form class="stack" data-form="profile"><label class="fld"><span>Full name</span><input id="a-name" name="name" required data-keep autocomplete="name" value="'+esc(S.pending.name)+'"></label>'+
   '<label class="fld"><span>Email</span><input value="'+esc(S.pending.email)+'" readonly></label>'+
-  '<label class="fld"><span>Staff group</span>'+deptSel("a-dept","dept","",true)+'</label>'+err+
+  '<label class="fld"><span>Staff group</span>'+deptSel("a-dept","dept",S.pending.dept||"",true)+'</label>'+
+  '<label class="fld"><span>Phone number</span><input id="a-phone" name="phone" type="tel" inputmode="tel" required data-keep autocomplete="tel" placeholder="712 3456" value="'+esc(S.pending.phone||"")+'"><small>Brunei numbers can be typed without +673.</small></label>'+err+
   '<button class="btn primary wide"'+(S.busy?' disabled':'')+'>Continue</button></form>';
  else body='<div><h2>Sign in</h2><p class="muted mt">Use your school Microsoft account to report a problem or manage complaints.</p></div>'+err+
   '<button class="btn primary wide msbtn" data-act="mslogin">'+msLogo+'Sign in with Microsoft</button>';
@@ -1006,7 +1010,7 @@ function pgTicket(){
   var isStf=c.role==="admin"||c.role==="technician";
   return '<li class="cm'+(isStf?" staff":"")+(c.internal?" int":"")+(c.by===S.me.username?" me":"")+'"><header><span><b>'+esc(c.byName)+'</b> <span class="who-tag">'+(c.by===S.me.username?"You":ROLES[c.role]||"")+(c.internal?", internal note (staff only)":"")+'</span></span>'+dualT(c.ts)+'</header><p translate="no">'+esc(c.text)+'</p>'+imgsHTML(c.images)+'</li>';
  }).join("");
- var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
+ var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t))+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
  '<div><dt>Category</dt><dd>'+esc(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
  '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Target date</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
  '<div style="grid-column:1/-1"><dt>Progress '+(t.progress||0)+'%</dt><dd><div class="progress" role="progressbar" aria-valuenow="'+(t.progress||0)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+(t.progress||0)+'%"></i></div></dd></div></dl>';
@@ -1120,7 +1124,7 @@ function pgAccounts(){
  }).sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(a.role==="admin"?-1:b.role==="admin"?1:a.role==="technician"?-1:1)});
  var rows=list.map(function(a){
   var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week;
-  return '<tr><td><b>'+esc(a.name)+'</b> '+(isNew?'<span class="pill s-progress">New</span>':'')+'<br><span class="muted small" translate="no">'+esc(a.username)+'</span>'+(a.dept?'<br><span class="muted small">'+esc(a.dept)+'</span>':'')+'</td><td>'+ROLES[a.role]+'</td><td>'+(a.active===false?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+'</td><td class="muted small">'+(a.createdAt?fmtG(a.createdAt):"")+'</td>'+
+  return '<tr><td><b>'+esc(a.name)+'</b> '+(isNew?'<span class="pill s-progress">New</span>':'')+'<br><span class="muted small" translate="no">'+esc(a.username)+'</span>'+(a.phone?'<br><span class="small">'+waLinks(a.phone)+'</span>':'')+(a.dept?'<br><span class="muted small">'+esc(a.dept)+'</span>':'')+'</td><td>'+ROLES[a.role]+'</td><td>'+(a.active===false?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+'</td><td class="muted small">'+(a.createdAt?fmtG(a.createdAt):"")+'</td>'+
   '<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button> '+(self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(a.active===false?"Enable":"Disable")+'</button> ')+(G.mode!=="share"?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button> ':'')+(self?'':'<button class="btn sm" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</td></tr>';
  }).join("");
  var dom=CFG.ALLOWED_DOMAIN?'@'+CFG.ALLOWED_DOMAIN:'';
@@ -1136,6 +1140,7 @@ function pgAccounts(){
  '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
  '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
  '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
+ '<label class="fld"><span>Phone number <small>(optional)</small></span><input id="ac-phone" name="phone" type="tel" inputmode="tel" data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
  '<label class="fld"><span>Staff group <small>(optional)</small></span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",false)+'</label>'+
  '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></div>';
 }
@@ -1157,14 +1162,16 @@ async function withBusy(fn){
 var F={
  profile:function(f){var v=fd(f);return withBusy(async function(){
   if(!S.pending)return;
-  var dept=(v.dept||"").trim(),name=(v.name||"").trim()||S.pending.name,e=S.pending.email;
+  var P=S.pending,dept=(v.dept||"").trim(),name=(v.name||"").trim()||P.name,e=P.email,phone=normPhone(v.phone);
   if(!dept)throw new Error("Choose your staff group.");
-  await S.db.doc("accounts/"+e).set({username:e,email:e,mail:S.pending.mail||e,name:name,role:"user",dept:dept,active:true,createdAt:Date.now()});
+  if(!phone)throw new Error("Enter a valid phone number.");
+  if(P.existing)await S.db.doc("accounts/"+e).update({name:name,dept:dept,phone:phone,mail:P.mail||e});
+  else await S.db.doc("accounts/"+e).set({username:e,email:e,mail:P.mail||e,name:name,role:"user",dept:dept,phone:phone,active:true,createdAt:Date.now()});
   var a=(await S.db.doc("accounts/"+e).get()).data();
   S.pending=null;S.loading=false;
   await startSession(Object.assign({},a,{username:e}));
-  await log("auth.register",e,"First sign-in");
-  S.guide={tab:"user",i:0};go("guide");
+  if(P.existing)await log("account.update",e,"Profile completed");
+  else{await log("auth.register",e,"First sign-in");S.guide={tab:"user",i:0};go("guide")}
  })},
  newticket:function(f){var v=fd(f);return withBusy(async function(){
   var title=v.title.trim(),desc=v.description.trim();
@@ -1172,7 +1179,7 @@ var F={
   if(!title||!desc){toast("Add a title and the details of the problem.",{kind:"warn"});return}
   var id=await nextTicketId(),now=Date.now();
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),status:"open",progress:0,
-   createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
+   createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
   try{
    await col("tickets/"+id+"/comments").add({type:"event",text:"Complaint submitted",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
    await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
@@ -1236,7 +1243,9 @@ var F={
   if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom)throw new Error("Use an email ending with @"+dom+".");
   var ref=S.db.doc("accounts/"+email),snap=await ref.get(),ex=snap.exists?snap.data():null;
   if(ex&&email===S.me.username&&v.role!==ex.role)throw new Error("You can’t change your own role.");
-  var rec=Object.assign({},ex||{},{username:email,email:email,name:name,role:v.role,dept:(v.dept||"").trim(),active:ex?ex.active!==false:true,createdAt:ex?ex.createdAt:Date.now()});
+  var ph=(v.phone||"").trim()?normPhone(v.phone):"";
+  if((v.phone||"").trim()&&!ph)throw new Error("Enter a valid phone number.");
+  var rec=Object.assign({},ex||{},{username:email,email:email,name:name,role:v.role,dept:(v.dept||"").trim(),phone:ph,active:ex?ex.active!==false:true,createdAt:ex?ex.createdAt:Date.now()});
   await ref.set(rec);
   await log(ex?"account.update":"account.create",email,ROLES[v.role]);
   if(!ex)inviteSafe(email);
@@ -1616,6 +1625,8 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Phone number":"Nombor telefon","Enter a valid phone number.":"Masukkan nombor telefon yang sah.","Brunei numbers can be typed without +673.":"Nombor Brunei boleh ditaip tanpa +673.","Call":"Telefon",
+"Tell us your staff group and phone number, so technicians can contact you by WhatsApp.":"Beritahu kami kumpulan kakitangan dan nombor telefon anda supaya juruteknik boleh menghubungi anda melalui WhatsApp.",
 "Report a problem":"Laporkan masalah","Tap the green + button or New complaint. Write what is wrong, choose the category and the location, and say how urgent it is. Then tap Submit complaint.":"Ketik butang + hijau atau Aduan baharu. Tulis apa masalahnya, pilih kategori dan lokasi, dan nyatakan tahap kecemasannya. Kemudian ketik Hantar aduan.","Open the complaint form":"Buka borang aduan","Add photos":"Tambah foto","On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.":"Pada borang aduan, ketik Tambah foto untuk melampirkan sehingga 4 gambar masalah. Foto membantu juruteknik memahaminya dengan lebih cepat.","Keep your complaint number":"Simpan nombor aduan anda","After you submit, you get a number such as SYSHHB-IT-0005 on the screen and in your email. Use it whenever you ask about your complaint.":"Selepas menghantar, anda akan mendapat nombor seperti SYSHHB-IT-0005 di skrin dan dalam e-mel anda. Gunakan nombor ini apabila bertanya tentang aduan anda.","Follow the progress":"Ikuti perkembangan","Your complaints are listed with their status: Open, In progress, On hold, Resolved or Closed. Tap a complaint to see the details, the progress and the technician handling it.":"Aduan anda disenaraikan bersama statusnya: Terbuka, Dalam proses, Ditangguhkan, Selesai atau Ditutup. Ketik aduan untuk melihat butiran, kemajuan dan juruteknik yang mengendalikannya.","Show my complaints":"Tunjukkan aduan saya","Reply to the technician":"Balas kepada juruteknik","Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.":"Buka aduan dan tulis di Tambah komen, kemudian ketik Hantar komen. Juruteknik akan melihatnya serta-merta.","Get notified":"Terima pemberitahuan","The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.":"Loceng di bahagian atas menunjukkan kemas kini baharu. Anda juga menerima e-mel apabila juruteknik mengemas kini, memberi komen, menyelesaikan atau menutup aduan anda.","If the problem comes back":"Jika masalah berulang","If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.":"Jika aduan yang selesai sebenarnya belum baik, buka aduan itu dan ketik Buka semula aduan ini. Juruteknik akan dimaklumkan serta-merta.","Handy settings":"Tetapan berguna","BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.":"BM menukar bahasa kepada Bahasa Melayu. Ikon matahari atau bulan menukar mod cerah dan gelap. Kalendar menunjukkan tarikh Masihi dan Hijrah. Untuk memasang aplikasi, buka menu Edge atau Chrome dan pilih Pasang aplikasi.","Open the calendar":"Buka kalendar","See what needs attention":"Lihat apa yang perlu ditangani","The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.":"Papan pemuka menunjukkan aduan yang menunggu, belum ditugaskan, lewat dan segera. Sepanduk merah bermaksud aduan telah menunggu lebih 1 hari tanpa juruteknik.","Open the dashboard":"Buka papan pemuka","Start work":"Mula bekerja","Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.":"Buka aduan dan ketik Mula bekerja. Aduan ditugaskan kepada anda dan pelapor menerima e-mel.","Open the complaints":"Buka senarai aduan","Update the requester":"Kemas kini pelapor","Tap Update to change the status, progress, technician or target date, and write a message. The requester gets an email with the changes.":"Ketik Kemas kini untuk menukar status, kemajuan, juruteknik atau tarikh sasaran, dan tulis mesej. Pelapor menerima e-mel tentang perubahan itu.","Comment or internal note":"Komen atau nota dalaman","Comments are emailed to the requester. Tick Internal note to keep a message between staff only.":"Komen dihantar melalui e-mel kepada pelapor. Tandakan Nota dalaman untuk menyimpan mesej antara kakitangan sahaja.","Resolve and close":"Selesaikan dan tutup","Mark the complaint Resolved when it is fixed, then Closed when it is confirmed. The requester is emailed each time.":"Tandakan aduan sebagai Selesai apabila sudah dibaiki, kemudian Ditutup apabila disahkan. Pelapor menerima e-mel setiap kali.","Reports":"Laporan","Open Reports, choose the period and the report type, then print it or download it.":"Buka Laporan, pilih tempoh dan jenis laporan, kemudian cetak atau muat turunnya.","Open reports":"Buka laporan","Manage people":"Urus pengguna","On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.":"Di Akaun, orang baharu muncul secara automatik selepas log masuk kali pertama. Cari dan tapis, tukar peranan atau kumpulan kakitangan dengan Edit, atau gunakan Lumpuhkan dan Padam.","Open accounts":"Buka akaun","Check the emails":"Semak e-mel","On Accounts, tap Send a test email to me to check that email notifications are working.":"Di Akaun, ketik Hantar e-mel ujian kepada saya untuk memastikan pemberitahuan e-mel berfungsi.","Audit log":"Log audit","The Audit log records every sign-in, change, export and email, with the time and the person.":"Log audit merekodkan setiap log masuk, perubahan, eksport dan e-mel, bersama masa dan orangnya.","Open the audit log":"Buka log audit","Brunei Hijri calendar":"Kalendar Hijrah Brunei","In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.":"Di Kalendar, buka tetapan kalendar Brunei untuk memasukkan hari pertama rasmi setiap bulan Hijrah.","User guide":"Panduan pengguna","Guide":"Panduan","Using the helpdesk":"Menggunakan helpdesk","For technicians":"Untuk juruteknik","For administrators":"Untuk pentadbir","Follow the steps one at a time. Swipe or use Next and Back.":"Ikuti langkah satu demi satu. Leret atau gunakan Seterusnya dan Kembali.","Next":"Seterusnya","Back":"Kembali","Finish":"Selesai","All steps":"Semua langkah",
 "IT Helpdesk System":"Sistem Helpdesk IT",
 "Thank you for your patience":"Terima kasih atas kesabaran anda",
@@ -2198,6 +2209,7 @@ async function afterLogin(acct){
   if(!snap.exists){S.pending={email:email,name:name,mail:myMail};S.loading=false;render();return}
   var a=snap.data();
   if(a.mail!==myMail){a.mail=myMail;try{await S.db.doc("accounts/"+email).update({mail:myMail})}catch(e){console.warn(e)}}
+  if(a.active!==false&&(!a.phone||!a.dept)){S.pending={email:email,name:a.name||name,mail:myMail,dept:a.dept||"",phone:a.phone||"",existing:true};S.loading=false;render();return}
   if(a.active===false){fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");return}
   S.loading=false;
   await startSession(Object.assign({},a,{username:email}));
@@ -2227,10 +2239,15 @@ var BNDATE=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Brunei",day:"numeric"
 var BNTM=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Brunei",hour:"2-digit",minute:"2-digit",hour12:false});
 function bnStamp(t){var d=new Date(t);return BNDATE.format(d)+", "+BNTM.format(d)+" BNT"}
 function Tm(x){return Object.prototype.hasOwnProperty.call(MS,x)?MS[x]:x}
+function mailMsg(to,subject,html){
+ var m={subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]};
+ if(html.indexOf("cid:hdlogo")>=0)m.attachments=[{"@odata.type":"#microsoft.graph.fileAttachment",name:"yayasan-logo.png",contentType:"image/png",contentBytes:LOGO.split(",")[1],isInline:true,contentId:"hdlogo"}];
+ return m;
+}
 async function sendMail(to,subject,html){
  if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:to,subject:subject,html:html,ts:Date.now()});return}
  var r=await gf("/me/sendMail",{method:"POST",headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({message:{subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]},saveToSentItems:CFG.SAVE_SENT!==false})});
+  body:JSON.stringify({message:mailMsg(to,subject,html),saveToSentItems:CFG.SAVE_SENT!==false})});
  if(!r.ok)throw await gerr(r);
 }
 function chEn(c){
@@ -2274,7 +2291,7 @@ function buildMail(kind,t,o){
  var sub={"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
  var link=pageUrl();
  var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
-  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+esc(pageUrl()+"icons/icon-192.png")+'" width="44" height="44" alt="Yayasan" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk</td></tr></table>'+
+  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"icons/icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
   '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
   mailBlock("en",kind,t,o)+
   '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;line-height:1.3;text-align:center">Open the helpdesk<br><span style="font-weight:400">Buka helpdesk</span></a></p>'+
@@ -2312,7 +2329,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v15";
+var BUILD="2026-10-30 v17";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2388,6 +2405,25 @@ function pgGuide(){
 function guideMove(d){var g=S.guide||{tab:"user",i:0},L=GUIDE[g.tab];if(d>0&&g.i>=L.length-1){go("dashboard");return}g.i=Math.max(0,Math.min(L.length-1,g.i+d));renderContent();var c=document.getElementById("gcard");if(c)c.scrollIntoView({block:"nearest"})}
 document.addEventListener("touchstart",function(e){var c=e.target.closest&&e.target.closest("#gcard");S.gt=c?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null},{passive:true});
 document.addEventListener("touchend",function(e){if(!S.gt)return;var t=e.changedTouches[0],dx=t.clientX-S.gt.x,dy=t.clientY-S.gt.y;S.gt=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)guideMove(dx<0?1:-1)},{passive:true});
+
+/* ============ phone numbers and WhatsApp ============ */
+function normPhone(x){
+ var d=String(x||"").replace(/\D/g,"");
+ if(!d)return "";
+ if(d.length===7)d="673"+d;
+ if(d.length<8||d.length>15)return "";
+ return "+"+d;
+}
+function waLinks(p){
+ if(!p)return "";
+ var d=String(p).replace(/\D/g,"");
+ return '<span class="phone" translate="no">'+esc(p)+'</span> <a class="wa" href="https://wa.me/'+d+'" target="_blank" rel="noopener">WhatsApp</a> <a class="wa call" href="tel:+'+d+'">Call</a>';
+}
+function phoneFor(t){
+ if(t.createdByPhone)return t.createdByPhone;
+ var a=S.accounts.filter(function(x){return x.username===t.createdBy})[0];
+ return a&&a.phone||"";
+}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
