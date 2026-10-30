@@ -552,6 +552,20 @@ html,body{max-width:100%;overflow-x:clip}
 .nav button.nv{position:relative}
 .nbn{min-width:18px;height:18px;border-radius:9px;background:var(--s-open);color:#fff;font-size:.7rem;font-weight:800;display:inline-grid;place-items:center;padding:0 5px;margin-left:auto}
 @media screen and (max-width:820px){.nbn{position:absolute;top:2px;left:calc(50% + 6px);margin:0}}
+.aulist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-width:900px}
+.au-day{margin:12px 2px 0;font-weight:700;font-family:var(--f-display);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.au-day:first-child{margin-top:0}
+.au-day small{color:var(--moon);font-weight:500;font-family:var(--f-body)}
+.au{--kc:var(--s-closed);background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--kc);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.au.k-auth{--kc:var(--s-progress)}.au.k-tkt{--kc:var(--s-resolved)}.au.k-cmt{--kc:var(--brand)}.au.k-acct{--kc:var(--s-hold)}.au.k-mail{--kc:var(--sun)}.au.k-bad{--kc:var(--s-open)}
+.au .act{background:color-mix(in srgb,var(--kc) 16%,transparent);color:var(--kc);white-space:normal}
+.au-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.au-top time{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;flex:none}
+.au-who{display:flex;gap:10px;align-items:center;min-width:0}
+.au-who>div{min-width:0;overflow-wrap:anywhere}
+.av.sm{width:32px;height:32px;font-size:.8rem;flex:none}
+.au-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;font-size:.9rem;overflow-wrap:anywhere}
+.au-row .lbl{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1150,15 +1164,19 @@ async function saveFile(name,text){
  }catch(e){toast("Couldn’t save the file.",{kind:"bad"})}
 }
 function auditFiltered(){
- var q=S.auditQ.trim().toLowerCase();
- return S.audit.filter(function(a){return !q||(a.actor+" "+a.actorName+" "+a.action+" "+(ACTIONS[a.action]||"")+" "+a.target+" "+fmtIds(a.target)+" "+a.detail).toLowerCase().indexOf(q)>=0});
+ var q=S.auditQ.trim().toLowerCase(),ty=S.auditType||"all";
+ return S.audit.filter(function(a){
+  if(ty!=="all"&&auditKind(a)!==ty)return false;
+  return !q||(a.actor+" "+a.actorName+" "+a.action+" "+(ACTIONS[a.action]||"")+" "+a.target+" "+fmtIds(a.target)+" "+a.detail).toLowerCase().indexOf(q)>=0;
+ });
 }
 function pgAudit(){
- var L=auditFiltered(),show=L.slice(0,S.auditN);
- var rows=show.map(function(a){return '<tr><td>'+dualT(a.ts)+'</td><td>'+esc(a.actorName||a.actor)+'<br><span class="muted small">'+esc(a.actor)+(a.role&&a.role!=="-"?", "+esc(ROLES[a.role]||a.role):"")+'</span></td><td><span class="act'+(a.action==="auth.failed"?" bad":"")+'">'+esc(ACTIONS[a.action]||a.action)+'</span></td><td>'+esc(a.target)+'</td><td>'+esc(a.detail)+'</td></tr>'}).join("");
- return '<div class="page-h"><div><h1>Audit log</h1><p class="muted">Every sign-in, complaint, update and account change. Showing the latest 500 entries.</p></div><button class="btn" data-act="exportaudit">'+ico("down")+'Export CSV</button></div>'+
- '<div class="filters"><input class="q" id="au-q" data-filter="auq" data-keep type="search" value="'+esc(S.auditQ)+'" placeholder="Filter by person, action or complaint ID" aria-label="Filter audit log"></div>'+
- (show.length?'<div class="panel scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Details</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+(L.length>show.length?'<div style="margin-top:12px;text-align:center"><button class="btn" data-act="auditmore">Show more</button></div>':''):'<div class="panel empty"><b>No entries</b>'+(S.audit.length?"Nothing matches that filter.":"Activity will be recorded here.")+'</div>');
+ var L=auditFiltered(),show=L.slice(0,S.auditN),ty=S.auditType||"all";
+ return '<div class="page-h"><div><h1>Audit log</h1><p class="muted">Every sign-in, complaint, comment, email and account change. Latest 500 entries.</p></div><button class="btn" data-act="exportaudit">'+ico("down")+'Export CSV</button></div>'+
+ '<div class="filters"><input class="q" id="au-q" data-filter="auq" data-keep type="search" value="'+esc(S.auditQ)+'" placeholder="Filter by person, action or complaint ID" aria-label="Filter audit log">'+
+ '<select data-filter="autype" aria-label="Type of activity">'+AUDIT_TYPES.map(function(x){return '<option value="'+x[0]+'"'+(ty===x[0]?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></div>'+
+ '<p class="muted small" style="margin:-4px 0 10px">Showing '+show.length+' of '+L.length+'.</p>'+
+ (show.length?'<ol class="aulist">'+auditCards(show)+'</ol>'+(L.length>show.length?'<div style="margin-top:12px;text-align:center"><button class="btn" data-act="auditmore">Show more</button></div>':''):'<div class="panel empty"><b>No entries</b>'+(S.audit.length?"Nothing matches that filter.":"Activity will be recorded here.")+'</div>');
 }
 
 /* ============ page: accounts ============ */
@@ -1429,6 +1447,7 @@ document.addEventListener("input",function(e){
 document.addEventListener("change",function(e){
  var t=e.target;if(t.hasAttribute&&t.hasAttribute("data-keep"))t.dataset.dirty="1";
  if(t.dataset.filter==="prio"){S.f.prio=t.value;renderContent()}
+ else if(t.dataset.filter==="autype"){S.auditType=t.value;S.auditN=80;renderContent()}
  else if(t.dataset.filter==="mine"){S.f.mine=t.checked;renderContent()}
  else if(t.dataset.rp){rpField(t)}
  else if(t.id==="u-due"){var h=$("#u-due-h");if(h)h.textContent=t.value&&hOK?T("Hijri: "+fmtH(fromYmd(t.value).getTime())):""}
@@ -1681,6 +1700,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"All activity":"Semua aktiviti","Sign-ins":"Log masuk","Complaint changes":"Perubahan aduan","Accounts and settings":"Akaun dan tetapan","Emails":"E-mel","Problems":"Masalah","Exports":"Eksport","Target":"Sasaran","Details":"Butiran","Today":"Hari ini","Yesterday":"Semalam","Type of activity":"Jenis aktiviti","Every sign-in, complaint, comment, email and account change. Latest 500 entries.":"Setiap log masuk, aduan, komen, e-mel dan perubahan akaun. 500 entri terkini.",
 "Updated":"Dikemas kini","New reply":"Balasan baharu","New reply by email":"Balasan baharu melalui e-mel",
 "All":"Semua","Comments":"Komen","History":"Sejarah","Internal note":"Nota dalaman","By email":"Melalui e-mel","Public":"Umum","Internal":"Dalaman","Close on send":"Tutup selepas hantar","Type a comment…":"Taip komen…","Type a reply to the technician…":"Taip balasan kepada juruteknik…","No history yet.":"Belum ada sejarah.","No comments yet.":"Belum ada komen.","Newest first":"Terbaru dahulu","Oldest first":"Terlama dahulu","Send":"Hantar","Who can see it":"Siapa boleh melihatnya",
 "Comment by email":"Komen melalui e-mel","Email reply ignored":"Balasan e-mel diabaikan",", by email":", melalui e-mel",
@@ -2389,7 +2409,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v21";
+var BUILD="2026-10-30 v22";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2634,6 +2654,32 @@ function newSnip(t){
  return '<span class="nsnip" translate="no"><b>'+esc(t.lastActByName||"")+':</b> '+esc(t.lastActText)+'</span>';
 }
 function navBadge(){var n=S.tickets.filter(unseen).length;return n?'<span class="nbn" translate="no">'+(n>99?"99+":n)+'</span>':""}
+
+/* ============ audit log as readable cards ============ */
+function auditKind(a){
+ var x=String(a.action||"");
+ if(/failed|ignored/.test(x))return "bad";
+ if(x.indexOf("auth.")===0)return "auth";
+ if(x.indexOf("account.")===0||x.indexOf("settings.")===0)return "acct";
+ if(x.indexOf("email.")===0)return "mail";
+ if(x.indexOf("comment.")===0||x==="update.message")return "cmt";
+ if(x.indexOf("ticket.")===0)return "tkt";
+ return "other";
+}
+var AUDIT_TYPES=[["all","All activity"],["auth","Sign-ins"],["tkt","Complaint changes"],["cmt","Comments"],["acct","Accounts and settings"],["mail","Emails"],["bad","Problems"],["other","Exports"]];
+function auditCards(list){
+ var out="",day="",today=todayKey(),yest=ymd(addDays(noon(new Date()),-1));
+ list.forEach(function(a){
+  var d=new Date(a.ts),k=ymd(d);
+  if(k!==day){day=k;out+='<li class="au-day"><span>'+(k===today?"Today":k===yest?"Yesterday":esc(fmtG(a.ts)))+'</span>'+(hOK?'<small translate="no">'+esc(fmtH(a.ts))+'</small>':'')+'</li>'}
+  var kind=auditKind(a),who=a.actorName||a.actor||"",tk=(a.target&&/IT-SYSHHB|SYSHHB-IT/i.test(a.target))?findTicketByAnyId(String(a.target).toUpperCase()):null;
+  out+='<li class="au k-'+kind+'"><div class="au-top"><span class="act">'+esc(ACTIONS[a.action]||a.action)+'</span><time translate="no">'+tF.format(d)+'</time></div>'+
+   '<div class="au-who"><span class="av sm" style="background:'+avColor(who)+'" aria-hidden="true">'+esc(initials(who))+'</span><div><b translate="no">'+esc(who)+'</b>'+(ROLES[a.role]?' <span class="muted small">'+esc(ROLES[a.role])+'</span>':'')+(a.actor&&a.actor!==who?'<div class="muted small" translate="no">'+esc(a.actor)+'</div>':'')+'</div></div>'+
+   (a.target?'<div class="au-row"><span class="lbl">Target</span>'+(tk?'<span><button class="link" data-act="open" data-id="'+esc(tk.id)+'" translate="no">'+esc(fmtIds(a.target))+'</button></span>':'<span translate="no">'+esc(fmtIds(a.target))+'</span>')+'</div>':'')+
+   (a.detail?'<div class="au-row"><span class="lbl">Details</span><span translate="no">'+esc(fmtIds(a.detail))+'</span></div>':'')+'</li>';
+ });
+ return out;
+}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
