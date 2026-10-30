@@ -1069,7 +1069,7 @@ function pgAccounts(){
   '<select data-filter="acstatus" aria-label="Status"><option value="all"'+(F2.status==="all"?" selected":"")+'>All statuses</option><option value="active"'+(F2.status==="active"?" selected":"")+'>Active</option><option value="disabled"'+(F2.status==="disabled"?" selected":"")+'>Disabled</option></select>'+
   '<select data-filter="acdept" aria-label="Staff group"><option value="all"'+(F2.dept==="all"?" selected":"")+'>All staff groups</option>'+groups.map(function(d){return '<option value="'+esc(d)+'"'+(F2.dept===d?" selected":"")+'>'+esc(d)+'</option>'}).join("")+'<option value="none"'+(F2.dept==="none"?" selected":"")+'>No group</option></select></div>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- '<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div class="panel scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">No one matches those filters.</td></tr>')+'</tbody></table></div>'+
  '<form class="panel stack" data-form="account" id="acctform"><h2>'+(ed?"Edit account":"Add account")+'</h2>'+
  '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
@@ -1228,6 +1228,7 @@ var A={
  mslogout:function(){if(msalApp){try{sessionStorage.clear()}catch(e){}msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()})}},
  reload:function(){location.reload()},
  shareacct:function(el){return inviteSafe(el.dataset.u,true)},
+ testmail:function(){return testMail()},
  delacct:function(el){
   var u=el.dataset.u;if(!u||u===S.me.username)return;
   if(!window.confirm(T("Delete this account? The person can sign in again later and will be added as a normal user.")+"\n\n"+u))return;
@@ -2217,6 +2218,20 @@ function mailSafe(kind,t,o){
 /* ---- accounts page filters ---- */
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
+
+async function testMail(){
+ if(MAILMODE==="off"){toast("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\" or \"outbox\", then upload it to GitHub.",{kind:"warn",ms:12000});return}
+ var t={id:"SYSHHB-IT-TEST",title:"Test email",category:"Other",priority:"medium",location:"",description:"This is a test email from the helpdesk.",status:"open",assignedName:"",createdAt:Date.now(),createdBy:S.me.username};
+ var m=buildMail("new",t,{by:S.me.name});
+ try{
+  await sendMail(S.me.username,"[TEST] "+m.subject,m.html);
+  toast(MAILMODE==="outbox"?"Test email queued in the outbox folder. The Power Automate flow sends it within a few minutes. Check "+S.me.username+" and Junk.":"Microsoft accepted the test email for "+S.me.username+". Check your inbox and Junk folder.",{ms:12000});
+ }catch(e){toast("Test email failed: "+((e&&e.message)||e),{kind:"bad",ms:20000})}
+}
+function mailPanel(){
+ var m=MAILMODE==="off"?"OFF":MAILMODE==="graph"?"ON (sent from the person who acts)":"ON (outbox and Power Automate)";
+ return '<div class="note" translate="no" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>Email notifications:</b> '+m+'</span><button class="btn sm" data-act="testmail">Send a test email to me</button></div>';
+}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
