@@ -566,6 +566,24 @@ html,body{max-width:100%;overflow-x:clip}
 .av.sm{width:32px;height:32px;font-size:.8rem;flex:none}
 .au-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;font-size:.9rem;overflow-wrap:anywhere}
 .au-row .lbl{color:var(--muted)}
+.acf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.acf .q{grid-column:1/-1}
+.acf select{min-width:0}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pc.off{opacity:.72}
+.pc-top{display:flex;gap:12px;align-items:center;min-width:0}
+.pc-id{min-width:0;overflow-wrap:anywhere}
+.pc-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pc-phone{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pc-acts{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.pc-acts .btn{flex:1 1 auto}
+.pc-acts .danger{color:var(--s-open)}
+.pill.rp-admin{--c:var(--s-hold)}.pill.rp-technician{--c:var(--s-progress)}.pill.rp-user{--c:var(--s-closed)}
+.acct-add summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:1.1rem;list-style:none}
+.acct-add summary::-webkit-details-marker{display:none}
+.acct-add.only-m{display:none;margin-bottom:12px}
+@media (max-width:1020px){.acct-add.only-m{display:block}.acct-add.only-d{display:none}.acf{grid-template-columns:repeat(2,minmax(0,1fr))}.acf select:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -896,7 +914,7 @@ function authHTML(){
   '<label class="fld"><span>Staff group</span>'+deptSel("a-dept","dept",S.pending.dept||"",true)+'</label>'+
   '<label class="fld"><span>Phone number</span><input id="a-phone" name="phone" type="tel" inputmode="tel" required data-keep autocomplete="tel" placeholder="712 3456" value="'+esc(S.pending.phone||"")+'"><small>Brunei numbers can be typed without +673.</small></label>'+err+
   '<button class="btn primary wide"'+(S.busy?' disabled':'')+'>Continue</button></form>';
- else body='<div><h2>Sign in</h2><p class="muted mt">Use your school Microsoft account to report a problem or manage complaints.</p></div>'+err+
+ else body='<div><p class="muted" translate="no">'+signinText()+'</p></div>'+err+
   '<button class="btn primary wide msbtn" data-act="mslogin">'+msLogo+'Sign in with Microsoft</button>';
 
  return '<main class="auth">'+hero+'<section class="auth-side"><div class="langsw" translate="no"><button type="button" class="'+(LANG==="en"?"on":"")+'" data-act="lang" data-l="en">English</button><button type="button" class="'+(LANG==="ms"?"on":"")+'" data-act="lang" data-l="ms">Bahasa Melayu</button></div><div class="auth-card">'+body+'</div></section></main>';
@@ -1191,30 +1209,37 @@ function pgAccounts(){
   if(F2.status==="disabled"&&a.active!==false)return false;
   if(F2.dept==="none"&&a.dept)return false;
   if(F2.dept!=="all"&&F2.dept!=="none"&&a.dept!==F2.dept)return false;
-  if(q&&(a.name+" "+a.username+" "+(a.dept||"")).toLowerCase().indexOf(q)<0)return false;
+  if(q&&(a.name+" "+a.username+" "+(a.dept||"")+" "+(a.phone||"")).toLowerCase().indexOf(q)<0)return false;
   return true;
  }).sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(a.role==="admin"?-1:b.role==="admin"?1:a.role==="technician"?-1:1)});
- var rows=list.map(function(a){
-  var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week;
-  return '<tr><td><b>'+esc(a.name)+'</b> '+(isNew?'<span class="pill s-progress">New</span>':'')+'<br><span class="muted small" translate="no">'+esc(a.username)+'</span>'+(a.phone?'<br><span class="small">'+waLinks(a.phone)+'</span>':'')+(a.dept?'<br><span class="muted small">'+esc(a.dept)+'</span>':'')+'</td><td>'+ROLES[a.role]+'</td><td>'+(a.active===false?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+'</td><td class="muted small">'+(a.createdAt?fmtG(a.createdAt):"")+'</td>'+
-  '<td style="text-align:right;white-space:nowrap"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button> '+(self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(a.active===false?"Enable":"Disable")+'</button> ')+(G.mode!=="share"?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button> ':'')+(self?'':'<button class="btn sm" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</td></tr>';
+ var cards=list.map(function(a){
+  var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week,off=a.active===false;
+  return '<li class="pc'+(off?" off":"")+'"><div class="pc-top"><span class="av" style="background:'+avColor(a.name)+'" aria-hidden="true">'+esc(initials(a.name))+'</span><div class="pc-id"><b translate="no">'+esc(a.name)+'</b>'+(self?' <span class="muted small">(you)</span>':'')+'<div class="muted small" translate="no">'+esc(a.username)+'</div></div></div>'+
+   '<div class="pc-tags"><span class="pill rp-'+esc(a.role)+'">'+ROLES[a.role]+'</span>'+(off?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+(isNew?'<span class="pill s-progress">New</span>':'')+(a.dept?'<span class="muted small">'+esc(a.dept)+'</span>':'')+'</div>'+
+   (a.phone?'<div class="pc-phone">'+waLinks(a.phone)+'</div>':'<div class="muted small">No phone number</div>')+
+   (a.createdAt?'<div class="muted small">Joined '+fmtG(a.createdAt)+'</div>':'')+
+   '<div class="pc-acts"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button>'+
+   (self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(off?"Enable":"Disable")+'</button>')+
+   (G.mode!=="share"?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button>':'')+
+   (self?'':'<button class="btn sm danger" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</div></li>';
  }).join("");
  var dom=CFG.ALLOWED_DOMAIN?'@'+CFG.ALLOWED_DOMAIN:'';
  var nAdm=S.accounts.filter(function(a){return a.role==="admin"}).length,nTech=S.accounts.filter(function(a){return a.role==="technician"}).length,nUsr=S.accounts.length-nAdm-nTech;
- var filt='<div class="filters"><input class="q" id="ac-q" data-filter="acq" data-keep type="search" value="'+esc(F2.q)+'" placeholder="Search by name, email or staff group" aria-label="Search people">'+
+ var filt='<div class="acf"><input class="q" id="ac-q" data-filter="acq" data-keep type="search" value="'+esc(F2.q)+'" placeholder="Search name, email, phone or group" aria-label="Search people">'+
   '<select data-filter="acrole" aria-label="Role"><option value="all"'+(F2.role==="all"?" selected":"")+'>All roles</option><option value="admin"'+(F2.role==="admin"?" selected":"")+'>Admin</option><option value="technician"'+(F2.role==="technician"?" selected":"")+'>Technician</option><option value="user"'+(F2.role==="user"?" selected":"")+'>User</option></select>'+
   '<select data-filter="acstatus" aria-label="Status"><option value="all"'+(F2.status==="all"?" selected":"")+'>All statuses</option><option value="active"'+(F2.status==="active"?" selected":"")+'>Active</option><option value="disabled"'+(F2.status==="disabled"?" selected":"")+'>Disabled</option></select>'+
   '<select data-filter="acdept" aria-label="Staff group"><option value="all"'+(F2.dept==="all"?" selected":"")+'>All staff groups</option>'+groups.map(function(d){return '<option value="'+esc(d)+'"'+(F2.dept===d?" selected":"")+'>'+esc(d)+'</option>'}).join("")+'<option value="none"'+(F2.dept==="none"?" selected":"")+'>No group</option></select></div>';
+ var form='<details class="panel acct-add" id="acctwrap"'+(ed||S.acctFormOpen?" open":"")+'><summary><span>'+(ed?"Edit account":"Add account")+'</span>'+ico(ed?"users":"plus")+'</summary>'+
+  '<form class="stack" data-form="account" id="acctform" style="margin-top:14px">'+
+  '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
+  '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
+  '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
+  '<label class="fld"><span>Phone number <small>(optional)</small></span><input id="ac-phone" name="phone" type="tel" inputmode="tel" data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
+  '<label class="fld"><span>Staff group <small>(optional)</small></span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",false)+'</label>'+
+  '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
  mailPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
- '<div class="acctlayout"><div class="panel scroll" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">No one matches those filters.</td></tr>')+'</tbody></table></div>'+
- '<form class="panel stack" data-form="account" id="acctform"><h2>'+(ed?"Edit account":"Add account")+'</h2>'+
- '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
- '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
- '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
- '<label class="fld"><span>Phone number <small>(optional)</small></span><input id="ac-phone" name="phone" type="tel" inputmode="tel" data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
- '<label class="fld"><span>Staff group <small>(optional)</small></span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",false)+'</label>'+
- '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></div>';
+ '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
 /* ============ form handlers ============ */
@@ -1321,7 +1346,7 @@ var F={
   await ref.set(rec);
   await log(ex?"account.update":"account.create",email,ROLES[v.role]);
   if(!ex)inviteSafe(email);
-  S.acctEdit="";clearKeep();toast("Account saved.");
+  S.acctEdit="";S.acctFormOpen=false;clearKeep();toast("Account saved.");
  })}
 };
 
@@ -1423,7 +1448,7 @@ var A={
   document.querySelectorAll("#updpanel [data-keep]").forEach(function(x){x.removeAttribute("data-keep")});
   buzz([12,30,12]);toast(t.id+" is now "+stLbl(st)+".");
  })},
- editacct:function(el){S.acctEdit=el.dataset.u||"";clearKeep();renderContent();var f=$("#acctform");if(f&&S.acctEdit)f.scrollIntoView({block:"nearest"})},
+ editacct:function(el){S.acctEdit=el.dataset.u||"";if(!S.acctEdit)S.acctFormOpen=false;clearKeep();renderContent();var f=$("#acctform");if(f&&S.acctEdit)f.scrollIntoView({block:"nearest"})},
  toggleacct:function(el){return withBusy(async function(){
   var u=el.dataset.u,a=S.accounts.filter(function(x){return x.username===u})[0];if(!a||u===S.me.username)return;
   var on=a.active===false;await S.db.doc("accounts/"+u).update({active:on});await log(on?"account.enable":"account.disable",u,"");
@@ -1700,6 +1725,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Search name, email, phone or group":"Cari nama, e-mel, telefon atau kumpulan","No phone number":"Tiada nombor telefon","(you)":"(anda)","Joined":"Sertai",
 "All activity":"Semua aktiviti","Sign-ins":"Log masuk","Complaint changes":"Perubahan aduan","Accounts and settings":"Akaun dan tetapan","Emails":"E-mel","Problems":"Masalah","Exports":"Eksport","Target":"Sasaran","Details":"Butiran","Today":"Hari ini","Yesterday":"Semalam","Type of activity":"Jenis aktiviti","Every sign-in, complaint, comment, email and account change. Latest 500 entries.":"Setiap log masuk, aduan, komen, e-mel dan perubahan akaun. 500 entri terkini.",
 "Updated":"Dikemas kini","New reply":"Balasan baharu","New reply by email":"Balasan baharu melalui e-mel",
 "All":"Semua","Comments":"Komen","History":"Sejarah","Internal note":"Nota dalaman","By email":"Melalui e-mel","Public":"Umum","Internal":"Dalaman","Close on send":"Tutup selepas hantar","Type a comment…":"Taip komen…","Type a reply to the technician…":"Taip balasan kepada juruteknik…","No history yet.":"Belum ada sejarah.","No comments yet.":"Belum ada komen.","Newest first":"Terbaru dahulu","Oldest first":"Terlama dahulu","Send":"Hantar","Who can see it":"Siapa boleh melihatnya",
@@ -2409,7 +2435,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v22";
+var BUILD="2026-10-30 v25";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2679,6 +2705,13 @@ function auditCards(list){
    (a.detail?'<div class="au-row"><span class="lbl">Details</span><span translate="no">'+esc(fmtIds(a.detail))+'</span></div>':'')+'</li>';
  });
  return out;
+}
+
+document.addEventListener("toggle",function(e){var t=e.target;if(t&&t.id&&/^acctwrap/.test(t.id))S.acctFormOpen=t.open},true);
+
+function signinText(){
+ var d=String(CFG.ALLOWED_DOMAIN||"syayasan.edu.bn");
+ return LANG==="ms"?"Gunakan e-mel sekolah anda (@"+d+") untuk membuat laporan masalah atau mengurus aduan.":"Use your school email (@"+d+") to report a problem or manage complaints.";
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
