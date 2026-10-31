@@ -596,6 +596,11 @@ html,body{max-width:100%;overflow-x:clip}
 .ttl .kv b,.ttl .kv strong{display:inline;white-space:normal;overflow:visible;-webkit-line-clamp:unset;font-weight:700}
 .ttl .kv strong{font-size:1.02rem}
 .ttl>small{display:block;margin-top:2px}
+.chk.big{align-items:flex-start;gap:10px;font-weight:600;line-height:1.35;font-size:.92rem}
+.chk.big input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:var(--brand)}
+.note.ok{border-left-color:var(--s-resolved)}
+.copyrow{display:flex;gap:8px;margin-top:6px}
+.copyrow input{flex:1;min-width:0;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -614,7 +619,7 @@ function normCat(c){return {"Computer / laptop":CATS[1],"Network / Wi-Fi":CATS[3
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
-"ticket.create":"Complaint submitted","ticket.status":"Status changed","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
+"ticket.create":"Complaint submitted","ticket.status":"Status changed","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
 var DAY=864e5;
@@ -921,12 +926,13 @@ function authHTML(){
  var msLogo='<svg width="20" height="20" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>';
  if(S.loading)body='<p class="muted">Thank you for your patience</p>';
  else if(S.fatal)body='<div><h2>'+esc(S.fatalTitle||"Can’t continue")+'</h2></div><div class="err" role="alert">'+esc(S.fatal)+'</div><div class="stack"><button class="btn" data-act="mslogout">Use a different account</button><button class="btn" data-act="reload">Try again</button></div>';
- else if(S.pending)body='<div><h2>Complete your profile</h2><p class="muted mt">Tell us your staff group and phone number, so technicians can contact you by WhatsApp.</p></div>'+
-  '<form class="stack" data-form="profile"><label class="fld"><span>Full name</span><input id="a-name" name="name" required data-keep autocomplete="name" value="'+esc(S.pending.name)+'"></label>'+
+ else if(S.pending)body='<div><h2>Confirm your details</h2><p class="muted mt">Please check your details the first time you sign in. Type your real full name, choose your staff group and enter your phone number, so technicians can contact you by WhatsApp.</p></div>'+
+  '<form class="stack" data-form="profile"><label class="fld"><span>Full name (as in your records)</span><input id="a-name" name="name" required data-keep autocomplete="name" value="'+esc(S.pending.name)+'"></label>'+
   '<label class="fld"><span>Email</span><input value="'+esc(S.pending.email)+'" readonly></label>'+
   '<label class="fld"><span>Staff group</span>'+deptSel("a-dept","dept",S.pending.dept||"",true)+'</label>'+
-  '<label class="fld"><span>Phone number</span><input id="a-phone" name="phone" type="tel" inputmode="tel" required data-keep autocomplete="tel" placeholder="712 3456" value="'+esc(S.pending.phone||"")+'"><small>Brunei numbers can be typed without +673.</small></label>'+err+
-  '<button class="btn primary wide"'+(S.busy?' disabled':'')+'>Continue</button></form>';
+  '<label class="fld"><span>Phone number</span><input id="a-phone" name="phone" type="tel" inputmode="tel" required data-keep autocomplete="tel" placeholder="712 3456" value="'+esc(S.pending.phone||"")+'"><small>Brunei numbers can be typed without +673.</small></label>'+
+  '<label class="chk big"><input type="checkbox" name="confirm" id="a-confirm" required><span>I confirm that my full name, staff group and phone number are correct.</span></label>'+err+
+  '<button class="btn primary wide"'+(S.busy?' disabled':'')+'>Confirm and continue</button></form>';
  else body='<div><p class="muted" translate="no">'+signinText()+'</p></div>'+err+
   '<button class="btn primary wide msbtn" data-act="mslogin">'+msLogo+'Sign in with Microsoft</button>';
 
@@ -1248,8 +1254,8 @@ function pgAccounts(){
   '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
   '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
   '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
-  '<label class="fld"><span>Phone number <small>(optional)</small></span><input id="ac-phone" name="phone" type="tel" inputmode="tel" data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
-  '<label class="fld"><span>Staff group <small>(optional)</small></span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",false)+'</label>'+
+  '<label class="fld"><span>Phone number</span><input id="ac-phone" name="phone" type="tel" inputmode="tel" required data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
+  '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
  mailPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
@@ -1274,10 +1280,12 @@ var F={
  profile:function(f){var v=fd(f);return withBusy(async function(){
   if(!S.pending)return;
   var P=S.pending,dept=(v.dept||"").trim(),name=(v.name||"").trim()||P.name,e=P.email,phone=normPhone(v.phone);
+  if(!okName(name))throw new Error("Enter your full name (first and last name).");
   if(!dept)throw new Error("Choose your staff group.");
   if(!phone)throw new Error("Enter a valid phone number.");
-  if(P.existing)await S.db.doc("accounts/"+e).update({name:name,dept:dept,phone:phone,mail:P.mail||e});
-  else await S.db.doc("accounts/"+e).set({username:e,email:e,mail:P.mail||e,name:name,role:"user",dept:dept,phone:phone,active:true,createdAt:Date.now()});
+  if(!v.confirm)throw new Error("Tick the box to confirm your details.");
+  if(P.existing)await S.db.doc("accounts/"+e).update({name:name,dept:dept,phone:phone,mail:P.mail||e,confirmedAt:Date.now()});
+  else await S.db.doc("accounts/"+e).set({username:e,email:e,mail:P.mail||e,name:name,role:"user",dept:dept,phone:phone,active:true,confirmedAt:Date.now(),createdAt:Date.now()});
   var a=(await S.db.doc("accounts/"+e).get()).data();
   S.pending=null;S.loading=false;
   await startSession(Object.assign({},a,{username:e}));
@@ -1360,8 +1368,9 @@ var F={
   if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom)throw new Error("Use an email ending with @"+dom+".");
   var ref=S.db.doc("accounts/"+email),snap=await ref.get(),ex=snap.exists?snap.data():null;
   if(ex&&email===S.me.username&&v.role!==ex.role)throw new Error("You can’t change your own role.");
-  var ph=(v.phone||"").trim()?normPhone(v.phone):"";
-  if((v.phone||"").trim()&&!ph)throw new Error("Enter a valid phone number.");
+  var ph=normPhone(v.phone);
+  if(!ph)throw new Error("Enter a valid phone number.");
+  if(!(v.dept||"").trim())throw new Error("Choose the staff group.");
   var rec=Object.assign({},ex||{},{username:email,email:email,name:name,role:v.role,dept:(v.dept||"").trim(),phone:ph,active:ex?ex.active!==false:true,createdAt:ex?ex.createdAt:Date.now()});
   await ref.set(rec);
   await log(ex?"account.update":"account.create",email,ROLES[v.role]);
@@ -1413,6 +1422,14 @@ var A={
  },
  auditmore:function(){S.auditN+=100;renderContent()},
  closesheet:function(){S.sheet=false;render()},
+ mklink:function(){return withBusy(async function(){
+  if(!G.drive||!G.folder)throw new Error("The folder is not known yet. Reload and try again.");
+  var r=await gf("/drives/"+G.drive+"/items/"+G.folder+"/createLink",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"edit",scope:"organization"})});
+  if(!r.ok)throw new Error("Couldn’t create the link ("+r.status+"). Your Microsoft 365 may block organisation-wide links. In OneDrive, open the folder SYSHHB-Helpdesk, choose Share, set it to People in your organization with edit access, copy that link and paste it into config.js.");
+  var j=await r.json();S.signupLink=j.link&&j.link.webUrl;
+  await log("settings.signup","sign-up link","Organisation link created");
+ })},
+ copylink:function(){var i=document.getElementById("su-link");if(i)copyText(i.value)},
  acttab:function(el){S.actTab=el.dataset.t;renderContent()},
  actsort:function(){S.actNewest=!(S.actNewest!==false);renderContent()},
  guidetab:function(el){S.guide={tab:el.dataset.t,i:0};renderContent()},
@@ -1746,6 +1763,9 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Almost there":"Hampir siap","You can’t open the helpdesk yet. Sign-up has not been opened for everyone in the school. Please ask the administrator (it.helpdesk@syayasan.edu.bn) to switch it on. It takes one minute.":"Anda belum boleh membuka helpdesk. Pendaftaran belum dibuka untuk semua orang di sekolah. Sila minta pentadbir (it.helpdesk@syayasan.edu.bn) untuk membukanya. Ia mengambil masa seminit.",
+"Sign-up is open.":"Pendaftaran dibuka.","New staff cannot sign in on their own yet.":"Kakitangan baharu belum boleh log masuk sendiri.","Create the sign-up link":"Cipta pautan pendaftaran","Copy":"Salin","Copied.":"Disalin.","Sign-up link created":"Pautan pendaftaran dicipta",
+"Confirm your details":"Sahkan butiran anda","Please check your details the first time you sign in. Type your real full name, choose your staff group and enter your phone number, so technicians can contact you by WhatsApp.":"Sila semak butiran anda semasa log masuk kali pertama. Taip nama penuh sebenar anda, pilih kumpulan kakitangan dan masukkan nombor telefon anda, supaya juruteknik boleh menghubungi anda melalui WhatsApp.","Full name (as in your records)":"Nama penuh (seperti dalam rekod anda)","I confirm that my full name, staff group and phone number are correct.":"Saya mengesahkan nama penuh, kumpulan kakitangan dan nombor telefon saya adalah betul.","Confirm and continue":"Sahkan dan teruskan","Enter your full name (first and last name).":"Masukkan nama penuh anda (nama pertama dan nama akhir).","Tick the box to confirm your details.":"Tandakan kotak untuk mengesahkan butiran anda.","Choose the staff group.":"Pilih kumpulan kakitangan.",
 "Choose the category and the location.":"Pilih kategori dan lokasi.",
 "Name:":"Nama:","Complain:":"Aduan:","Location:":"Lokasi:",
 "Room or place":"Bilik atau tempat","For example: Room 4, Y7, IT room":"Contohnya: Bilik 4, Y7, bilik IT",
@@ -2264,19 +2284,20 @@ function makeDb(){
 }
 
 /* ---- finding the shared OneDrive folder ---- */
+var OPEN_MSG="You can’t open the helpdesk yet. Sign-up has not been opened for everyone in the school. Please ask the administrator (it.helpdesk@syayasan.edu.bn) to switch it on. It takes one minute.";
 async function resolveStorage(email){
  var admins=(CFG.ADMIN_EMAILS||[]).map(function(x){return x.toLowerCase()}),isAdm=admins.indexOf(email)>=0;
- if(CFG.DRIVE_ID&&CFG.FOLDER_ID){
+ var haveIds=!!(CFG.DRIVE_ID&&CFG.FOLDER_ID);
+ if(CFG.FOLDER_SHARE_URL){
+  var sb="/shares/u!"+b64url(CFG.FOLDER_SHARE_URL)+"/root",sr=await gf(sb+"?select=id,name");
+  if(sr.ok){G.base=sb;G.mode="share";if(haveIds){G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID}return}
+  if(!haveIds&&!isAdm)throw new Error(OPEN_MSG+" ("+sr.status+")");
+ }
+ if(haveIds){
   G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID;G.base="/drives/"+G.drive+"/items/"+G.folder;
   var chk=await gf(G.base+"?select=id");
   if(chk.ok){G.mode="config";return}
-  if(!isAdm)throw new Error("Can’t open the shared helpdesk folder ("+chk.status+"). Ask the administrator to check the sharing and the IDs in config.js.");
- }
- if(CFG.FOLDER_SHARE_URL){
-  G.base="/shares/u!"+b64url(CFG.FOLDER_SHARE_URL)+"/root";
-  var r=await gf(G.base+"?select=id,name");
-  if(!r.ok)throw await gerr(r);
-  G.mode="share";return;
+  if(!isAdm)throw new Error(OPEN_MSG+" ("+chk.status+")");
  }
  if(!isAdm)throw new Error("The helpdesk storage has not been set up yet. Please ask the administrator.");
  var name=CFG.FOLDER_NAME||"SYSHHB-Helpdesk",enc=encodeURIComponent(name);
@@ -2339,18 +2360,27 @@ async function afterLogin(acct){
   if(!snap.exists){S.pending={email:email,name:name,mail:myMail};S.loading=false;render();return}
   var a=snap.data();
   if(a.mail!==myMail){a.mail=myMail;try{await S.db.doc("accounts/"+email).update({mail:myMail})}catch(e){console.warn(e)}}
-  if(a.active!==false&&(!a.phone||!a.dept)){S.pending={email:email,name:a.name||name,mail:myMail,dept:a.dept||"",phone:a.phone||"",existing:true};S.loading=false;render();return}
+  if(a.active!==false&&(!a.confirmedAt||!a.phone||!a.dept)){S.pending={email:email,name:a.name||name,mail:myMail,dept:a.dept||"",phone:a.phone||"",existing:true};S.loading=false;render();return}
   if(a.active===false){fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");return}
   S.loading=false;
   await startSession(Object.assign({},a,{username:email}));
   var k="hd.logged."+email;
   if(!sessionStorage.getItem(k)){try{sessionStorage.setItem(k,"1")}catch(e){}log("auth.login",email,ROLES[a.role])}
- }catch(e){console.warn(e);fatal(e.message||"Something went wrong while connecting.","Can’t connect")}
+ }catch(e){console.warn(e);fatal(e.message||"Something went wrong while connecting.",(e.message||"").indexOf(OPEN_MSG)===0?"Almost there":"Can’t connect")}
+}
+function signupPanel(){
+ if(!isAdmin())return "";
+ if(G.mode==="share")return '<div class="note ok" translate="no" style="margin-bottom:14px"><b>Sign-up is open.</b> Anyone with a school account can sign in. They are added to the list automatically.</div>';
+ var link=S.signupLink?'<div style="margin-top:10px"><b>Copy this link</b> into <code>config.js</code> as <code>FOLDER_SHARE_URL: "…",</code> and commit it:<div class="copyrow"><input readonly id="su-link" value="'+esc(S.signupLink)+'"><button class="btn sm" data-act="copylink">Copy</button></div></div>':'';
+ return '<div class="note" translate="no" style="margin-bottom:14px"><b>New staff cannot sign in on their own yet.</b><br>Right now the folder is shared person by person. Turn on sign-up for everyone with a school account, then new people can just sign in and appear in Accounts by themselves.<div style="margin-top:10px"><button class="btn sm primary" data-act="mklink">Create the sign-up link</button></div>'+link+'</div>';
 }
 function setupBar(){
- if(G.mode!=="owner"||!isAdmin())return "";
- return '<div class="note" translate="no" style="margin-bottom:14px"><b>Storage is ready but not shared yet.</b><br>Add these two lines to <code>config.js</code> on GitHub, then share the OneDrive folder “'+esc(CFG.FOLDER_NAME||"SYSHHB-Helpdesk")+'” with your staff (see README).<br><code style="word-break:break-all">DRIVE_ID: "'+esc(G.drive)+'",<br>FOLDER_ID: "'+esc(G.folder)+'",</code></div>';
+ var out="";
+ if(isAdmin()&&G.mode==="owner")out+='<div class="note" translate="no" style="margin-bottom:14px"><b>Storage is ready but not shared yet.</b><br>Add these two lines to <code>config.js</code> on GitHub, then share the OneDrive folder “'+esc(CFG.FOLDER_NAME||"SYSHHB-Helpdesk")+'” with your staff (see README).<br><code style="word-break:break-all">DRIVE_ID: "'+esc(G.drive)+'",<br>FOLDER_ID: "'+esc(G.folder)+'",</code></div>';
+ if(isAdmin()&&(S.view==="dashboard"||S.view==="accounts"))out+=signupPanel();
+ return out;
 }
+function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast("Copied.")},function(){legacyCopy()})}catch(e){legacyCopy()}function legacyCopy(){var i=document.getElementById("su-link");if(i){i.select();try{document.execCommand("copy");toast("Copied.")}catch(e){toast("Press and hold the link to copy it.",{kind:"warn"})}}}}
 
 /* ============ sharing the folder from the Accounts page ============ */
 async function inviteToFolder(email){
@@ -2466,7 +2496,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-31 v32";
+var BUILD="2026-11-01 v34";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2836,6 +2866,12 @@ function cardExtras(t){
  if(isOverdue(t))p.push('<span class="over">Overdue</span>');
  if(isStale(t))p.push('<span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>');
  return p.length?'<small>'+p.join(", ")+'</small>':"";
+}
+
+function okName(n){
+ n=String(n||"").trim();
+ var p=n.split(/\s+/).filter(Boolean);
+ return p.length>=2&&n.indexOf("@")<0&&p.every(function(w){return w.length>=2});
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */

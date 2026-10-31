@@ -20,10 +20,10 @@ window.HELPDESK_CONFIG = {
   /* Where the data is kept: a folder in the OneDrive of it.helpdesk@syayasan.edu.bn */
   FOLDER_NAME: "SYSHHB-Helpdesk",
 
-  /* After the first run, fill in ONE of these two options (see README, step 5):
-     A) an organisation edit link to the folder */
+  /* SIGN-UP FOR EVERYONE: in the helpdesk, sign in as admin, tap "Create the sign-up link",
+     copy the link and paste it between the quotes below. Then new staff can sign in by themselves. */
   FOLDER_SHARE_URL: "",
-  /*    B) or the two IDs that the first run shows to the administrator */
+  /* The folder the data is kept in (you can leave these as they are). */
   DRIVE_ID: "b!R_lPWUdjfEuqzVrRupLxSE47Uqs5BWdEtWJhDv2jn1e619-HvmPEQrnstLIZc1T6",
   FOLDER_ID: "01O26XY4QKUSC3SK67LBDY4QRH2JYOPT5K",
 
@@ -32,6 +32,13 @@ window.HELPDESK_CONFIG = {
      "graph"  sent from the signed-in person's own mailbox (quickest; needs the Mail.Send permission)
      "outbox" sent from it.helpdesk@syayasan.edu.bn by a small Power Automate flow (needs the flow) */
   EMAIL_MODE: "graph",
+
+  /* Who gets the [ALERT] emails when a person submits, replies on or reopens a complaint.
+     The technician assigned to the complaint is always added. */
+  NOTIFY_EMAILS: ["it.helpdesk@syayasan.edu.bn"],
+
+  /* Set to true only after you build the reply flow (README, part 9). */
+  EMAIL_REPLIES: false,
 
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
