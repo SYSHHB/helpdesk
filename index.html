@@ -2289,9 +2289,15 @@ async function resolveStorage(email){
  var admins=(CFG.ADMIN_EMAILS||[]).map(function(x){return x.toLowerCase()}),isAdm=admins.indexOf(email)>=0;
  var haveIds=!!(CFG.DRIVE_ID&&CFG.FOLDER_ID);
  if(CFG.FOLDER_SHARE_URL){
-  var sb="/shares/u!"+b64url(CFG.FOLDER_SHARE_URL)+"/root",sr=await gf(sb+"?select=id,name");
-  if(sr.ok){G.base=sb;G.mode="share";if(haveIds){G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID}return}
-  if(!haveIds&&!isAdm)throw new Error(OPEN_MSG+" ("+sr.status+")");
+  var sr=await gf("/shares/u!"+b64url(CFG.FOLDER_SHARE_URL)+"/driveItem?$select=id,name,parentReference",{headers:{Prefer:"redeemSharingLinkIfNecessary"}});
+  if(sr.ok){
+   var sj=await sr.json(),sd=sj.parentReference&&sj.parentReference.driveId;
+   if(sd&&sj.id){
+    var sbase="/drives/"+sd+"/items/"+sj.id,sc=await gf(sbase+"?select=id");
+    if(sc.ok){G.drive=sd;G.folder=sj.id;G.base=sbase;G.mode="share";return}
+    if(!haveIds&&!isAdm)throw new Error(OPEN_MSG+" ("+sc.status+")");
+   }
+  }else if(!haveIds&&!isAdm)throw new Error(OPEN_MSG+" ("+sr.status+")");
  }
  if(haveIds){
   G.drive=CFG.DRIVE_ID;G.folder=CFG.FOLDER_ID;G.base="/drives/"+G.drive+"/items/"+G.folder;
@@ -2497,7 +2503,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-01 v35";
+var BUILD="2026-11-01 v36";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
