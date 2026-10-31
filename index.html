@@ -1283,6 +1283,7 @@ var F={
    await log("ticket.create",id,prLbl(v.priority)+" priority, "+v.category+": "+title);
   }catch(e){console.warn("follow-up writes failed",e)}
   mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username},{by:S.me.name});
+  mailStaff("staffnew",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username},{by:S.me.name});
   S.att.new=[];S.newPrio=null;toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
   clearKeep();openTicket(id);
  })},
@@ -1300,6 +1301,7 @@ var F={
   }else await notify(t.assignedTo||"staff",S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
   await log(internal?"comment.internal":"comment.public",t.id,snip);
   if(!internal&&isStaff()&&t.createdBy!==S.me.username&&text)mailSafe("comment",t,{by:S.me.name,msg:text});
+  if(!isStaff()&&(text||imgs.length))mailStaff("staffreply",t,{by:S.me.name,msg:text||"(photo)"});
   S.att.comment=[];var ta=$("#c-text");if(ta)ta.value="";var ck=$("#c-int");if(ck)ck.value="";var cc=$("#c-close");if(cc)cc.checked=false;
  });if(cl)pr.then(function(){var t=curTicket();if(t&&t.status!=="closed")return A.quick({dataset:{s:"closed"}})});return pr},
  update:function(){return withBusy(async function(){
@@ -1309,7 +1311,7 @@ var F={
   if(status!==t.status){patch.status=status;ev.push("Status changed from "+stLbl(t.status)+" to "+stLbl(status));sum.push("status is now "+stLbl(status));au.push(["ticket.status",stLbl(t.status)+" to "+stLbl(status)]);
    if(status==="resolved"){patch.resolvedAt=now;prog=100}else if(status==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;prog=100}else patch.resolvedAt=null}
   if(prog!==(t.progress||0)){patch.progress=prog;if(!patch.status)sum.push("progress is "+prog+"%");au.push(["ticket.progress",(t.progress||0)+"% to "+prog+"%"])}
-  if((asg||null)!==(t.assignedTo||null)){var a=techs().filter(function(x){return x.username===asg})[0];patch.assignedTo=asg||null;patch.assignedName=a?a.name:"";
+  if((asg||null)!==(t.assignedTo||null)){var a=techs().filter(function(x){return x.username===asg})[0];patch.assignedTo=asg||null;patch.assignedName=a?a.name:"";patch.assignedMail=a?(a.mail||a.username):"";
    ev.push(a?"Assigned to "+a.name:"Assignment removed");sum.push(a?"assigned to "+a.name:"unassigned");au.push(["ticket.assign",a?a.name:"Unassigned"])}
   if(due!==(t.due||null)){patch.due=due;ev.push(due?"Target date set to "+fmtG(fromYmd(due).getTime())+(hOK?" ("+fmtH(fromYmd(due).getTime())+")":""):"Target date cleared");sum.push(due?"target date "+fmtG(fromYmd(due).getTime()):"no target date");au.push(["ticket.due",due||"cleared"])}
   if(!Object.keys(patch).length&&!msg){toast("Nothing to update yet.",{kind:"warn"});return}
@@ -1379,6 +1381,7 @@ var A={
   await col("tickets/"+t.id+"/comments").add({type:"event",text:"Complaint reopened",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
   await notify(t.assignedTo||"staff",S.me.name+" reopened "+t.id+": "+t.title,t.id,"new");
   await log("ticket.reopen",t.id,t.title);
+  mailStaff("staffreply",t,{by:S.me.name,msg:"Reopened this complaint."});
  })},
  exporttickets:function(){
   var rows=[["ID","Title","Category","Priority","Status","Progress %","Requested by","Assigned to","Submitted (Gregorian)","Submitted (Hijri)","Target date","Last updated"]];
@@ -1437,7 +1440,7 @@ var A={
   var t=curTicket();if(!t||!isStaff())return;var st=el.dataset.s,now=Date.now();
   var patch=Object.assign({status:st,updatedAt:now},lastActPatch("update","Status: "+stLbl(st),false)),ev=["Status changed from "+stLbl(t.status)+" to "+stLbl(st)];
   if(st==="resolved"){patch.resolvedAt=now;patch.progress=100}else if(st==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;patch.progress=100}else patch.resolvedAt=null;
-  if(st==="progress"&&!t.assignedTo){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;ev.push("Assigned to "+S.me.name)}
+  if(st==="progress"&&!t.assignedTo){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;patch.assignedMail=S.me.mail||S.me.username;ev.push("Assigned to "+S.me.name)}
   if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
   await S.db.doc("tickets/"+t.id).update(patch);
   for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
@@ -2345,13 +2348,13 @@ var BNTM=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Brunei",hour:"2-digit",
 function bnStamp(t){var d=new Date(t);return BNDATE.format(d)+", "+BNTM.format(d)+" BNT"}
 function Tm(x){return Object.prototype.hasOwnProperty.call(MS,x)?MS[x]:x}
 function mailMsg(to,subject,html){
- var m={subject:subject,body:{contentType:"HTML",content:html},toRecipients:[{emailAddress:{address:to}}]};
+ var m={subject:subject,body:{contentType:"HTML",content:html},toRecipients:[].concat(to).map(function(x){return {emailAddress:{address:x}}})};
  if(emailRepliesOn())m.replyTo=[{emailAddress:{address:replyTo()}}];
  if(html.indexOf("cid:hdlogo")>=0)m.attachments=[{"@odata.type":"#microsoft.graph.fileAttachment",name:"yayasan-logo.png",contentType:"image/png",contentBytes:LOGO.split(",")[1],isInline:true,contentId:"hdlogo"}];
  return m;
 }
 async function sendMail(to,subject,html){
- if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:to,subject:subject,html:html,ts:Date.now()});return}
+ if(MAILMODE==="outbox"){await S.db.doc("outbox/"+rid()).set({to:[].concat(to).join(";"),subject:subject,html:html,ts:Date.now()});return}
  var r=await gf("/me/sendMail",{method:"POST",headers:{"Content-Type":"application/json"},
   body:JSON.stringify({message:mailMsg(to,subject,html),saveToSentItems:CFG.SAVE_SENT!==false})});
  if(!r.ok)throw await gerr(r);
@@ -2381,7 +2384,9 @@ function mailBlock(lang,kind,t,o){
   "update":en?by+" updated your complaint.":by+" telah mengemas kini aduan anda.",
   "comment":en?by+" commented on your complaint.":by+" memberi komen pada aduan anda.",
   "resolved":en?by+" marked your complaint as resolved.":by+" menandakan aduan anda telah selesai.",
-  "closed":en?"Your complaint has been closed by "+by+". Thank you.":"Aduan anda telah ditutup oleh "+by+". Terima kasih."
+  "closed":en?"Your complaint has been closed by "+by+". Thank you.":"Aduan anda telah ditutup oleh "+by+". Terima kasih.",
+  "staffnew":en?"A new complaint was submitted by <b>"+by+"</b>.":"Aduan baharu dihantar oleh <b>"+by+"</b>.",
+  "staffreply":en?"<b>"+by+"</b> replied on this complaint.":"<b>"+by+"</b> telah membalas pada aduan ini."
  }[kind];
  var row=function(k,v){return '<tr><td style="padding:5px 12px 5px 0;color:#55665A;white-space:nowrap;vertical-align:top">'+k+'</td><td style="padding:5px 0"><b>'+v+'</b></td></tr>'};
  var cat=en?t.category:Tm(t.category),pri=en?prLbl(t.priority):Tm(prLbl(t.priority)),st=en?stLbl(t.status):Tm(stLbl(t.status));
@@ -2394,7 +2399,8 @@ function mailBlock(lang,kind,t,o){
  return h;
 }
 function buildMail(kind,t,o){
- var sub={"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
+ var staffK=kind==="staffnew"||kind==="staffreply";
+ var sub=staffK?(kind==="staffnew"?"New complaint from "+(o.by||""):(o.by||"")+" replied"):{"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
  var link=pageUrl()+"#t="+encodeURIComponent(fmtIds(t.id));
  var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
   '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"icons/icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
@@ -2403,7 +2409,7 @@ function buildMail(kind,t,o){
   '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;line-height:1.3;text-align:center">Reply or view in the helpdesk<br><span style="font-weight:400">Balas atau lihat di helpdesk</span></a></p>'+
   '<hr style="border:0;border-top:1px solid #D6DBC9;margin:18px 0">'+mailBlock("ms",kind,t,o)+
   '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic message. | Ini ialah mesej automatik.</p></div></div>';
- return {subject:fmtIds("["+t.id+"] "+sub),html:fmtIds(html)};
+ return {subject:fmtIds(staffK?"[ALERT] "+sub+" "+t.id:"["+t.id+"] "+sub),html:fmtIds(html)};
 }
 function addrFor(t){
  if(t.createdByMail)return t.createdByMail;
@@ -2435,7 +2441,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-30 v25";
+var BUILD="2026-10-31 v26";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2568,6 +2574,7 @@ async function processInbox(){
    if(!m){await del();continue}
    var subj=String(m.subject||""),from=m.from&&m.from.emailAddress?m.from.emailAddress.address:m.from;
    from=String(from||"").toLowerCase().replace(/^.*<|>.*$/g,"");
+   if(/^\s*((re|fw|fwd):\s*)*\[alert\]/i.test(subj)){await del();continue}
    var idm=subj.match(/SYSHHB-IT-\d{4,}|\d{4,}-IT-SYSHHB/i);
    var t=idm?findTicketByAnyId(idm[0].toUpperCase()):null;
    if(!t){if(S.tickets.length){await del();log("email.ignored",idm?idm[0]:"","No matching complaint for reply from "+from)}continue}
@@ -2712,6 +2719,31 @@ document.addEventListener("toggle",function(e){var t=e.target;if(t&&t.id&&/^acct
 function signinText(){
  var d=String(CFG.ALLOWED_DOMAIN||"syayasan.edu.bn");
  return LANG==="ms"?"Gunakan e-mel sekolah anda (@"+d+") untuk membuat laporan masalah atau mengurus aduan.":"Use your school email (@"+d+") to report a problem or manage complaints.";
+}
+
+/* ============ email the helpdesk team about user activity ============ */
+function staffRecipients(t){
+ var base=(CFG.NOTIFY_EMAILS&&CFG.NOTIFY_EMAILS.length?CFG.NOTIFY_EMAILS:CFG.ADMIN_EMAILS)||[];
+ var list=base.slice();
+ var tech=String(t.assignedMail||t.assignedTo||"");
+ if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tech))list.push(tech);
+ var me=S.me?[String(S.me.mail||"").toLowerCase(),String(S.me.username||"").toLowerCase()]:[],seen={},out=[];
+ list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x]||me.indexOf(x)>=0)return;seen[x]=1;out.push(x)});
+ return out;
+}
+function mailStaff(kind,t,o){
+ try{
+  if(MAILMODE==="off")return;
+  var to=staffRecipients(t);
+  if(!to.length)return;
+  var m=buildMail(kind,t,o||{});
+  sendMail(to,m.subject,m.html).then(function(){
+   log("email.sent",t.id,to.join(", ")+" ("+kind+", "+MAILMODE+")");
+  }).catch(function(e){
+   console.warn("staff email failed",e);
+   log("email.failed",t.id,to.join(", ")+": "+String((e&&e.message)||e).slice(0,200));
+  });
+ }catch(e){console.warn(e)}
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
