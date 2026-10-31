@@ -584,6 +584,10 @@ html,body{max-width:100%;overflow-x:clip}
 .acct-add summary::-webkit-details-marker{display:none}
 .acct-add.only-m{display:none;margin-bottom:12px}
 @media (max-width:1020px){.acct-add.only-m{display:block}.acct-add.only-d{display:none}.acf{grid-template-columns:repeat(2,minmax(0,1fr))}.acf select:last-child{grid-column:1/-1}}
+.nt-id{display:block;font-weight:700;color:var(--muted);font-size:.8rem;letter-spacing:.02em}
+.nt-l{display:block;font-weight:600;font-size:1.02rem;margin-top:2px}
+.nt-sub{display:block;color:var(--muted);font-size:.85rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt small{margin-top:4px}
 </style>
 </head>
 <body>
@@ -847,7 +851,7 @@ function startSubs(){
   S.notifReady=true;checkStale();
   added.forEach(function(n){
    if(n.ts<S.sessionStart||n.by===S.me.username)return;
-   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isAdmin())){var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(n.text,{kind:hot?"new":"",ticket:n.ticketId})}
+   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isAdmin())){var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(notifLine(n),{kind:hot?"new":"",ticket:n.ticketId})}
   });
   renderChrome();
  },"notifications"));
@@ -936,7 +940,7 @@ function titleOf(){
 function bellHTML(){
  var list=mineNotifs().slice(0,30),un=unreadCount();
  var items=list.length?list.map(function(n){
-  return '<button class="nt'+(n.ts>S.lastSeen?" un":"")+'" data-act="opennotif" data-id="'+esc(n.ticketId)+'">'+esc(n.text)+'<small>'+esc(n.byName||"")+', '+ago(n.ts)+'</small></button>';
+  return '<button class="nt'+(n.ts>S.lastSeen?" un":"")+'" data-act="opennotif" data-id="'+esc(n.ticketId)+'">'+notifBody(n)+'<small>'+esc(n.byName||"")+', '+ago(n.ts)+'</small></button>';
  }).join(""):'<div class="empty"><b>No notifications yet</b>You’ll see new complaints, comments and technician updates here.</div>';
  return '<div class="bellwrap"><button class="icon-btn" data-act="bell" aria-label="Notifications'+(un?", "+un+" unread":"")+'" aria-expanded="'+S.bell+'">'+ico("bell")+(un?'<span class="badge">'+(un>99?"99+":un)+'</span>':'')+'</button>'+
  (S.bell?'<div class="sheet-bd" data-act="bell"></div><div class="bellpanel"><div class="grab" data-act="bell"></div><header><b>Notifications</b>'+(un?'<button class="link" data-act="readall">Mark all as read</button>':'')+'</header>'+items+'</div>':'')+'</div>';
@@ -2441,7 +2445,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-31 v26";
+var BUILD="2026-10-31 v27";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2745,6 +2749,45 @@ function mailStaff(kind,t,o){
   });
  }catch(e){console.warn(e)}
 }
+
+/* ============ short notification text ============ */
+function notifParse(n){
+ var t=String(n.text||""),id=n.ticketId||"",ms=LANG==="ms",L=[],sub="",m;
+ function tm(x){return ms?Tm(x):x}
+ if(n.byName&&t.indexOf(" updated by "+n.byName)>0){
+  var at=t.indexOf(" updated by "+n.byName);id=t.slice(0,at);
+  var rest=t.slice(at+(" updated by "+n.byName).length),msg="";
+  if(rest.indexOf(": ")===0)rest=rest.slice(2);
+  var q=rest.indexOf(". “");
+  if(q>=0){msg=rest.slice(q+3);rest=rest.slice(0,q)}else if(rest.indexOf("“")===1&&rest.charAt(0)==="."){msg=rest.slice(2);rest=""}
+  rest.split(", ").forEach(function(p){
+   var x;
+   if((x=p.match(/^status is now (.+)$/)))L.push("Status: "+tm(x[1]));
+   else if((x=p.match(/^progress is (.+)$/)))L.push((ms?"Kemajuan: ":"Progress: ")+x[1]);
+   else if((x=p.match(/^assigned to (.+)$/)))L.push((ms?"Ditugaskan kepada: ":"Assigned to: ")+x[1]);
+   else if(p==="unassigned")L.push(ms?"Juruteknik dibuang":"Unassigned");
+   else if((x=p.match(/^target date (.+)$/)))L.push((ms?"Tarikh sasaran: ":"Target date: ")+x[1]);
+   else if(p==="no target date")L.push(ms?"Tarikh sasaran dikosongkan":"Target date cleared");
+   else if(p)L.push(p);
+  });
+  if(msg)L.push(ms?"Memberi komen":"Commented");
+  if(!L.length)L.push(ms?"Dikemas kini":"Updated");
+  return {id:id,lines:L,sub:""};
+ }
+ if((m=t.match(/^.+? commented on (\S+): /)))return {id:m[1],lines:[ms?"Memberi komen":"Commented"],sub:""};
+ if((m=t.match(/^.+? added an internal note on (\S+): /)))return {id:m[1],lines:[ms?"Nota dalaman":"Internal note"],sub:""};
+ if((m=t.match(/^.+? replied by email on (\S+): /)))return {id:m[1],lines:[ms?"Membalas melalui e-mel":"Replied by email"],sub:""};
+ if((m=t.match(/^New complaint (\S+) from .+?: (.*)$/)))return {id:m[1],lines:[ms?"Aduan baharu":"New complaint"],sub:m[2]};
+ if((m=t.match(/^You were assigned (\S+): (.*)$/)))return {id:m[1],lines:[ms?"Ditugaskan kepada anda":"Assigned to you"],sub:m[2]};
+ if((m=t.match(/^.+? reopened (\S+): (.*)$/)))return {id:m[1],lines:[ms?"Dibuka semula":"Reopened"],sub:m[2]};
+ if((m=t.match(/^Attend now: (\S+) has waited (\d+) days? and no technician has attended\. (.*)$/)))return {id:m[1],lines:[ms?"Menunggu "+m[2]+" hari, belum ada juruteknik":"Waiting "+m[2]+(+m[2]===1?" day":" days")+", no technician yet"],sub:m[3]};
+ return {id:id,lines:[t],sub:""};
+}
+function notifBody(n){
+ var p=notifParse(n);
+ return '<span class="nt-id" translate="no">'+esc(fmtIds(p.id))+'</span>'+p.lines.map(function(l){return '<span class="nt-l" translate="no">'+esc(fmtIds(l))+'</span>'}).join("")+(p.sub?'<span class="nt-sub" translate="no">'+esc(p.sub)+'</span>':"");
+}
+function notifLine(n){var p=notifParse(n);return fmtIds(p.id)+": "+p.lines.join(", ")}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
