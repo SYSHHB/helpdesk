@@ -2364,6 +2364,7 @@ async function afterLogin(acct){
   if(a.active===false){fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");return}
   S.loading=false;
   await startSession(Object.assign({},a,{username:email}));
+  if(a.role==="admin"&&G.mode!=="share")autoLink();
   var k="hd.logged."+email;
   if(!sessionStorage.getItem(k)){try{sessionStorage.setItem(k,"1")}catch(e){}log("auth.login",email,ROLES[a.role])}
  }catch(e){console.warn(e);fatal(e.message||"Something went wrong while connecting.",(e.message||"").indexOf(OPEN_MSG)===0?"Almost there":"Can’t connect")}
@@ -2371,8 +2372,8 @@ async function afterLogin(acct){
 function signupPanel(){
  if(!isAdmin())return "";
  if(G.mode==="share")return '<div class="note ok" translate="no" style="margin-bottom:14px"><b>Sign-up is open.</b> Anyone with a school account can sign in. They are added to the list automatically.</div>';
- var link=S.signupLink?'<div style="margin-top:10px"><b>Copy this link</b> into <code>config.js</code> as <code>FOLDER_SHARE_URL: "…",</code> and commit it:<div class="copyrow"><input readonly id="su-link" value="'+esc(S.signupLink)+'"><button class="btn sm" data-act="copylink">Copy</button></div></div>':'';
- return '<div class="note" translate="no" style="margin-bottom:14px"><b>New staff cannot sign in on their own yet.</b><br>Right now the folder is shared person by person. Turn on sign-up for everyone with a school account, then new people can just sign in and appear in Accounts by themselves.<div style="margin-top:10px"><button class="btn sm primary" data-act="mklink">Create the sign-up link</button></div>'+link+'</div>';
+ var link=S.signupLink?'<div style="margin-top:10px"><b>Your sign-up link is ready.</b> One time only: open <code>config.js</code> on GitHub, replace the line that starts with <code>FOLDER_SHARE_URL</code> with this line, and commit:<div class="copyrow"><input readonly id="su-link" value="'+esc('FOLDER_SHARE_URL: "'+S.signupLink+'",')+'"><button class="btn sm" data-act="copylink">Copy</button></div></div>':(S.signupBusy?'<div style="margin-top:10px">Preparing the sign-up link…</div>':'');
+ return '<div class="note" translate="no" style="margin-bottom:14px"><b>New staff cannot sign in on their own yet.</b><br>Right now the folder is shared person by person. Turn on sign-up for everyone with a school account, then new people can just sign in and appear in Accounts by themselves.'+link+(S.signupLink||S.signupBusy?'':'<div style="margin-top:10px"><button class="btn sm primary" data-act="mklink">Create the sign-up link</button></div>')+'</div>';
 }
 function setupBar(){
  var out="";
@@ -2496,7 +2497,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-01 v34";
+var BUILD="2026-11-01 v35";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2872,6 +2873,16 @@ function okName(n){
  n=String(n||"").trim();
  var p=n.split(/\s+/).filter(Boolean);
  return p.length>=2&&n.indexOf("@")<0&&p.every(function(w){return w.length>=2});
+}
+
+async function autoLink(){
+ if(S.signupLink||S.signupBusy||!G.drive||!G.folder)return;
+ S.signupBusy=true;if(S.me)renderContent();
+ try{
+  var r=await gf("/drives/"+G.drive+"/items/"+G.folder+"/createLink",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"edit",scope:"organization"})});
+  if(r.ok){var j=await r.json();S.signupLink=j.link&&j.link.webUrl}
+ }catch(e){console.warn("auto link",e)}
+ S.signupBusy=false;if(S.me)renderContent();
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
