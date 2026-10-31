@@ -588,6 +588,14 @@ html,body{max-width:100%;overflow-x:clip}
 .nt-l{display:block;font-weight:600;font-size:1.02rem;margin-top:2px}
 .nt-sub{display:block;color:var(--muted);font-size:.85rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nt small{margin-top:4px}
+.tmeta .cat{white-space:normal;line-height:1.25;max-width:100%;border-radius:14px}
+.tmeta .cat span{overflow-wrap:anywhere}
+.tmeta .cat svg.i{flex:none}
+.ttl .kv{display:block;margin-top:2px;overflow-wrap:anywhere}
+.ttl .kv .k{color:var(--muted);font-weight:500}
+.ttl .kv b,.ttl .kv strong{display:inline;white-space:normal;overflow:visible;-webkit-line-clamp:unset;font-weight:700}
+.ttl .kv strong{font-size:1.02rem}
+.ttl>small{display:block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -601,8 +609,8 @@ html,body{max-width:100%;overflow-x:clip}
 /* ============ constants ============ */
 var STATUSES=[["open","Open"],["progress","In progress"],["hold","On hold"],["resolved","Resolved"],["closed","Closed"]];
 var PRIORITIES=[["low","Low",1],["medium","Medium",2],["high","High",3],["urgent","Urgent",4]];
-var CATS=["Computer / laptop","Network / Wi-Fi","Printer / scanner","Projector / Screen","VM (Finance)","Other"];
-function normCat(c){return {"Projector / AV":"Projector / Screen","Account / access":"VM (Finance)","Software":"Other"}[c]||c}
+var CATS=["Biztrack System (FINANCE COUNTER ONLY)","Computer / Laptop (Hak Milik Sekolah)","Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)","Network / WiFi / Lan / Internet","Printer (Hak Milik Sekolah)","Projector / Projector Screen / Projector Socket / Projector Cable","VM - Virtual Machine (FINANCE COUNTER ONLY)"];
+function normCat(c){return {"Computer / laptop":CATS[1],"Network / Wi-Fi":CATS[3],"Printer / scanner":CATS[4],"Projector / Screen":CATS[5],"Projector / AV":CATS[5],"VM (Finance)":CATS[6],"Account / access":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
@@ -656,6 +664,7 @@ clip:'<path d="m21.4 11.6-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9
 send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/>',
 sortdown:'<path d="M4 6h10M4 12h7M4 18h4"/><path d="M18 5v14m0 0-3-3m3 3 3-3"/>',
 sortup:'<path d="M4 6h4M4 12h7M4 18h10"/><path d="M18 19V5m0 0-3 3m3-3 3 3"/>',
+monitor:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
 wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'};
 function ico(n){return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICONS[n]+'</svg>'}
 
@@ -994,7 +1003,7 @@ function prio(p){var l=(PRIORITIES.filter(function(x){return x[0]===p})[0]||[0,0
 function barRow(label,n,max,color){return '<div class="bar"><span>'+esc(label)+'</span><span class="tr"><i style="width:'+(max?Math.round(n/max*100):0)+'%'+(color?';background:'+color:'')+'"></i></span><b>'+n+'</b></div>'}
 function ticketRow(t){
  return '<button class="trow s-'+esc(t.status)+(unseen(t)?' has-new':'')+'" data-act="open" data-id="'+esc(t.id)+'"><span class="tid">'+esc(t.id)+'</span>'+
- '<span class="ttl">'+newBadge(t)+'<strong translate="no">'+esc(t.title)+'</strong><small>'+esc(t.createdByName)+(t.location?", "+esc(t.location):"")+(t.images&&t.images.length?", "+t.images.length+" photo"+(t.images.length>1?"s":""):"")+(isOverdue(t)?' <span class="over">Overdue</span>':'')+(isStale(t)?' <span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>':'')+'</small>'+newSnip(t)+'<span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+esc(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
+ '<span class="ttl">'+newBadge(t)+'<span class="kv"><span class="k">Name:</span> <b translate="no">'+esc(t.createdByName)+'</b></span><span class="kv"><span class="k">Complain:</span> <strong translate="no">'+esc(t.title)+'</strong></span>'+(t.location?'<span class="kv"><span class="k">Location:</span> <span translate="no">'+esc(t.location)+'</span></span>':'')+cardExtras(t)+newSnip(t)+'<span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+esc(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
  pill(t.status)+prio(t.priority)+'<span class="tasg">'+esc(t.assignedName||"Unassigned")+'</span><span class="tdt">'+dual(t.createdAt)+'</span></button>';
 }
 
@@ -1090,7 +1099,8 @@ function pgNew(){
  '<form class="panel form stack" data-form="newticket">'+
  '<label class="fld"><span>What’s the problem?</span><input id="n-title" name="title" required maxlength="120" data-keep placeholder="For example: Projector in Room 4 shows no signal"></label>'+
  '<div class="grid2"><label class="fld"><span>Category</span><select id="n-cat" name="category" data-keep>'+CATS.map(function(c){return '<option>'+c+'</option>'}).join("")+'</select></label>'+
- '<label class="fld"><span>Location</span><input id="n-loc" name="location" maxlength="80" data-keep placeholder="Room, office or department"></label></div>'+
+ '<label class="fld"><span>Location</span>'+locSel()+'</label></div>'+
+ '<label class="fld"><span>Room or place <small>(optional)</small></span><input id="n-room" name="room" maxlength="60" data-keep placeholder="For example: Room 4, Y7, IT room"></label>'+
  '<label class="fld"><span>Details</span><textarea id="n-desc" name="description" required rows="6" maxlength="4000" data-keep placeholder="What happened, when it started, and anything you already tried."></textarea></label>'+
  '<div class="fld"><span>Photos <small>(optional)</small></span>'+attachHTML("new")+'</div>'+
  '<div><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(S.busy?"Saving…":"Submit complaint")+'</button></div></form>';
@@ -1279,15 +1289,15 @@ var F={
   if(S.upBusy){toast("Wait for the photos to finish uploading.",{kind:"warn"});return}
   if(!title||!desc){toast("Add a title and the details of the problem.",{kind:"warn"});return}
   var id=await nextTicketId(),now=Date.now();
-  await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),status:"open",progress:0,
+  await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:locFrom(v),status:"open",progress:0,
    lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
   try{
    await col("tickets/"+id+"/comments").add({type:"event",text:"Complaint submitted",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
    await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
    await log("ticket.create",id,prLbl(v.priority)+" priority, "+v.category+": "+title);
   }catch(e){console.warn("follow-up writes failed",e)}
-  mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username},{by:S.me.name});
-  mailStaff("staffnew",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:(v.location||"").trim(),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username},{by:S.me.name});
+  mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username},{by:S.me.name});
+  mailStaff("staffnew",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username},{by:S.me.name});
   S.att.new=[];S.newPrio=null;toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
   clearKeep();openTicket(id);
  })},
@@ -1735,6 +1745,8 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Name:":"Nama:","Complain:":"Aduan:","Location:":"Lokasi:",
+"Room or place":"Bilik atau tempat","For example: Room 4, Y7, IT room":"Contohnya: Bilik 4, Y7, bilik IT",
 "Urgency":"Tahap kecemasan","Urgency changed":"Tahap kecemasan diubah",
 "Search name, email, phone or group":"Cari nama, e-mel, telefon atau kumpulan","No phone number":"Tiada nombor telefon","(you)":"(anda)","Joined":"Sertai",
 "All activity":"Semua aktiviti","Sign-ins":"Log masuk","Complaint changes":"Perubahan aduan","Accounts and settings":"Akaun dan tetapan","Emails":"E-mel","Problems":"Masalah","Exports":"Eksport","Target":"Sasaran","Details":"Butiran","Today":"Hari ini","Yesterday":"Semalam","Type of activity":"Jenis aktiviti","Every sign-in, complaint, comment, email and account change. Latest 500 entries.":"Setiap log masuk, aduan, komen, e-mel dan perubahan akaun. 500 entri terkini.",
@@ -2452,7 +2464,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-31 v28";
+var BUILD="2026-10-31 v31";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2548,7 +2560,17 @@ function phoneFor(t){
  return a&&a.phone||"";
 }
 
-function catIcon(c){return ({"Computer / laptop":"laptop","Network / Wi-Fi":"wifi","Printer / scanner":"print","Projector / Screen":"projector","VM (Finance)":"server"})[c]||"dots"}
+function catIcon(c){
+ c=String(c||"");
+ if(/projector/i.test(c))return "projector";
+ if(/monitor|keyboard|mouse|headset/i.test(c))return "monitor";
+ if(/computer|laptop/i.test(c))return "laptop";
+ if(/network|wifi|wi-fi|lan|internet/i.test(c))return "wifi";
+ if(/printer|scanner/i.test(c))return "print";
+ if(/\bvm\b|virtual/i.test(c))return "server";
+ if(/biztrack/i.test(c))return "chart";
+ return "dots";
+}
 
 /* ============ email replies become comments ============ */
 function replyTo(){return String(CFG.REPLY_TO||(CFG.ADMIN_EMAILS||[])[0]||"").toLowerCase()}
@@ -2798,6 +2820,21 @@ function notifBody(n){
  return '<span class="nt-id" translate="no">'+esc(fmtIds(p.id))+'</span>'+p.lines.map(function(l){return '<span class="nt-l" translate="no">'+esc(fmtIds(l))+'</span>'}).join("")+(p.sub?'<span class="nt-sub" translate="no">'+esc(p.sub)+'</span>':"");
 }
 function notifLine(n){var p=notifParse(n);return fmtIds(p.id)+": "+p.lines.join(", ")}
+
+/* ============ location choice ============ */
+var LOCS=["Secondary","Primary","Taska","Finance","HR","Pendaftaran"];
+function locFrom(v){var a=(v.location||"").trim(),r=(v.room||"").trim();return r?(a?a+" - "+r:r):a}
+function locSel(){
+ return '<select id="n-loc" name="location" data-keep required><option value="">Select…</option>'+LOCS.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>'}).join("")+'</select>';
+}
+
+function cardExtras(t){
+ var p=[],n=t.images?t.images.length:0;
+ if(n)p.push(n+" photo"+(n>1?"s":""));
+ if(isOverdue(t))p.push('<span class="over">Overdue</span>');
+ if(isStale(t))p.push('<span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>');
+ return p.length?'<small>'+p.join(", ")+'</small>':"";
+}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
