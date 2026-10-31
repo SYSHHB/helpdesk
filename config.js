@@ -22,7 +22,7 @@ window.HELPDESK_CONFIG = {
 
   /* SIGN-UP FOR EVERYONE: in the helpdesk, sign in as admin, tap "Create the sign-up link",
      copy the link and paste it between the quotes below. Then new staff can sign in by themselves. */
-  FOLDER_SHARE_URL: "",
+  FOLDER_SHARE_URL: "https://syayasanedu-my.sharepoint.com/:f:/g/personal/it_helpdesk_syayasan_edu_bn/IgAKpIW5K99YR45CJ9Jw58-qAcka9cxl_Yrk_0kNIXuTFYY",
   /* The folder the data is kept in (you can leave these as they are). */
   DRIVE_ID: "b!R_lPWUdjfEuqzVrRupLxSE47Uqs5BWdEtWJhDv2jn1e619-HvmPEQrnstLIZc1T6",
   FOLDER_ID: "01O26XY4QKUSC3SK67LBDY4QRH2JYOPT5K",
