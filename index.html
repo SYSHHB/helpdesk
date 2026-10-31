@@ -1098,7 +1098,7 @@ function pgNew(){
  return '<div class="page-h"><div><h1>New complaint</h1><p class="muted">Technicians are notified as soon as you submit.</p></div></div>'+
  '<form class="panel form stack" data-form="newticket">'+
  '<label class="fld"><span>What’s the problem?</span><input id="n-title" name="title" required maxlength="120" data-keep placeholder="For example: Projector in Room 4 shows no signal"></label>'+
- '<div class="grid2"><label class="fld"><span>Category</span><select id="n-cat" name="category" data-keep>'+CATS.map(function(c){return '<option>'+c+'</option>'}).join("")+'</select></label>'+
+ '<div class="grid2"><label class="fld"><span>Category</span><select id="n-cat" name="category" data-keep required><option value="">Select…</option>'+CATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join("")+'</select></label>'+
  '<label class="fld"><span>Location</span>'+locSel()+'</label></div>'+
  '<label class="fld"><span>Room or place <small>(optional)</small></span><input id="n-room" name="room" maxlength="60" data-keep placeholder="For example: Room 4, Y7, IT room"></label>'+
  '<label class="fld"><span>Details</span><textarea id="n-desc" name="description" required rows="6" maxlength="4000" data-keep placeholder="What happened, when it started, and anything you already tried."></textarea></label>'+
@@ -1288,6 +1288,7 @@ var F={
   var title=v.title.trim(),desc=v.description.trim();
   if(S.upBusy){toast("Wait for the photos to finish uploading.",{kind:"warn"});return}
   if(!title||!desc){toast("Add a title and the details of the problem.",{kind:"warn"});return}
+  if(!v.category||!v.location){toast("Choose the category and the location.",{kind:"warn"});return}
   var id=await nextTicketId(),now=Date.now();
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:locFrom(v),status:"open",progress:0,
    lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
@@ -1745,6 +1746,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Choose the category and the location.":"Pilih kategori dan lokasi.",
 "Name:":"Nama:","Complain:":"Aduan:","Location:":"Lokasi:",
 "Room or place":"Bilik atau tempat","For example: Room 4, Y7, IT room":"Contohnya: Bilik 4, Y7, bilik IT",
 "Urgency":"Tahap kecemasan","Urgency changed":"Tahap kecemasan diubah",
@@ -2464,7 +2466,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-10-31 v31";
+var BUILD="2026-10-31 v32";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
