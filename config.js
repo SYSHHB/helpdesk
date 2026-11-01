@@ -40,6 +40,12 @@ window.HELPDESK_CONFIG = {
   /* Set to true only after you build the reply flow (README, part 9). */
   EMAIL_REPLIES: false,
 
+  /* Hijri date on the login page. Signed-in people always see the dates from the calendar
+     settings. A phone that has never signed in cannot read them, so copy the two lines shown in
+     Calendar > Brunei calendar settings (in the helpdesk) over these two lines. */
+  HIJRI_ADJ: -1,
+  HIJRI_STARTS: {},
+
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
 };

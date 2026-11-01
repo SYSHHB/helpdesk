@@ -682,6 +682,12 @@ function ico(n){return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+
 
 /* ============ calendars ============ */
 var hOff=-1,hStarts={},bsCache={};
+(function(){
+ var c=null;try{c=JSON.parse(localStorage.getItem("hd.hijri")||"null")}catch(e){}
+ var cf=window.HELPDESK_CONFIG||{};
+ if(c&&typeof c.adj==="number"){hOff=c.adj;hStarts=c.starts||{}}
+ else{if(typeof cf.HIJRI_ADJ==="number")hOff=cf.HIJRI_ADJ;if(cf.HIJRI_STARTS&&typeof cf.HIJRI_STARTS==="object")hStarts=cf.HIJRI_STARTS}
+})();
 var hOK=true,hParts,hName;
 try{
  hParts=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"numeric",year:"numeric"});
@@ -862,7 +868,7 @@ function syncBar(){
 function startSubs(){
  seenMap();
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
- S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};render()},function(e){console.warn(e)}));
+ S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
  S.unsubs.push(watch(tq,function(s){S.tickets=s.docs.map(function(d){var x=d.data();x.id=d.id;x.category=normCat(x.category);return x});render();checkStale();tryOpenWanted()},"tickets"));
  S.unsubs.push(watch(col("notifs").orderBy("ts","desc").limit(150),function(s){
@@ -1182,7 +1188,7 @@ function pgCal(){
   hsPanel='<details class="panel mt hs"><summary><b>Brunei calendar settings</b> for administrators</summary><p class="muted small" style="margin:8px 0 12px">Enter the first day of each Hijri month as announced by the Ministry of Religious Affairs. Everyone sees the same dates.</p>'+
   Object.keys(hms).sort().map(function(key){var x=hms[key],st=startOf(x.y,x.m),has=!!hStarts[key];
    return '<div class="hsrow"><label class="fld"><span>1 '+esc(HM[x.m-1])+' '+x.y+' H</span><input type="date" id="hs-'+key+'" data-keep value="'+ymd(st)+'"></label><button class="btn sm primary" data-act="savestart" data-k="'+key+'">Save</button>'+(has?'<button class="btn sm" data-act="clearstart" data-k="'+key+'">Reset</button>':'')+'</div>'}).join("")+
-  '<label class="fld" style="margin-top:12px;max-width:280px"><span>Calculated dates compared with Umm al-Qura</span><select id="hadj"><option value="-1"'+(hOff===-1?" selected":"")+'>1 day behind (Brunei)</option><option value="0"'+(hOff===0?" selected":"")+'>Same</option><option value="1"'+(hOff===1?" selected":"")+'>1 day ahead</option></select></label></details>';
+  '<label class="fld" style="margin-top:12px;max-width:280px"><span>Calculated dates compared with Umm al-Qura</span><select id="hadj"><option value="-1"'+(hOff===-1?" selected":"")+'>1 day behind (Brunei)</option><option value="0"'+(hOff===0?" selected":"")+'>Same</option><option value="1"'+(hOff===1?" selected":"")+'>1 day ahead</option></select></label><div class="fld" style="margin-top:14px"><span>Show the same dates on the login page for new phones</span><p class="muted small" style="margin:4px 0 8px">A phone that has never signed in cannot read these settings. Copy these lines into config.js on GitHub (replace any HIJRI_ lines), and commit.</p><textarea readonly id="hj-snip" rows="3" style="font-family:monospace;font-size:.82rem">'+esc(hijriSnippet())+'</textarea><button type="button" class="btn sm" data-act="copyhj" style="margin-top:8px">Copy</button></div></details>';
  }
  var sd=fromYmd(S.cal.sel),a1=created[S.cal.sel]||[],a2=due[S.cal.sel]||[];
  var rowsF=function(arr){return arr.map(function(t){return '<button class="dayrow" data-act="open" data-id="'+esc(t.id)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.id)+', '+esc(stLbl(t.status))+', '+esc(t.assignedName||"Unassigned")+'</small></button>'}).join("")};
@@ -1431,6 +1437,7 @@ var A={
  },
  auditmore:function(){S.auditN+=100;renderContent()},
  closesheet:function(){S.sheet=false;render()},
+ copyhj:function(){var t=document.getElementById("hj-snip");if(!t)return;t.select();try{navigator.clipboard.writeText(t.value).then(function(){toast("Copied.")},function(){document.execCommand("copy");toast("Copied.")})}catch(e){try{document.execCommand("copy");toast("Copied.")}catch(x){}}},
  installapp:function(){
   if(IP){var p=IP;IP=null;p.prompt();p.userChoice.then(function(c){if(c&&c.outcome==="accepted"){ls.set("hd.installHide","1");if(S.me)renderContent()}else{if(S.me)renderContent();else render()}});}
   else showInstallHelp();
@@ -1777,6 +1784,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Show the same dates on the login page for new phones":"Tunjukkan tarikh yang sama pada halaman log masuk untuk telefon baharu","A phone that has never signed in cannot read these settings. Copy these lines into config.js on GitHub (replace any HIJRI_ lines), and commit.":"Telefon yang belum pernah log masuk tidak dapat membaca tetapan ini. Salin baris ini ke config.js di GitHub (gantikan sebarang baris HIJRI_), dan commit.",
 "Install app on this phone":"Pasang aplikasi pada telefon ini",
 "Fill in everything and add at least 1 photo to submit.":"Isi semua maklumat dan tambah sekurang-kurangnya 1 gambar untuk menghantar.","Enter the room or place.":"Masukkan bilik atau tempat.","Add at least 1 photo.":"Tambah sekurang-kurangnya 1 gambar.",
 "Almost there":"Hampir siap","You can’t open the helpdesk yet. Sign-up has not been opened for everyone in the school. Please ask the administrator (it.helpdesk@syayasan.edu.bn) to switch it on. It takes one minute.":"Anda belum boleh membuka helpdesk. Pendaftaran belum dibuka untuk semua orang di sekolah. Sila minta pentadbir (it.helpdesk@syayasan.edu.bn) untuk membukanya. Ia mengambil masa seminit.",
@@ -2519,7 +2527,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-01 v40";
+var BUILD="2026-11-01 v41";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2951,6 +2959,14 @@ function showInstallHelp(){
  document.body.appendChild(d);
  var x=document.getElementById("ihelp-x");x.onclick=function(){d.remove()};x.focus();
  d.addEventListener("click",function(e){if(e.target===d)d.remove()});
+}
+
+/* ============ Hijri settings that also work before sign-in ============ */
+function hijriSnippet(){
+ var r=baseHij(noon(new Date())),cur=r.y*12+r.m,keep=[];
+ Object.keys(hStarts).forEach(function(k){var p=k.split("-"),n=(+p[0])*12+(+p[1]);if(n>=cur-3&&n<=cur+14)keep.push([n,k])});
+ keep.sort(function(x,y){return x[0]-y[0]});
+ return 'HIJRI_ADJ: '+hOff+',\n  HIJRI_STARTS: {'+keep.map(function(x){return '"'+x[1]+'":"'+hStarts[x[1]]+'"'}).join(", ")+'},';
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
