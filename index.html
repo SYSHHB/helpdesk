@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SYSHHB IT Helpdesk System</title>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0E3B22">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Helpdesk">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -608,6 +608,10 @@ html,body{max-width:100%;overflow-x:clip}
 .ihelp h2{margin-bottom:10px}
 .ihelp ol{padding-left:22px;margin:0 0 12px;display:flex;flex-direction:column;gap:8px;line-height:1.45}
 .ihelp .btn{margin-top:6px}
+.idiag{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--text) 6%,transparent)}
+.idiag .drow{margin:3px 0;overflow-wrap:anywhere}
+.idiag .drow.ok{color:var(--s-resolved)}
+.idiag .drow.no{color:var(--s-open);font-weight:700}
 </style>
 </head>
 <body>
@@ -2527,7 +2531,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-01 v41";
+var BUILD="2026-11-01 v42";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2955,8 +2959,9 @@ function installSteps(){
 function showInstallHelp(){
  var ms=LANG==="ms",old=document.getElementById("ihelp");if(old)old.remove();
  var d=document.createElement("div");d.id="ihelp";d.className="ihelp";d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");d.translate=false;
- d.innerHTML='<div class="ibox"><h2>'+(ms?"Pasang pada telefon":"Install on your phone")+'</h2><ol>'+installSteps().map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+'</ol><p class="muted small">'+(ms?"Tidak nampak pilihan Pasang? Kemas kini Chrome atau Edge, jangan guna mod peribadi (Incognito/InPrivate), muat semula halaman ini dan tunggu beberapa saat.":"Don’t see Install? Update Chrome or Edge, don’t use a private (Incognito or InPrivate) tab, reload this page and wait a few seconds.")+'</p><button class="btn primary wide" id="ihelp-x">'+(ms?"Tutup":"Close")+'</button></div>';
+ d.innerHTML='<div class="ibox"><h2>'+(ms?"Pasang pada telefon":"Install on your phone")+'</h2><ol>'+installSteps().map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+'</ol><div id="ihelp-diag" class="idiag muted small">'+(ms?"Menyemak fail pemasangan…":"Checking the install files…")+'</div><p class="muted small">'+(ms?"Tidak nampak pilihan Pasang? Kemas kini Chrome atau Edge, jangan guna mod peribadi (Incognito/InPrivate), muat semula halaman ini dan tunggu beberapa saat.":"Don’t see Install? Update Chrome or Edge, don’t use a private (Incognito or InPrivate) tab, reload this page and wait a few seconds.")+'</p><button class="btn primary wide" id="ihelp-x">'+(ms?"Tutup":"Close")+'</button></div>';
  document.body.appendChild(d);
+ installDiag().then(function(lines){var b=document.getElementById("ihelp-diag");if(b)b.innerHTML=lines});
  var x=document.getElementById("ihelp-x");x.onclick=function(){d.remove()};x.focus();
  d.addEventListener("click",function(e){if(e.target===d)d.remove()});
 }
@@ -2967,6 +2972,42 @@ function hijriSnippet(){
  Object.keys(hStarts).forEach(function(k){var p=k.split("-"),n=(+p[0])*12+(+p[1]);if(n>=cur-3&&n<=cur+14)keep.push([n,k])});
  keep.sort(function(x,y){return x[0]-y[0]});
  return 'HIJRI_ADJ: '+hOff+',\n  HIJRI_STARTS: {'+keep.map(function(x){return '"'+x[1]+'":"'+hStarts[x[1]]+'"'}).join(", ")+'},';
+}
+
+async function installDiag(){
+ var ms=LANG==="ms",rows=[],good=0,bad=0;
+ var ok=function(t){good++;rows.push('<div class="drow ok">✓ '+esc(t)+'</div>')},no=function(t){bad++;rows.push('<div class="drow no">✗ '+esc(t)+'</div>')};
+ var T2=function(en,m){return ms?m:en};
+ try{
+  if(location.protocol!=="https:"&&location.hostname!=="localhost")no(T2("The page is not opened with https.","Halaman tidak dibuka dengan https."));
+  var l=document.querySelector("link[rel=manifest]"),mu=l?l.href:"";
+  if(!mu)no(T2("The page has no manifest link.","Halaman tiada pautan manifest."));
+  else{
+   var r=await fetch(mu,{cache:"no-store"});
+   if(!r.ok)no(T2("manifest.json is missing on GitHub ("+r.status+"). Upload manifest.json next to index.html.","manifest.json tiada di GitHub ("+r.status+"). Muat naik manifest.json bersebelahan index.html."));
+   else{
+    ok("manifest.json");
+    var m=null;try{m=await r.json()}catch(e){no(T2("manifest.json is not valid. Upload the new one again.","manifest.json tidak sah. Muat naik yang baharu semula."))}
+    if(m){
+     var seen={};
+     for(var i=0;i<(m.icons||[]).length;i++){
+      var u=new URL(m.icons[i].src,mu).href;if(seen[u])continue;seen[u]=1;
+      var name=m.icons[i].src.split("/").pop();
+      try{var ri=await fetch(u,{cache:"no-store"});if(ri.ok)ok(name);else no(T2(name+" is missing on GitHub ("+ri.status+"). Upload it next to index.html.",name+" tiada di GitHub ("+ri.status+"). Muat naik bersebelahan index.html."))}
+      catch(e){no(T2(name+" could not be loaded.",name+" tidak dapat dimuatkan."))}
+     }
+    }
+   }
+  }
+  var rs=await fetch("sw.js",{cache:"no-store"});
+  if(!rs.ok)no(T2("sw.js is missing on GitHub ("+rs.status+"). Upload sw.js next to index.html.","sw.js tiada di GitHub ("+rs.status+"). Muat naik sw.js bersebelahan index.html."));
+  else{
+   var reg=null;try{reg=await navigator.serviceWorker.getRegistration()}catch(e){}
+   if(reg)ok("sw.js");else no(T2("sw.js is on GitHub but not running yet. Close this browser tab completely and open the helpdesk again.","sw.js ada tetapi belum berjalan. Tutup tab pelayar sepenuhnya dan buka helpdesk semula."));
+  }
+ }catch(e){no(T2("Could not check: "+(e&&e.message||e),"Tidak dapat menyemak: "+(e&&e.message||e)))}
+ var tail=bad?"":'<div class="drow">'+T2("All install files are on GitHub. If Chrome still says it cannot install, close the tab, clear this site’s data in Chrome (Settings, Site settings), and open the helpdesk once more.","Semua fail pemasangan ada di GitHub. Jika Chrome masih berkata tidak boleh dipasang, tutup tab, kosongkan data tapak ini di Chrome (Tetapan, Tetapan tapak), dan buka helpdesk sekali lagi.")+'</div>';
+ return rows.join("")+tail;
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
