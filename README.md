@@ -188,3 +188,126 @@ The helpdesk then opens full screen from its own icon, like a normal app.
 If the menu only offers **Create shortcut**, the manifest files are not on GitHub yet, or the page
 has not reloaded since you uploaded them. Check that `https://YOURNAME.github.io/helpdesk/manifest.webmanifest`
 opens in the browser and shows text. Then close the tab, open the helpdesk again, and retry.
+
+---------------------------------------------------------------------------
+## Part 9. Let people reply to helpdesk emails
+
+When this is on, every helpdesk email says "You can reply to this email". The reply goes to
+it.helpdesk@syayasan.edu.bn, a small Power Automate flow saves it in OneDrive, and the helpdesk adds
+it to the complaint as a comment (marked "by email"). Only replies from the person who made the
+complaint, or from technicians and admins, are accepted. Others are ignored and noted in the Audit log.
+
+Every email also has a **Reply or view in the helpdesk** button that opens the complaint directly.
+That button works without any setup.
+
+**Set up the reply flow once (2 steps, signed in to Power Automate as it.helpdesk@syayasan.edu.bn)**
+1. In OneDrive, inside `SYSHHB-Helpdesk`, create a folder named `inbox` (lowercase).
+2. make.powerautomate.com > **Create** > **Automated cloud flow**. Name: `Helpdesk email replies`.
+   Trigger: **When a new email arrives (V3)** (Office 365 Outlook). Click Create.
+   - Folder: **Inbox**.
+   - Under advanced parameters, **Subject Filter**: `SYSHHB-IT-`
+3. Add the action **Create file** (OneDrive for Business):
+   - Folder Path: click the folder icon and pick **SYSHHB-Helpdesk > inbox** (do not type it).
+   - File Name: click the box, choose **fx**, paste `concat(guid(),'.json')`, click Add.
+   - File Content: click the box, choose **fx**, paste `string(triggerBody())`, click Add.
+4. Save. Make sure the flow is **On**.
+
+**Then switch it on in the helpdesk**
+In `config.js` on GitHub add this line under `EMAIL_MODE`:
+```
+  EMAIL_REPLIES: true,
+```
+Commit, wait 2 minutes, reopen the helpdesk.
+
+Replies are picked up while a technician or admin has the helpdesk open (it checks every minute).
+If nobody has it open, they appear the next time someone does.
+
+---------------------------------------------------------------------------
+## Part 10. Emails to the helpdesk team
+
+When a person submits a complaint, replies on it, or reopens it, an email with the subject
+`[ALERT] ...` is sent to **it.helpdesk@syayasan.edu.bn** and to the technician assigned to the
+complaint. It includes the complaint details, the person's message and a button that opens
+the complaint.
+
+To send these emails to other addresses as well, add this line to `config.js`:
+```
+  NOTIFY_EMAILS: ["it.helpdesk@syayasan.edu.bn", "someone@syayasan.edu.bn"],
+```
+If you do not add it, the addresses in `ADMIN_EMAILS` are used.
+
+These alert emails are ignored by the email-reply feature (Part 9), so they never turn into
+duplicate comments. Replies to them are ignored too. To answer a person, use the helpdesk button.
+
+---------------------------------------------------------------------------
+## Part 11. Let new staff sign in on their own (no manual adding)
+
+New people can sign in by themselves only when the OneDrive folder is open to everyone with a
+school account. If it is shared person by person, they see "Almost there. You can't open the
+helpdesk yet."
+
+**Switch it on (about one minute)**
+1. Sign in as administrator. On the **Home** page (or **Accounts**) you will see a yellow box:
+   "New staff cannot sign in on their own yet."
+2. Tap **Create the sign-up link**. A link appears. Tap **Copy**.
+3. On GitHub open `config.js`, click the pencil icon and paste the link between the quote marks:
+   ```
+   FOLDER_SHARE_URL: "paste the link here",
+   ```
+   Commit, wait 2 minutes, reopen the helpdesk.
+4. The box turns green: **Sign-up is open.**
+
+After that, a new person only needs to tap **Sign in with Microsoft**, confirm their name, staff
+group and phone number, and they appear in **Accounts** as a User. You can edit, disable or delete
+them there later. Technicians and administrators still need to be added or changed by you.
+
+If the button says it could not create the link, your Microsoft 365 may block organisation-wide
+links. In OneDrive open the folder `SYSHHB-Helpdesk`, choose **Share**, set it to **People in your
+organization** with **Can edit**, copy that link and paste it into `config.js` the same way.
+
+---------------------------------------------------------------------------
+## Part 12. If "Install app" does not appear on the phone
+
+The phone only offers to install the helpdesk when ALL of these files are on GitHub, in the SAME
+place as `index.html` (not inside a folder):
+- `manifest.json`
+- `sw.js`
+- `icon-192.png`
+- `icon-512.png`
+- `icon-maskable-512.png`
+- `apple-touch-icon.png`
+
+Upload them with **Add file > Upload files**. Wait 2 minutes, close the browser tab completely
+and open the helpdesk again.
+
+Not sure which one is missing? Tap **Install app on this phone** in the helpdesk. The window that
+opens checks the files and shows a green tick for each one that is there, and a red cross with
+the name of each one that is missing.
+
+---------------------------------------------------------------------------
+## Part 13. Security settings
+
+These settings are in `config.js`.
+
+**1. Content Security Policy (`CSP: true`)**
+The page may only run its own code, load the Microsoft sign-in library, and talk to Microsoft
+and OneDrive. Code injected by someone else is refused. If something stops working after an
+update, set `CSP: false`, commit, and tell the developer. Set it back to `true` afterwards.
+Note: GitHub Pages cannot send the "frame-ancestors" protection, so the page can still be
+shown inside someone else's frame.
+
+**2. Fingerprint for the Microsoft sign-in library (`MSAL_SRI`)**
+1. Sign in as administrator and open **Accounts**.
+2. In **Security checks**, tap **Create the fingerprint**, then **Copy**.
+3. On GitHub open `config.js`, replace the line that starts with `MSAL_SRI` with the copied
+   line, and commit.
+From then on the browser refuses to run the library if it is ever changed. If everyone suddenly
+cannot sign in and sees "failed its security check", clear the `MSAL_SRI` value and tell the
+developer. The fingerprint is created from the library as it is today, so create it once and
+do not change the library version without making a new one.
+
+**3. Automatic sign-out (`IDLE_MINUTES`)**
+After 30 minutes without touching the app, the person is signed out of the helpdesk. A message
+warns them one minute before, with a **Stay signed in** button. It also works if the app was
+closed and opened again later. Set `IDLE_MINUTES: 0` to turn it off. With
+`IDLE_FULL_SIGNOUT: true` the Microsoft account on that phone is signed out too.
