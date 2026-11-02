@@ -612,10 +612,46 @@ html,body{max-width:100%;overflow-x:clip}
 .idiag .drow{margin:3px 0;overflow-wrap:anywhere}
 .idiag .drow.ok{color:var(--s-resolved)}
 .idiag .drow.no{color:var(--s-open);font-weight:700}
+.splash{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center;color:#fff;background:radial-gradient(circle at 50% 38%,#22a846 0%,#12853a 55%,#0a5f28 100%)}
+.sp-in{display:flex;flex-direction:column;align-items:center;gap:18px;animation:spin-in .45s ease both}
+.sp-logo{position:relative;width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 10px 34px rgba(0,0,0,.25)}
+.sp-logo img{width:84px;height:84px;object-fit:contain;border-radius:50%}
+.sp-ring{position:absolute;inset:-9px;border-radius:50%;border:3px solid rgba(255,255,255,.28);border-top-color:#fff;animation:sprot 1s linear infinite}
+.sp-title{margin:0;font-family:var(--f-display,inherit);font-size:1.3rem;font-weight:700;letter-spacing:.01em}
+.sp-bar{width:190px;height:4px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
+.sp-bar i{display:block;height:100%;width:38%;border-radius:2px;background:#fff;animation:spbar 1.25s ease-in-out infinite}
+.sp-text{margin:0;opacity:.88;font-size:.95rem}
+@keyframes sprot{to{transform:rotate(360deg)}}
+@keyframes spbar{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}
+@keyframes spin-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes appin{from{opacity:0}to{opacity:1}}
+#root[data-mode=app]>.shell{animation:appin .35s ease both}
+#root[data-mode=auth]>*{animation:appin .3s ease both}
+@media (prefers-reduced-motion:reduce){.sp-ring,.sp-bar i,.sp-in,#root[data-mode=app]>.shell,#root[data-mode=auth]>*{animation:none}}
+.pick-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font:inherit;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-height:42px;cursor:pointer}
+.pick-btn .pick-v{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick-btn .pick-v.ph{color:var(--text)}
+.pick-btn svg.i{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:2}
+.pick-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.pickov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.pickbox{width:100%;max-width:520px;max-height:82vh;max-height:82dvh;background:var(--surface);color:var(--text);border-radius:16px 16px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:pickup .22s ease both}
+@keyframes pickup{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+.pickh{padding:16px 16px 10px;font-family:var(--f-display);font-weight:700;font-size:1.05rem}
+.picklist{overflow:auto;padding:0 0 8px}
+.pickopt{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 22px;align-items:center;gap:10px;text-align:left;border:0;border-top:1px solid var(--line);background:none;color:var(--text);padding:0 16px;min-height:50px;cursor:pointer;font:inherit}
+.pickopt .pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;line-height:1.2}
+.pickopt .pr{width:20px;height:20px;border-radius:50%;border:2px solid var(--muted);display:block;box-sizing:border-box}
+.pickopt.on .pr{border-color:var(--brand);background:radial-gradient(circle,var(--brand) 0 45%,transparent 50%)}
+.pickopt.on{background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.pickopt:hover,.pickopt:focus-visible{background:color-mix(in srgb,var(--text) 7%,transparent);outline:none}
+@media (min-width:700px){.pickov{align-items:center}.pickbox{border-radius:16px}}
+@media (prefers-reduced-motion:reduce){.pickbox{animation:none}}
+.hm{font-size:.78em;font-weight:500;color:var(--muted);white-space:nowrap}
+.tmeta .cat .hm{color:inherit;opacity:.75}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
@@ -625,8 +661,8 @@ html,body{max-width:100%;overflow-x:clip}
 /* ============ constants ============ */
 var STATUSES=[["open","Open"],["progress","In progress"],["hold","On hold"],["resolved","Resolved"],["closed","Closed"]];
 var PRIORITIES=[["low","Low",1],["medium","Medium",2],["high","High",3],["urgent","Urgent",4]];
-var CATS=["Biztrack System (FINANCE COUNTER ONLY)","Computer / Laptop (Hak Milik Sekolah)","Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)","Network / WiFi / Lan / Internet","Printer (Hak Milik Sekolah)","Projector / Projector Screen / Projector Socket / Projector Cable","VM - Virtual Machine (FINANCE COUNTER ONLY)"];
-function normCat(c){return {"Computer / laptop":CATS[1],"Network / Wi-Fi":CATS[3],"Printer / scanner":CATS[4],"Projector / Screen":CATS[5],"Projector / AV":CATS[5],"VM (Finance)":CATS[6],"Account / access":CATS[6]}[c]||c}
+var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network / WiFi / LAN / Internet","Printer","Projector / Screen / Socket / Cable","Biztrack System (FINANCE COUNTER ONLY)","VM - Virtual Machine (FINANCE COUNTER ONLY)"];
+function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
@@ -871,10 +907,11 @@ function syncBar(){
 }
 function startSubs(){
  seenMap();
+ S.dataReady=false;clearTimeout(S.dataT);S.dataT=setTimeout(function(){if(!S.dataReady){S.dataReady=true;render()}},6000);
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
- S.unsubs.push(watch(tq,function(s){S.tickets=s.docs.map(function(d){var x=d.data();x.id=d.id;x.category=normCat(x.category);return x});render();checkStale();tryOpenWanted()},"tickets"));
+ S.unsubs.push(watch(tq,function(s){S.tickets=s.docs.map(function(d){var x=d.data();x.id=d.id;x.category=normCat(x.category);return x});S.dataReady=true;clearTimeout(S.dataT);render();checkStale();tryOpenWanted()},"tickets"));
  S.unsubs.push(watch(col("notifs").orderBy("ts","desc").limit(150),function(s){
   var fresh=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});
   var added=S.notifReady?fresh.filter(function(n){return !S.notifs.some(function(o){return o.id===n.id})}):[];
@@ -985,7 +1022,7 @@ function renderChrome(){
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
  var dark=(document.documentElement.dataset.theme==="dark")||(!document.documentElement.dataset.theme&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
- $("#top").innerHTML='<h1>'+titleOf()+'</h1><div class="today"><span class="sun">'+ico("sun")+'<span>'+fmtG(Date.now())+'</span></span>'+(h?'<span class="moon">'+ico("moon")+'<span>'+esc(h.d+" "+h.name+" "+h.y+" H")+'</span></span>':'')+'<span class="clk" translate="no">'+ico("clock")+'<span id="hd-clock2">'+clockText()+'</span></span></div>'+
+ $("#top").innerHTML='<h1>'+titleOf()+'</h1><div class="today"><span class="sun"><span>'+fmtG(Date.now())+'</span></span>'+(h?'<span class="moon"><span>'+esc(h.d+" "+h.name+" "+h.y+" H")+'</span></span>':'')+'<span class="clk" translate="no">'+ico("clock")+'<span id="hd-clock2">'+clockText()+'</span></span></div>'+
   bellHTML()+'<button class="lang-btn" data-act="lang" data-l="'+(LANG==="ms"?"en":"ms")+'" translate="no" aria-label="Language / Bahasa" title="Language / Bahasa">'+(LANG==="ms"?"EN":"BM")+'</button><button class="icon-btn" data-act="theme" aria-label="Switch light or dark theme">'+ico(dark?"sun":"moon")+'</button>'+
   '<button class="icon-btn" data-act="logout" aria-label="Sign out">'+ico("out")+'</button>';
  var fb=$("#fab");if(fb){fb.hidden=["new","audit","accounts","ticket","reports"].indexOf(S.view)>=0||S.sheet;fb.setAttribute("aria-label",T("New complaint"))}
@@ -1009,6 +1046,10 @@ function renderContent(){
  });
 }
 function render(){
+ if((!S.me&&S.loading)||(S.me&&!S.dataReady)){
+  if(root.dataset.mode!=="splash"||!root.querySelector(".sp-logo img")){root.innerHTML=splashHTML();root.dataset.mode="splash";i18nApply(root)}
+  return;
+ }
  if(!S.me){
   if(root.dataset.mode==="app")root.dataset.mode="";
   keep(function(){root.innerHTML=authHTML()});root.dataset.mode="auth";i18nApply(root);authFx();return;
@@ -1026,7 +1067,7 @@ function prio(p){var l=(PRIORITIES.filter(function(x){return x[0]===p})[0]||[0,0
 function barRow(label,n,max,color){return '<div class="bar"><span>'+esc(label)+'</span><span class="tr"><i style="width:'+(max?Math.round(n/max*100):0)+'%'+(color?';background:'+color:'')+'"></i></span><b>'+n+'</b></div>'}
 function ticketRow(t){
  return '<button class="trow s-'+esc(t.status)+(unseen(t)?' has-new':'')+'" data-act="open" data-id="'+esc(t.id)+'"><span class="tid">'+esc(t.id)+'</span>'+
- '<span class="ttl">'+newBadge(t)+'<span class="kv"><span class="k">Name:</span> <b translate="no">'+esc(t.createdByName)+'</b></span><span class="kv"><span class="k">Complain:</span> <strong translate="no">'+esc(t.title)+'</strong></span>'+(t.location?'<span class="kv"><span class="k">Location:</span> <span translate="no">'+esc(t.location)+'</span></span>':'')+cardExtras(t)+newSnip(t)+'<span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+esc(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
+ '<span class="ttl">'+newBadge(t)+'<span class="kv"><span class="k">Name:</span> <b translate="no">'+esc(t.createdByName)+'</b></span><span class="kv"><span class="k">Complain:</span> <strong translate="no">'+esc(t.title)+'</strong></span>'+(t.location?'<span class="kv"><span class="k">Location:</span> <span translate="no">'+esc(t.location)+'</span></span>':'')+cardExtras(t)+newSnip(t)+'<span class="tmeta"><span class="cat">'+ico(catIcon(t.category))+'<span>'+catHTML(t.category)+'</span></span><span class="when">'+ico("clock")+'<span translate="no">'+fmtG(t.createdAt)+', '+BNTM.format(new Date(t.createdAt))+'</span></span></span></span>'+
  pill(t.status)+prio(t.priority)+'<span class="tasg">'+esc(t.assignedName||"Unassigned")+'</span><span class="tdt">'+dual(t.createdAt)+'</span></button>';
 }
 
@@ -1121,7 +1162,7 @@ function pgNew(){
  return '<div class="page-h"><div><h1>New complaint</h1><p class="muted">Technicians are notified as soon as you submit.</p></div></div>'+
  '<form class="panel form stack" data-form="newticket">'+
  '<label class="fld"><span>What’s the problem?</span><input id="n-title" name="title" required maxlength="120" data-keep placeholder="For example: Projector in Room 4 shows no signal"></label>'+
- '<div class="grid2"><label class="fld"><span>Category</span><select id="n-cat" name="category" data-keep required><option value="">Select…</option>'+CATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join("")+'</select></label>'+
+ '<div class="grid2"><label class="fld"><span>Category</span><div class="pick"><input type="hidden" id="n-cat" name="category" data-keep value=""><button type="button" class="pick-btn" id="n-cat-btn" data-act="pickopen" aria-haspopup="listbox"><span class="pick-v ph" translate="no">Select…</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></label>'+
  '<label class="fld"><span>Location</span>'+locSel()+'</label></div>'+
  '<label class="fld"><span>Room or place</span><input id="n-room" name="room" required maxlength="60" data-keep placeholder="For example: Room 4, Y7, IT room"></label>'+
  '<label class="fld"><span>Details</span><textarea id="n-desc" name="description" required rows="6" maxlength="4000" data-keep placeholder="What happened, when it started, and anything you already tried."></textarea></label>'+
@@ -1135,7 +1176,7 @@ function pgTicket(){
  if(!t)return '<div class="crumb"><button class="link" data-act="nav" data-v="tickets">Back to complaints</button></div><div class="panel empty"><b>Complaint not found</b>It may have been removed, or you may not have access to it.</div>';
  var staff=isStaff(),mineT=t.createdBy===S.me.username;markSeen(t.id);
  var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t))+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
- '<div><dt>Category</dt><dd>'+esc(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
+ '<div><dt>Category</dt><dd>'+catHTML(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
  '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Target date</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
  '<div style="grid-column:1/-1"><dt>Progress '+(t.progress||0)+'%</dt><dd><div class="progress" role="progressbar" aria-valuenow="'+(t.progress||0)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+(t.progress||0)+'%"></i></div></dd></div></dl>';
  var reopen=(!staff&&mineT&&!isActive(t))?'<button class="btn" data-act="reopen">Reopen this complaint</button>':'';
@@ -1441,6 +1482,7 @@ var A={
  },
  auditmore:function(){S.auditN+=100;renderContent()},
  closesheet:function(){S.sheet=false;render()},
+ pickopen:function(){openPick()},
  copyhj:function(){var t=document.getElementById("hj-snip");if(!t)return;t.select();try{navigator.clipboard.writeText(t.value).then(function(){toast("Copied.")},function(){document.execCommand("copy");toast("Copied.")})}catch(e){try{document.execCommand("copy");toast("Copied.")}catch(x){}}},
  installapp:function(){
   if(IP){var p=IP;IP=null;p.prompt();p.userChoice.then(function(c){if(c&&c.outcome==="accepted"){ls.set("hd.installHide","1");if(S.me)renderContent()}else{if(S.me)renderContent();else render()}});}
@@ -1788,6 +1830,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Loading…":"Memuatkan…",
 "Show the same dates on the login page for new phones":"Tunjukkan tarikh yang sama pada halaman log masuk untuk telefon baharu","A phone that has never signed in cannot read these settings. Copy these lines into config.js on GitHub (replace any HIJRI_ lines), and commit.":"Telefon yang belum pernah log masuk tidak dapat membaca tetapan ini. Salin baris ini ke config.js di GitHub (gantikan sebarang baris HIJRI_), dan commit.",
 "Install app on this phone":"Pasang aplikasi pada telefon ini",
 "Fill in everything and add at least 1 photo to submit.":"Isi semua maklumat dan tambah sekurang-kurangnya 1 gambar untuk menghantar.","Enter the room or place.":"Masukkan bilik atau tempat.","Add at least 1 photo.":"Tambah sekurang-kurangnya 1 gambar.",
@@ -2531,7 +2574,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-01 v42";
+var BUILD="2026-11-02 v47";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3009,6 +3052,76 @@ async function installDiag(){
  var tail=bad?"":'<div class="drow">'+T2("All install files are on GitHub. If Chrome still says it cannot install, close the tab, clear this site’s data in Chrome (Settings, Site settings), and open the helpdesk once more.","Semua fail pemasangan ada di GitHub. Jika Chrome masih berkata tidak boleh dipasang, tutup tab, kosongkan data tapak ini di Chrome (Tetapan, Tetapan tapak), dan buka helpdesk sekali lagi.")+'</div>';
  return rows.join("")+tail;
 }
+
+/* ============ loading screen ============ */
+function splashHTML(){
+ return '<main class="splash" role="status" aria-live="polite"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span><img src="'+LOGO+'" alt=""></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main>';
+}
+
+/* ============ category picker: one-line options that fit the screen ============ */
+function pickLabel(v){return v||"Select…"}
+function fitFont(texts,width,weight,min,max){
+ var c=document.createElement("canvas").getContext("2d"),fam=getComputedStyle(document.body).fontFamily,size=max;
+ for(;size>min;size-=0.25){
+  c.font=weight+" "+size+"px "+fam;
+  var w=0;texts.forEach(function(t){w=Math.max(w,c.measureText(t).width)});
+  if(w<=width)break;
+ }
+ return size;
+}
+function syncPick(){
+ var h=document.getElementById("n-cat"),b=document.getElementById("n-cat-btn");
+ if(!h||!b)return;
+ var v=h.value||"",s=b.querySelector(".pick-v");
+ if(s&&s.dataset.v!==v){
+  s.dataset.v=v;s.innerHTML=v?catHTML(v):esc(pickLabel(v));
+  s.classList.toggle("ph",!v);
+ }
+ if(s){s.style.fontSize=fitOne(v,Math.max(120,b.clientWidth-52),10.5,15)+"px"}
+}
+function closePick(){var o=document.getElementById("pickov");if(o)o.remove();document.removeEventListener("keydown",pickKey,true);var b=document.getElementById("n-cat-btn");if(b)b.focus()}
+function pickKey(e){if(e.key==="Escape"){e.preventDefault();closePick()}}
+function openPick(){
+ var h=document.getElementById("n-cat");if(!h)return;
+ closePick();
+ var items=[["","Select…"]].concat(CATS.map(function(c){return [c,c]}));
+ var o=document.createElement("div");o.id="pickov";o.className="pickov";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.translate=false;
+ var box=document.createElement("div");box.className="pickbox";
+ var title=document.createElement("div");title.className="pickh";title.textContent=LANG==="ms"?"Pilih kategori":"Choose the category";
+ var list=document.createElement("div");list.className="picklist";list.setAttribute("role","listbox");
+ box.appendChild(title);box.appendChild(list);o.appendChild(box);document.body.appendChild(o);
+ var avail=Math.min(window.innerWidth,520)-32-36;
+ var fs=fitCats(avail,10,15);
+ var cur=h.value||"",focusEl=null;
+ items.forEach(function(it){
+  var b=document.createElement("button");b.type="button";b.className="pickopt"+(it[0]===cur?" on":"");
+  b.setAttribute("role","option");b.setAttribute("aria-selected",it[0]===cur?"true":"false");
+  var t=document.createElement("span");t.className="pt";t.innerHTML=catHTML(it[1]);t.style.fontSize=fs+"px";
+  var r=document.createElement("i");r.className="pr";r.setAttribute("aria-hidden","true");
+  b.appendChild(t);b.appendChild(r);
+  b.onclick=function(){h.value=it[0];h.dispatchEvent(new Event("input",{bubbles:true}));h.dispatchEvent(new Event("change",{bubbles:true}));syncPick();closePick();syncNew()};
+  list.appendChild(b);if(it[0]===cur)focusEl=b;
+ });
+ o.addEventListener("click",function(e){if(e.target===o)closePick()});
+ document.addEventListener("keydown",pickKey,true);
+ (focusEl||list.firstChild).focus();if(focusEl)focusEl.scrollIntoView({block:"center"});
+}
+setInterval(syncPick,300);
+
+/* ============ "(Hak Milik Sekolah)" shown as small text ============ */
+var CAT_NOTE="(Hak Milik Sekolah)";
+function catNote(c){return (c==="Computer / Laptop"||c==="Monitor / Keyboard / Mouse / Headsets"||c==="Printer")?CAT_NOTE:""}
+function catHTML(c){var n=catNote(c);return esc(c)+(n?' <small class="hm">'+esc(n)+'</small>':'')}
+var catCtx=null;
+function catWidth(c,size){
+ if(!catCtx)catCtx=document.createElement("canvas").getContext("2d");
+ var fam=getComputedStyle(document.body).fontFamily;
+ catCtx.font="600 "+size+"px "+fam;var w=catCtx.measureText(c).width,n=catNote(c);
+ if(n){catCtx.font="500 "+(size*0.78)+"px "+fam;w+=catCtx.measureText(" "+n).width}
+ return w;
+}
+function fitCats(width,min,max){var size=max;for(;size>min;size-=0.25){var w=0;CATS.forEach(function(c){w=Math.max(w,catWidth(c,size))});if(w<=width)break}return size}
+function fitOne(c,width,min,max){var size=max;for(;size>min;size-=0.25){if(catWidth(c||"Select…",size)<=width)break}return size}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
