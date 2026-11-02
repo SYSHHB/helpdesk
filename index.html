@@ -662,7 +662,7 @@ html,body{max-width:100%;overflow-x:clip}
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-zpsY6q58u2jMC/vJmNOGcZQBaJKH6JxYEaKM+VjbjMI=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-P4Y0wluBbisztLqZ6uBFw5my2FNG01k6M+lLT+W+rGg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
 document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
@@ -1187,7 +1187,7 @@ function pgTicket(){
  var t=curTicket();
  if(!t)return '<div class="crumb"><button class="link" data-act="nav" data-v="tickets">Back to complaints</button></div><div class="panel empty"><b>Complaint not found</b>It may have been removed, or you may not have access to it.</div>';
  var staff=isStaff(),mineT=t.createdBy===S.me.username;markSeen(t.id);
- var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t))+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
+ var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t),t)+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
  '<div><dt>Category</dt><dd>'+catHTML(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
  '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Target date</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
  '<div style="grid-column:1/-1"><dt>Progress '+(t.progress||0)+'%</dt><dd><div class="progress" role="progressbar" aria-valuenow="'+(t.progress||0)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+(t.progress||0)+'%"></i></div></dd></div></dl>';
@@ -2595,7 +2595,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-02 v50";
+var BUILD="2026-11-02 v51";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2680,10 +2680,10 @@ function normPhone(x){
  if(d.length<8||d.length>15)return "";
  return "+"+d;
 }
-function waLinks(p){
+function waLinks(p,t){
  if(!p)return "";
  var d=String(p).replace(/\D/g,"");
- return '<span class="phone" translate="no">'+esc(p)+'</span> <a class="wa" href="https://wa.me/'+d+'" target="_blank" rel="noopener">WhatsApp</a> <a class="wa call" href="tel:+'+d+'">Call</a>';
+ return '<span class="phone" translate="no">'+esc(p)+'</span> <a class="wa" href="https://wa.me/'+d+(t?'?text='+encodeURIComponent(waMessage(t)):'')+'" target="_blank" rel="noopener">WhatsApp</a> <a class="wa call" href="tel:+'+d+'">Call</a>';
 }
 function phoneFor(t){
  if(t.createdByPhone)return t.createdByPhone;
@@ -3218,6 +3218,35 @@ function securityPanel(){
   else h+='<button class="btn sm primary" data-act="mkfp">'+t2("Create the fingerprint","Cipta cap jari")+'</button>';
  }
  return h+'</div>';
+}
+
+/* ============ WhatsApp message with the complaint details ============ */
+function waMessage(t){
+ var ms=LANG==="ms",L=[];
+ var hj=function(ts){try{var h=fmtH(ts);return h?" ("+h+")":""}catch(e){return ""}};
+ var dt=function(ts){return fmtG(ts)+", "+tF.format(new Date(ts))+hj(ts)};
+ var dueTs=t.due?new Date(t.due+"T12:00:00").getTime():0;
+ var who=(S.me&&S.me.name)||"";
+ L.push(ms?"Salam "+t.createdByName+",":"Hello "+t.createdByName+",");
+ L.push(ms?"ini IT Helpdesk berkenaan aduan anda.":"this is the IT Helpdesk about your complaint.");
+ L.push("");
+ L.push("*"+fmtIds(t.id)+"*");
+ L.push((ms?"Aduan: ":"Complaint: ")+t.title);
+ L.push((ms?"Status: ":"Status: ")+(ms?Tm(stLbl(t.status)):stLbl(t.status)));
+ L.push("");
+ L.push((ms?"Pelapor: ":"Requested by: ")+t.createdByName);
+ if(t.category)L.push((ms?"Kategori: ":"Category: ")+t.category);
+ if(t.location)L.push((ms?"Lokasi: ":"Location: ")+t.location);
+ if(t.assignedName)L.push((ms?"Ditugaskan kepada: ":"Assigned to: ")+t.assignedName);
+ L.push((ms?"Dihantar: ":"Submitted: ")+dt(t.createdAt));
+ if(t.attendedAt)L.push((ms?"Mula diambil tindakan: ":"First attended: ")+dt(t.attendedAt)+(t.attendedByName?(ms?" oleh ":" by ")+t.attendedByName:""));
+ if(dueTs)L.push((ms?"Tarikh sasaran: ":"Target date: ")+fmtG(dueTs)+hj(dueTs));
+ L.push((ms?"Kemajuan: ":"Progress: ")+(t.progress||0)+"%");
+ L.push("");
+ L.push(ms?"Terima kasih.":"Thank you.");
+ if(who&&who!=="IT Helpdesk")L.push(who);
+ L.push("IT Helpdesk, SYSHHB");
+ return L.join("\n");
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */
