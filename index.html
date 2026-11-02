@@ -661,8 +661,8 @@ html,body{max-width:100%;overflow-x:clip}
 /* ============ constants ============ */
 var STATUSES=[["open","Open"],["progress","In progress"],["hold","On hold"],["resolved","Resolved"],["closed","Closed"]];
 var PRIORITIES=[["low","Low",1],["medium","Medium",2],["high","High",3],["urgent","Urgent",4]];
-var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network / WiFi / LAN / Internet","Printer","Projector / Screen / Socket / Cable","Biztrack System (FINANCE COUNTER ONLY)","VM - Virtual Machine (FINANCE COUNTER ONLY)"];
-function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6]}[c]||c}
+var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network / WiFi / LAN / Internet","Printer","Projector / Screen / Socket / Cable","Biztrack System (Finance Counter Only)","VM - Virtual Machine (Finance Counter Only)"];
+function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6],"Biztrack System (FINANCE COUNTER ONLY)":CATS[5],"VM - Virtual Machine (FINANCE COUNTER ONLY)":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
@@ -2574,7 +2574,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-02 v47";
+var BUILD="2026-11-02 v49";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3108,16 +3108,22 @@ function openPick(){
 }
 setInterval(syncPick,300);
 
-/* ============ "(Hak Milik Sekolah)" shown as small text ============ */
+/* ============ notes such as "(Hak Milik Sekolah)" shown as small grey text ============ */
 var CAT_NOTE="(Hak Milik Sekolah)";
-function catNote(c){return (c==="Computer / Laptop"||c==="Monitor / Keyboard / Mouse / Headsets"||c==="Printer")?CAT_NOTE:""}
-function catHTML(c){var n=catNote(c);return esc(c)+(n?' <small class="hm">'+esc(n)+'</small>':'')}
+function catSplit(c){
+ c=String(c||"");
+ var m=c.match(/^(.*?)\s*\(finance counter only\)$/i);
+ if(m)return [m[1],"(Finance Counter Only)"];
+ return [c,(c==="Computer / Laptop"||c==="Monitor / Keyboard / Mouse / Headsets"||c==="Printer")?CAT_NOTE:""];
+}
+function catNote(c){return catSplit(c)[1]}
+function catHTML(c){var p=catSplit(c);return esc(p[0])+(p[1]?' <small class="hm">'+esc(p[1])+'</small>':'')}
 var catCtx=null;
 function catWidth(c,size){
  if(!catCtx)catCtx=document.createElement("canvas").getContext("2d");
- var fam=getComputedStyle(document.body).fontFamily;
- catCtx.font="600 "+size+"px "+fam;var w=catCtx.measureText(c).width,n=catNote(c);
- if(n){catCtx.font="500 "+(size*0.78)+"px "+fam;w+=catCtx.measureText(" "+n).width}
+ var fam=getComputedStyle(document.body).fontFamily,p=catSplit(c);
+ catCtx.font="600 "+size+"px "+fam;var w=catCtx.measureText(p[0]).width;
+ if(p[1]){catCtx.font="500 "+(size*0.78)+"px "+fam;w+=catCtx.measureText(" "+p[1]).width}
  return w;
 }
 function fitCats(width,min,max){var size=max;for(;size>min;size-=0.25){var w=0;CATS.forEach(function(c){w=Math.max(w,catWidth(c,size))});if(w<=width)break}return size}
