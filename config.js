@@ -46,6 +46,19 @@ window.HELPDESK_CONFIG = {
   HIJRI_ADJ: -1,
   HIJRI_STARTS: {},
 
+  /* SECURITY
+     CSP: true keeps the page limited to its own code (recommended). If something stops working
+     after an update, set it to false, tell the developer, and set it back to true. */
+  CSP: true,
+  /* Sign out after this many minutes without touching the app (0 turns it off). */
+  IDLE_MINUTES: 30,
+  /* false = only the helpdesk signs out (one tap to sign back in).
+     true = also sign out of the Microsoft account on this phone (asks for the password again). */
+  IDLE_FULL_SIGNOUT: false,
+  /* Fingerprint that locks the Microsoft sign-in library. Create it in the helpdesk:
+     Accounts > Security checks > Create the fingerprint, then paste the line here. */
+  MSAL_SRI: "",
+
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
 };

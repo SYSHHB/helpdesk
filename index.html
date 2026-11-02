@@ -648,13 +648,24 @@ html,body{max-width:100%;overflow-x:clip}
 @media (prefers-reduced-motion:reduce){.pickbox{animation:none}}
 .hm{font-size:.78em;font-weight:500;color:var(--muted);white-space:nowrap}
 .tmeta .cat .hm{color:inherit;opacity:.75}
+.secpanel{margin-bottom:14px}
+.secpanel h2{margin-bottom:10px}
+.srow{display:flex;gap:10px;align-items:flex-start;margin:6px 0;line-height:1.4}
+.srow b{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;color:#fff}
+.srow.ok b{background:var(--s-resolved)}
+.srow.no b{background:var(--s-hold)}
+.idlewarn{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:1100;max-width:520px;margin:0 auto;background:var(--surface);color:var(--text);border:2px solid var(--s-hold);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 36px rgba(0,0,0,.35)}
+.idlewarn .iw-t{font-weight:600;line-height:1.35}
 </style>
 </head>
 <body>
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-zpsY6q58u2jMC/vJmNOGcZQBaJKH6JxYEaKM+VjbjMI=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
+var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
+document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
 <script>
 (function(){
 "use strict";
@@ -666,7 +677,7 @@ function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer 
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
-"ticket.create":"Complaint submitted","ticket.status":"Status changed","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
+"ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
 var DAY=864e5;
@@ -957,7 +968,7 @@ async function startSession(acct){
  S.view=isStaff()?"dashboard":"dashboard";S.err="";
  startSubs();render();
 }
-async function logout(){
+async function logout(local){
  var em=S.me.username;
  try{await log("auth.logout",em,"")}catch(e){}
  try{sessionStorage.removeItem("hd.logged."+em)}catch(e){}
@@ -965,7 +976,8 @@ async function logout(){
  S.rp=null;S.me=null;S.tickets=[];S.notifs=[];S.accounts=[];S.audit=[];S.comments=[];S.sel=null;S.bell=false;S.err="";S.pending=null;
  S.f={status:"all",prio:"all",q:"",mine:false,special:""};
  root.dataset.mode="";render();
- if(msalApp)msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()});
+ if(local){clearMsalCache();try{if(msalApp)msalApp.setActiveAccount(null)}catch(e){}}
+ else if(msalApp)msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()});
 }
 function validUser(u){return /^[a-z0-9._-]{3,24}$/.test(u)}
 
@@ -1316,7 +1328,7 @@ function pgAccounts(){
   '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- mailPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+securityPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
@@ -1482,6 +1494,8 @@ var A={
  },
  auditmore:function(){S.auditN+=100;renderContent()},
  closesheet:function(){S.sheet=false;render()},
+ mkfp:function(){return withBusy(async function(){await makeFingerprint();renderContent()})},
+ copyfp:function(){var t=document.getElementById("fp-line");if(!t)return;t.select();try{navigator.clipboard.writeText(t.value).then(function(){toast("Copied.")},function(){document.execCommand("copy");toast("Copied.")})}catch(e){try{document.execCommand("copy");toast("Copied.")}catch(x){}}},
  pickopen:function(){openPick()},
  copyhj:function(){var t=document.getElementById("hj-snip");if(!t)return;t.select();try{navigator.clipboard.writeText(t.value).then(function(){toast("Copied.")},function(){document.execCommand("copy");toast("Copied.")})}catch(e){try{document.execCommand("copy");toast("Copied.")}catch(x){}}},
  installapp:function(){
@@ -1830,6 +1844,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Security checks":"Semakan keselamatan","Create the fingerprint":"Cipta cap jari","Stay signed in":"Kekal log masuk","Signed out (inactive)":"Dilog keluar (tidak aktif)",
 "Loading…":"Memuatkan…",
 "Show the same dates on the login page for new phones":"Tunjukkan tarikh yang sama pada halaman log masuk untuk telefon baharu","A phone that has never signed in cannot read these settings. Copy these lines into config.js on GitHub (replace any HIJRI_ lines), and commit.":"Telefon yang belum pernah log masuk tidak dapat membaca tetapan ini. Salin baris ini ke config.js di GitHub (gantikan sebarang baris HIJRI_), dan commit.",
 "Install app on this phone":"Pasang aplikasi pada telefon ini",
@@ -2391,7 +2406,7 @@ async function resolveStorage(email){
 
 /* ---- sign-in ---- */
 async function msInit(){
- if(!window.msal)throw new Error("The Microsoft sign-in library did not load. Check your internet connection and reload the page.");
+ if(!window.msal)throw new Error("The Microsoft sign-in library did not load. Check your internet connection and reload the page."+(CFG.MSAL_SRI?" If this keeps happening, the library failed its security check (MSAL_SRI in config.js). Ask the administrator.":""));
  if(!msConfigured())throw new Error("Setup needed: add your Application (client) ID and Tenant ID to config.js.");
  msalApp=new msal.PublicClientApplication({
   auth:{clientId:CFG.CLIENT_ID,authority:"https://login.microsoftonline.com/"+(CFG.TENANT_ID||"organizations"),redirectUri:pageUrl(),postLogoutRedirectUri:pageUrl(),navigateToLoginRequestUrl:false},
@@ -2399,6 +2414,11 @@ async function msInit(){
  });
  if(msalApp.initialize)await msalApp.initialize();
  var res=await msalApp.handleRedirectPromise();
+ var lim=idleLimit();
+ if(lim&&!(res&&res.account)&&msalApp.getAllAccounts().length){
+  var lastA=+(ls.get("hd.lastActive")||0);
+  if(lastA&&Date.now()-lastA>lim){clearMsalCache();S.err=LANG==="ms"?"Anda telah dilog keluar kerana tidak aktif. Log masuk semula untuk meneruskan.":"You were signed out because you were inactive. Sign in again to continue."}
+ }
  var acct=(res&&res.account)||msalApp.getActiveAccount()||msalApp.getAllAccounts()[0]||null;
  if(acct)msalApp.setActiveAccount(acct);
  return acct;
@@ -2422,6 +2442,7 @@ async function seedAndEnsure(email,name){
  }
 }
 async function afterLogin(acct){
+ idleTouch();
  var email=String(acct.username||"").toLowerCase(),name=acct.name||email;
  var dom=String(CFG.ALLOWED_DOMAIN||"").toLowerCase();
  if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom){
@@ -2574,7 +2595,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-02 v49";
+var BUILD="2026-11-02 v50";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3128,6 +3149,76 @@ function catWidth(c,size){
 }
 function fitCats(width,min,max){var size=max;for(;size>min;size-=0.25){var w=0;CATS.forEach(function(c){w=Math.max(w,catWidth(c,size))});if(w<=width)break}return size}
 function fitOne(c,width,min,max){var size=max;for(;size>min;size-=0.25){if(catWidth(c||"Select…",size)<=width)break}return size}
+
+/* ============ security: sign out after inactivity ============ */
+function idleLimit(){var m=(window.HELPDESK_CONFIG||{}).IDLE_MINUTES;if(typeof m!=="number")m=30;return m>0?m*60000:0}
+function clearMsalCache(){
+ [localStorage,sessionStorage].forEach(function(st){try{Object.keys(st).forEach(function(k){if(k.indexOf("msal.")===0||(CFG.CLIENT_ID&&k.indexOf(CFG.CLIENT_ID)>=0))st.removeItem(k)})}catch(e){}});
+}
+var idleLast=Date.now(),idleSaved=0;
+function idleTouch(){
+ var n=Date.now();idleLast=n;
+ if(n-idleSaved>10000){idleSaved=n;try{localStorage.setItem("hd.lastActive",String(n))}catch(e){}}
+ var w=document.getElementById("idlewarn");if(w)w.remove();
+}
+["pointerdown","keydown","touchstart","wheel"].forEach(function(ev){document.addEventListener(ev,function(){if(S.me)idleTouch()},true)});
+document.addEventListener("scroll",function(){if(S.me)idleTouch()},true);
+function idleShared(){var v=0;try{v=+(localStorage.getItem("hd.lastActive")||0)}catch(e){}return Math.max(idleLast,v)}
+function idleWarn(sec){
+ var ms=LANG==="ms",w=document.getElementById("idlewarn");
+ if(!w){
+  w=document.createElement("div");w.id="idlewarn";w.className="idlewarn";w.setAttribute("role","alertdialog");w.translate=false;
+  w.innerHTML='<div class="iw-t"></div><button type="button" class="btn sm primary" id="iw-b"></button>';
+  document.body.appendChild(w);
+  document.getElementById("iw-b").onclick=function(){idleTouch()};
+ }
+ w.firstChild.textContent=ms?("Anda akan dilog keluar dalam "+sec+" saat kerana tidak aktif."):("You will be signed out in "+sec+" seconds because the app has not been used.");
+ document.getElementById("iw-b").textContent=ms?"Kekal log masuk":"Stay signed in";
+}
+async function idleLogout(){
+ if(!S.me||S.idleBusy)return;S.idleBusy=true;
+ var w=document.getElementById("idlewarn");if(w)w.remove();
+ var full=!!(window.HELPDESK_CONFIG||{}).IDLE_FULL_SIGNOUT,mins=Math.round(idleLimit()/6000)/10;
+ try{await log("auth.idle",S.me.username,"Signed out after "+mins+" minutes of inactivity")}catch(e){}
+ await logout(!full);
+ S.err=LANG==="ms"?"Anda telah dilog keluar kerana tidak aktif. Log masuk semula untuk meneruskan.":"You were signed out because you were inactive. Sign in again to continue.";
+ S.idleBusy=false;render();
+}
+function idleTick(){
+ var lim=idleLimit();if(!lim||!S.me)return;
+ var idle=Date.now()-idleShared();
+ if(idle>=lim){idleLogout();return}
+ var warnAt=Math.min(60000,lim/2);
+ if(idle>=lim-warnAt)idleWarn(Math.ceil((lim-idle)/1000));
+}
+setInterval(idleTick,1000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)idleTick()});
+
+/* ============ security: fingerprint of the sign-in library ============ */
+var MSAL_URL="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js";
+async function makeFingerprint(){
+ var r=await fetch(MSAL_URL,{cache:"no-store"});
+ if(!r.ok)throw new Error("Could not read the sign-in library ("+r.status+").");
+ var d=await crypto.subtle.digest("SHA-384",await r.arrayBuffer()),b="";
+ new Uint8Array(d).forEach(function(x){b+=String.fromCharCode(x)});
+ S.msalSri="sha384-"+btoa(b);
+}
+function securityPanel(){
+ if(!isAdmin())return "";
+ var c=window.HELPDESK_CONFIG||{},ms=LANG==="ms",t2=function(e,m){return ms?m:e};
+ var idle=Math.round(idleLimit()/60000*10)/10,csp=c.CSP!==false,sri=!!c.MSAL_SRI;
+ var row=function(ok,txt){return '<div class="srow '+(ok?"ok":"no")+'"><b>'+(ok?"✓":"!")+'</b><span>'+esc(txt)+'</span></div>'};
+ var h='<div class="panel secpanel" translate="no"><h2>'+t2("Security checks","Semakan keselamatan")+'</h2>';
+ h+=row(csp,csp?t2("Content Security Policy is on. The page can only run its own code.","Content Security Policy aktif. Halaman hanya boleh menjalankan kodnya sendiri."):t2("Content Security Policy is off (CSP: false in config.js).","Content Security Policy dimatikan (CSP: false dalam config.js)."));
+ h+=row(idle>0,idle>0?t2("Signs out after "+idle+" minutes of inactivity.","Log keluar selepas "+idle+" minit tidak aktif."):t2("Automatic sign-out is off.","Log keluar automatik dimatikan."));
+ h+=row(sri,sri?t2("The Microsoft sign-in library is locked with a fingerprint.","Pustaka log masuk Microsoft dikunci dengan cap jari."):t2("The Microsoft sign-in library is not locked with a fingerprint yet.","Pustaka log masuk Microsoft belum dikunci dengan cap jari."));
+ if(!sri){
+  h+='<p class="muted small" style="margin:8px 0">'+t2("Create the fingerprint of the library as it is today, copy the line into config.js on GitHub, and commit. After that the browser refuses to run the library if anyone changes it.","Cipta cap jari pustaka seperti hari ini, salin baris ke config.js di GitHub, dan commit. Selepas itu pelayar enggan menjalankan pustaka jika ada yang mengubahnya.")+'</p>';
+  if(S.msalSri)h+='<div class="copyrow"><input readonly id="fp-line" value="'+esc('MSAL_SRI: "'+S.msalSri+'",')+'"><button class="btn sm" data-act="copyfp">'+t2("Copy","Salin")+'</button></div>';
+  else h+='<button class="btn sm primary" data-act="mkfp">'+t2("Create the fingerprint","Cipta cap jari")+'</button>';
+ }
+ return h+'</div>';
+}
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;
