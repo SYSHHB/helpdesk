@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Helpdesk">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="app-apple-touch.png">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -669,7 +669,7 @@ html,body{max-width:100%;overflow-x:clip}
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-exZ9lVXciTyRitwhV/BQcgUA/wl80t35DpQdaDUfBTc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-4J2XaO1DT6dERiSFCL8lQpTm1G4LyoarOgfFL/R2uKs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
 document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
@@ -2564,7 +2564,7 @@ function buildMail(kind,t,o){
  var sub=staffK?(kind==="staffnew"?"New complaint from "+(o.by||""):kind==="staffesc"?"Escalated to "+prLbl(t.priority):(o.by||"")+" replied"):{"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah selesai","closed":"Your complaint is closed | Aduan anda telah ditutup"}[kind];
  var link=pageUrl()+"#t="+encodeURIComponent(fmtIds(t.id));
  var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
-  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"icons/icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
+  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"app-icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
   '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
   mailBlock("en",kind,t,o)+
   '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;line-height:1.3;text-align:center">Reply or view in the helpdesk<br><span style="font-weight:400">Balas atau lihat di helpdesk</span></a></p>'+
@@ -2602,7 +2602,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-02 v52";
+var BUILD="2026-11-03 v53";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}

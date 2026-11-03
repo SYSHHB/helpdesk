@@ -272,10 +272,10 @@ The phone only offers to install the helpdesk when ALL of these files are on Git
 place as `index.html` (not inside a folder):
 - `manifest.json`
 - `sw.js`
-- `icon-192.png`
-- `icon-512.png`
-- `icon-maskable-512.png`
-- `apple-touch-icon.png`
+- `app-icon-192.png`
+- `app-icon-512.png`
+- `app-icon-maskable.png`
+- `app-apple-touch.png`
 
 Upload them with **Add file > Upload files**. Wait 2 minutes, close the browser tab completely
 and open the helpdesk again.
