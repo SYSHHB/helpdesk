@@ -57,7 +57,7 @@ window.HELPDESK_CONFIG = {
   IDLE_FULL_SIGNOUT: false,
   /* Fingerprint that locks the Microsoft sign-in library. Create it in the helpdesk:
      Accounts > Security checks > Create the fingerprint, then paste the line here. */
-  MSAL_SRI: "",
+  MSAL_SRI: "sha384-OJTwghM0Gh3Zc+gmd6l0lz1pFw9KuHHq0mSEZgmQEKgMnuSWWDb3bU9KzuD7w2hU",
 
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
