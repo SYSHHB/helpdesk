@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0E3B22">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Helpdesk">
+<meta name="apple-mobile-web-app-title" content="SYSHHB Helpdesk">
 <link rel="apple-touch-icon" href="app-apple-touch.png">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -663,13 +663,18 @@ html,body{max-width:100%;overflow-x:clip}
  .hero{padding-top:12px;padding-bottom:10px}
  .hero p.lead{font-size:.92rem}
 }
+.brand .bt{line-height:1.15;text-wrap:balance;min-width:0}
+.hero .brand{font-size:clamp(1rem,4.7vw,1.2rem)}
+.sp-title{font-size:clamp(1.15rem,5.4vw,1.5rem);line-height:1.2;text-wrap:balance;max-width:92vw;text-align:center}
+.sp-in{max-width:92vw}
+.top h1{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:break-word;line-height:1.12;font-size:clamp(.98rem,4.5vw,1.2rem);text-wrap:balance;align-self:center}
 </style>
 </head>
 <body>
-<div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
+<div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">SYSHHB IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-KBGj/CBVuImHoFAXl/BfezX3w1hPSmc79/jJtSuC5Rs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-z/Rkl98+3ZZQD6jvfOpCV5fwslVJ6UjvjVJdiXzcBxE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
 document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
@@ -991,7 +996,7 @@ function validUser(u){return /^[a-z0-9._-]{3,24}$/.test(u)}
 /* ============ views: auth ============ */
 function authHTML(){
  var now=new Date(),h=hij(now);
- var hero='<section class="hero"><div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>IT Helpdesk System</div>'+
+ var hero='<section class="hero"><div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span><span class="bt">SYSHHB IT Helpdesk System</span></div>'+
  '<div class="twin"><div class="twin-col"><span class="num">'+now.getDate()+'</span><span class="lab">'+esc(gML.format(now))+'</span><span class="tag">Gregorian</span></div>'+
  (h?'<hr><div class="twin-col hij"><span class="num">'+h.d+'</span><span class="lab">'+esc(h.name+"\u00a0"+h.y+"H")+'</span><span class="tag">Hijri</span></div>':'<span></span><span></span>')+'</div>'+
  '<div class="greetrow"><p class="greet">'+greeting()+'</p><div class="clock" translate="no"><span id="hd-clock"></span></div></div><p class="lead">Report a problem, follow it from start to finish, and see updates from the technician handling it.</p></section>';
@@ -1036,7 +1041,7 @@ function bellHTML(){
 function renderChrome(){
  if(!S.me||root.dataset.mode!=="app")return;
  var nav=$("#nav");if(!nav)return;
- nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span>IT Helpdesk System</div>'+
+ nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span><span class="bt">SYSHHB IT Helpdesk System</span></div>'+
   navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span>'+((i[0]==="tickets"&&isStaff())||(i[0]==="dashboard"&&!isStaff())?navBadge():'')+'</button>'}).join("")+
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
@@ -1871,7 +1876,7 @@ var MS={
 "Phone number":"Nombor telefon","Enter a valid phone number.":"Masukkan nombor telefon yang sah.","Brunei numbers can be typed without +673.":"Nombor Brunei boleh ditaip tanpa +673.","Call":"Telefon",
 "Tell us your staff group and phone number, so technicians can contact you by WhatsApp.":"Beritahu kami kumpulan kakitangan dan nombor telefon anda supaya juruteknik boleh menghubungi anda melalui WhatsApp.",
 "Report a problem":"Laporkan masalah","Open the complaint form":"Buka borang aduan","Add photos":"Tambah foto","On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.":"Pada borang aduan, ketik Tambah foto untuk melampirkan sehingga 4 gambar masalah. Foto membantu juruteknik memahaminya dengan lebih cepat.","Keep your complaint number":"Simpan nombor aduan anda","After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.":"Selepas menghantar, anda akan mendapat nombor seperti IT-2026-0005 di skrin dan dalam e-mel anda. Gunakan nombor ini apabila bertanya tentang aduan anda.","Follow the progress":"Ikuti perkembangan","Your complaints are listed with their status: Open, In progress, On hold, Resolved or Closed. Tap a complaint to see the details, the progress and the technician handling it.":"Aduan anda disenaraikan bersama statusnya: Terbuka, Dalam proses, Ditangguhkan, Selesai atau Ditutup. Ketik aduan untuk melihat butiran, kemajuan dan juruteknik yang mengendalikannya.","Show my complaints":"Tunjukkan aduan saya","Reply to the technician":"Balas kepada juruteknik","Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.":"Buka aduan dan tulis di Tambah komen, kemudian ketik Hantar komen. Juruteknik akan melihatnya serta-merta.","Get notified":"Terima pemberitahuan","The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.":"Loceng di bahagian atas menunjukkan kemas kini baharu. Anda juga menerima e-mel apabila juruteknik mengemas kini, memberi komen, menyelesaikan atau menutup aduan anda.","If the problem comes back":"Jika masalah berulang","If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.":"Jika aduan yang selesai sebenarnya belum baik, buka aduan itu dan ketik Buka semula aduan ini. Juruteknik akan dimaklumkan serta-merta.","Handy settings":"Tetapan berguna","BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.":"BM menukar bahasa kepada Bahasa Melayu. Ikon matahari atau bulan menukar mod cerah dan gelap. Kalendar menunjukkan tarikh Masihi dan Hijrah. Untuk memasang aplikasi, buka menu Edge atau Chrome dan pilih Pasang aplikasi.","Open the calendar":"Buka kalendar","See what needs attention":"Lihat apa yang perlu ditangani","The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.":"Papan pemuka menunjukkan aduan yang menunggu, belum ditugaskan, lewat dan segera. Sepanduk merah bermaksud aduan telah menunggu lebih 1 hari tanpa juruteknik.","Open the dashboard":"Buka papan pemuka","Start work":"Mula bekerja","Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.":"Buka aduan dan ketik Mula bekerja. Aduan ditugaskan kepada anda dan pelapor menerima e-mel.","Open the complaints":"Buka senarai aduan","Update the requester":"Kemas kini pelapor","Comment or internal note":"Komen atau nota dalaman","Comments are emailed to the requester. Tick Internal note to keep a message between staff only.":"Komen dihantar melalui e-mel kepada pelapor. Tandakan Nota dalaman untuk menyimpan mesej antara kakitangan sahaja.","Resolve and close":"Selesaikan dan tutup","Mark the complaint Resolved when it is fixed, then Closed when it is confirmed. The requester is emailed each time.":"Tandakan aduan sebagai Selesai apabila sudah dibaiki, kemudian Ditutup apabila disahkan. Pelapor menerima e-mel setiap kali.","Reports":"Laporan","Open Reports, choose the period and the report type, then print it or download it.":"Buka Laporan, pilih tempoh dan jenis laporan, kemudian cetak atau muat turunnya.","Open reports":"Buka laporan","Manage people":"Urus pengguna","On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.":"Di Akaun, orang baharu muncul secara automatik selepas log masuk kali pertama. Cari dan tapis, tukar peranan atau kumpulan kakitangan dengan Edit, atau gunakan Lumpuhkan dan Padam.","Open accounts":"Buka akaun","Check the emails":"Semak e-mel","On Accounts, tap Send a test email to me to check that email notifications are working.":"Di Akaun, ketik Hantar e-mel ujian kepada saya untuk memastikan pemberitahuan e-mel berfungsi.","Audit log":"Log audit","The Audit log records every sign-in, change, export and email, with the time and the person.":"Log audit merekodkan setiap log masuk, perubahan, eksport dan e-mel, bersama masa dan orangnya.","Open the audit log":"Buka log audit","Brunei Hijri calendar":"Kalendar Hijrah Brunei","In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.":"Di Kalendar, buka tetapan kalendar Brunei untuk memasukkan hari pertama rasmi setiap bulan Hijrah.","User guide":"Panduan pengguna","Guide":"Panduan","Using the helpdesk":"Menggunakan helpdesk","For technicians":"Untuk juruteknik","For administrators":"Untuk pentadbir","Follow the steps one at a time. Swipe or use Next and Back.":"Ikuti langkah satu demi satu. Leret atau gunakan Seterusnya dan Kembali.","Next":"Seterusnya","Back":"Kembali","Finish":"Selesai","All steps":"Semua langkah","Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.":"Ketik butang + hijau atau Aduan baharu. Tulis apa masalahnya dan pilih kategori dan lokasi. Kemudian ketik Hantar aduan. Juruteknik akan menetapkan tahap kecemasannya.","Tap Update to change the status, urgency, progress, technician or target date, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.":"Ketik Kemas kini untuk menukar status, tahap kecemasan, kemajuan, juruteknik atau tarikh sasaran, dan tulis mesej. Pelapor menerima e-mel tentang perubahan itu. Tetapkan tahap kecemasan kepada Tinggi atau Segera untuk meningkatkan keutamaan.",
-"IT Helpdesk System":"Sistem Helpdesk IT",
+"SYSHHB IT Helpdesk System":"Sistem Helpdesk IT SYSHHB",
 "Thank you for your patience":"Terima kasih atas kesabaran anda",
 "# of your # complaints are still being handled.":"# daripada # aduan anda masih dikendalikan.",
 "Good morning":"Selamat pagi","Good afternoon":"Selamat petang","Good evening":"Selamat malam",
@@ -2602,7 +2607,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-03 v55";
+var BUILD="2026-11-03 v57";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3083,7 +3088,7 @@ async function installDiag(){
 
 /* ============ loading screen ============ */
 function splashHTML(){
- return '<main class="splash" role="status" aria-live="polite"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span><img src="'+LOGO+'" alt=""></div><p class="sp-title">IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main>';
+ return '<main class="splash" role="status" aria-live="polite"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span><img src="'+LOGO+'" alt=""></div><p class="sp-title">SYSHHB IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main>';
 }
 
 /* ============ category picker: one-line options that fit the screen ============ */

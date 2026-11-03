@@ -1,6 +1,6 @@
 {
   "name": "SYSHHB IT Helpdesk System",
-  "short_name": "Helpdesk",
+  "short_name": "SYSHHB Helpdesk",
   "description": "Report a problem and follow it from start to finish.",
   "start_url": "./",
   "scope": "./",
