@@ -730,7 +730,7 @@ html,body{max-width:100%;overflow-x:clip}
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">SYSHHB IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-lz+d/vOYVoexahKcZDNwvjrawhSPCG4Ow9smf5PaYrs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-qhIxRU3zYxzWYdANYrAAg3aSYFQ9SJIrc3tP//YwLGE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
 document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
@@ -1562,6 +1562,7 @@ var A={
  },
  auditmore:function(){S.auditN+=100;renderContent()},
  closesheet:function(){S.sheet=false;render()},
+ otherhide:function(){try{sessionStorage.setItem("hd.otherHide","1")}catch(e){}renderContent()},
  mkfp:function(){return withBusy(async function(){await makeFingerprint();renderContent()})},
  copyfp:function(){var t=document.getElementById("fp-line");if(!t)return;t.select();try{navigator.clipboard.writeText(t.value).then(function(){toast("Copied.")},function(){document.execCommand("copy");toast("Copied.")})}catch(e){try{document.execCommand("copy");toast("Copied.")}catch(x){}}},
  pickopen:function(){openPick()},
@@ -2664,7 +2665,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-04 v59";
+var BUILD="2026-11-04 v60";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3080,8 +3081,16 @@ function installBtnHTML(){
  if(isStandalone()||!isPhone())return "";
  return '<button type="button" class="btn wide installbtn" data-act="installapp">'+ico("down")+'Install app on this phone</button>';
 }
+function fromOtherApp(){var r=document.referrer||"",ua=navigator.userAgent||"";return /^android-app:\/\//.test(r)||/; wv\)|FBAN|FBAV|Instagram|Line\//.test(ua)}
 function installBar(){
- if(!S.me||isStandalone()||!isPhone()||ls.get("hd.installHide")==="1")return "";
+ if(!S.me||isStandalone()||!isPhone())return "";
+ if(fromOtherApp()){
+  var oh="";try{oh=sessionStorage.getItem("hd.otherHide")}catch(e){}
+  if(oh==="1")return "";
+  var m=LANG==="ms";
+  return '<div class="note instbar" translate="no"><b>'+(m?"Dibuka di dalam aplikasi lain":"Opened inside another app")+'</b><br>'+(m?"Bar di atas datang daripada aplikasi itu (contohnya WhatsApp), jadi paparan tidak penuh. Untuk skrin penuh, ketik ⋮ lalu Buka dalam Chrome dan pasang aplikasi helpdesk, atau buka aplikasi SYSHHB Helpdesk dari skrin utama telefon anda.":"The bar at the top comes from that app (for example WhatsApp), so the screen is not full. For full screen, tap ⋮ then Open in Chrome and install the helpdesk app, or open the SYSHHB Helpdesk app from your phone’s home screen.")+'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm primary" data-act="installapp">'+(m?"Cara pasang":"How to install")+'</button><button class="btn sm" data-act="otherhide">'+(m?"Bukan sekarang":"Not now")+'</button></div></div>';
+ }
+ if(ls.get("hd.installHide")==="1")return "";
  return '<div class="note instbar" translate="no"><b>'+(LANG==="ms"?"Pasang helpdesk pada telefon anda":"Install the helpdesk on your phone")+'</b><br>'+(LANG==="ms"?"Buka seperti aplikasi biasa, dengan ikon sendiri.":"Open it like a normal app, with its own icon.")+'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm primary" data-act="installapp">'+(LANG==="ms"?"Pasang":"Install")+'</button><button class="btn sm" data-act="installhide">'+(LANG==="ms"?"Bukan sekarang":"Not now")+'</button></div></div>';
 }
 function installSteps(){
@@ -3093,7 +3102,7 @@ function installSteps(){
 function showInstallHelp(){
  var ms=LANG==="ms",old=document.getElementById("ihelp");if(old)old.remove();
  var d=document.createElement("div");d.id="ihelp";d.className="ihelp";d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");d.translate=false;
- d.innerHTML='<div class="ibox"><h2>'+(ms?"Pasang pada telefon":"Install on your phone")+'</h2><ol>'+installSteps().map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+'</ol><div id="ihelp-diag" class="idiag muted small">'+(ms?"Menyemak fail pemasangan…":"Checking the install files…")+'</div><p class="muted small">'+(ms?"Tidak nampak pilihan Pasang? Kemas kini Chrome atau Edge, jangan guna mod peribadi (Incognito/InPrivate), muat semula halaman ini dan tunggu beberapa saat.":"Don’t see Install? Update Chrome or Edge, don’t use a private (Incognito or InPrivate) tab, reload this page and wait a few seconds.")+'</p><button class="btn primary wide" id="ihelp-x">'+(ms?"Tutup":"Close")+'</button></div>';
+ d.innerHTML='<div class="ibox"><h2>'+(ms?"Pasang pada telefon":"Install on your phone")+'</h2><ol>'+installSteps().map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+'</ol><div id="ihelp-diag" class="idiag muted small">'+(ms?"Menyemak fail pemasangan…":"Checking the install files…")+'</div><p class="small">'+(ms?"Jika anda nampak bar dengan X di atas skrin, anda membukanya di dalam aplikasi lain (contohnya WhatsApp). Ketik ⋮ lalu Buka dalam Chrome, kemudian pasang. Selepas dipasang, sentiasa buka dari ikon di skrin utama untuk paparan penuh.":"If you see a bar with an X at the top of the screen, you opened it inside another app (for example WhatsApp). Tap ⋮ then Open in Chrome, then install. After installing, always open it from the icon on your home screen to get the full screen.")+'</p><p class="muted small">'+(ms?"Tidak nampak pilihan Pasang? Kemas kini Chrome atau Edge, jangan guna mod peribadi (Incognito/InPrivate), muat semula halaman ini dan tunggu beberapa saat.":"Don’t see Install? Update Chrome or Edge, don’t use a private (Incognito or InPrivate) tab, reload this page and wait a few seconds.")+'</p><button class="btn primary wide" id="ihelp-x">'+(ms?"Tutup":"Close")+'</button></div>';
  document.body.appendChild(d);
  installDiag().then(function(lines){var b=document.getElementById("ihelp-diag");if(b)b.innerHTML=lines});
  var x=document.getElementById("ihelp-x");x.onclick=function(){d.remove()};x.focus();
