@@ -674,7 +674,7 @@ html,body{max-width:100%;overflow-x:clip}
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">SYSHHB IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-z/Rkl98+3ZZQD6jvfOpCV5fwslVJ6UjvjVJdiXzcBxE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-Vn7STac7NWmJmQQw/a0Gn7qar6aejBwNCNwefL+SR5I=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
 document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
@@ -2607,7 +2607,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-03 v57";
+var BUILD="2026-11-03 v58";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3163,7 +3163,7 @@ function fitCats(width,min,max){var size=max;for(;size>min;size-=0.25){var w=0;C
 function fitOne(c,width,min,max){var size=max;for(;size>min;size-=0.25){if(catWidth(c||"Select…",size)<=width)break}return size}
 
 /* ============ security: sign out after inactivity ============ */
-function idleLimit(){var m=(window.HELPDESK_CONFIG||{}).IDLE_MINUTES;if(typeof m!=="number")m=30;return m>0?m*60000:0}
+function idleLimit(){var m=(window.HELPDESK_CONFIG||{}).IDLE_MINUTES;if(typeof m!=="number")m=0;return m>0?m*60000:0}
 function clearMsalCache(){
  [localStorage,sessionStorage].forEach(function(st){try{Object.keys(st).forEach(function(k){if(k.indexOf("msal.")===0||(CFG.CLIENT_ID&&k.indexOf(CFG.CLIENT_ID)>=0))st.removeItem(k)})}catch(e){}});
 }
@@ -3222,7 +3222,7 @@ function securityPanel(){
  var row=function(ok,txt){return '<div class="srow '+(ok?"ok":"no")+'"><b>'+(ok?"✓":"!")+'</b><span>'+esc(txt)+'</span></div>'};
  var h='<div class="panel secpanel" translate="no"><h2>'+t2("Security checks","Semakan keselamatan")+'</h2>';
  h+=row(csp,csp?t2("Content Security Policy is on. The page can only run its own code.","Content Security Policy aktif. Halaman hanya boleh menjalankan kodnya sendiri."):t2("Content Security Policy is off (CSP: false in config.js).","Content Security Policy dimatikan (CSP: false dalam config.js)."));
- h+=row(idle>0,idle>0?t2("Signs out after "+idle+" minutes of inactivity.","Log keluar selepas "+idle+" minit tidak aktif."):t2("Automatic sign-out is off.","Log keluar automatik dimatikan."));
+ h+=row(true,idle>0?t2("Signs out after "+idle+" minutes of inactivity.","Log keluar selepas "+idle+" minit tidak aktif."):t2("No automatic sign-out. People stay signed in until they tap sign out.","Tiada log keluar automatik. Pengguna kekal log masuk sehingga mereka menekan log keluar."));
  h+=row(sri,sri?t2("The Microsoft sign-in library is locked with a fingerprint.","Pustaka log masuk Microsoft dikunci dengan cap jari."):t2("The Microsoft sign-in library is not locked with a fingerprint yet.","Pustaka log masuk Microsoft belum dikunci dengan cap jari."));
  if(!sri){
   h+='<p class="muted small" style="margin:8px 0">'+t2("Create the fingerprint of the library as it is today, copy the line into config.js on GitHub, and commit. After that the browser refuses to run the library if anyone changes it.","Cipta cap jari pustaka seperti hari ini, salin baris ke config.js di GitHub, dan commit. Selepas itu pelayar enggan menjalankan pustaka jika ada yang mengubahnya.")+'</p>';
