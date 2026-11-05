@@ -732,13 +732,17 @@ html,body{max-width:100%;overflow-x:clip}
 <div id="root" data-mode="splash"><main class="splash"><div class="sp-in"><div class="sp-logo"><span class="sp-ring"></span></div><p class="sp-title">SYSHHB IT Helpdesk System</p><div class="sp-bar"><i></i></div><p class="sp-text">Loading…</p></div></main></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
-<script>(function(){var c=window.HELPDESK_CONFIG||{};var POLICY="default-src 'none'; script-src 'self' 'sha256-ehBYxWEWptgJQ3FqjUZS96BxAmvddE3GC/mChOfyMcQ=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+<script>(function(){var c=window.HELPDESK_CONFIG||{};
+if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
+var POLICY="default-src 'none'; script-src 'self' 'sha256-Y9NQQDcn5oDECOUF/l/bcWUOC3VkdUQqIMfXr8F5oXs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
-var sri=c.MSAL_SRI?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
-document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
+var local=c.MSAL_LOCAL===true;
+var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
+document.write('<script src="'+(local?'msal-browser.min.js':'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js')+'"'+(sri?' integrity="'+sri+'" crossorigin="anonymous"':'')+'><\/script>');})();</script>
 <script>
 (function(){
 "use strict";
+if(window.__framed)return;
 /* ============ constants ============ */
 var STATUSES=[["open","Open"],["progress","In progress"],["hold","On hold"],["resolved","Resolved"],["closed","Closed"]];
 var PRIORITIES=[["low","Low",1],["medium","Medium",2],["high","High",3],["urgent","Urgent",4]];
@@ -1380,7 +1384,7 @@ function pgAccounts(){
    (a.createdAt?'<div class="muted small">Joined '+fmtG(a.createdAt)+'</div>':'')+
    '<div class="pc-acts"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button>'+
    (self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(off?"Enable":"Disable")+'</button>')+
-   (G.mode!=="share"?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button>':'')+
+   (G.mode!=="share"&&!API_MODE?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button>':'')+
    (self?'':'<button class="btn sm danger" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</div></li>';
  }).join("");
  var dom=CFG.ALLOWED_DOMAIN?'@'+CFG.ALLOWED_DOMAIN:'';
@@ -1398,7 +1402,7 @@ function pgAccounts(){
   '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- mailPanel()+securityPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
@@ -1439,6 +1443,7 @@ var F={
   if(!v.category||!v.location){toast("Choose the category and the location.",{kind:"warn"});return}
   if(!(v.room||"").trim()){toast("Enter the room or place.",{kind:"warn"});return}
   if(!(S.att.new||[]).length){toast("Add at least 1 photo.",{kind:"warn"});return}
+  if(API_MODE){await apiNewTicket(v,title,desc);return}
   var id=await nextTicketId(),now=Date.now();
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:locFrom(v),status:"open",progress:0,
    lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
@@ -1588,7 +1593,7 @@ var A={
  guidego:function(el){S.guide=S.guide||{tab:"user",i:0};S.guide.i=+el.dataset.i;renderContent()},
  guidenext:function(){guideMove(1)},
  guideprev:function(){guideMove(-1)},
- mslogin:function(){S.err="";if(msalApp)msalApp.loginRedirect({scopes:SCOPES,prompt:"select_account"})},
+ mslogin:function(){S.err="";if(msalApp)msalApp.loginRedirect(loginRequest())},
  mslogout:function(){if(msalApp){try{sessionStorage.clear()}catch(e){}msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()})}},
  reload:function(){location.reload()},
  shareacct:function(el){return inviteSafe(el.dataset.u,true)},
@@ -2667,7 +2672,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-04 v61";
+var BUILD="2026-11-05 v64";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3287,13 +3292,13 @@ async function makeFingerprint(){
 function securityPanel(){
  if(!isAdmin())return "";
  var c=window.HELPDESK_CONFIG||{},ms=LANG==="ms",t2=function(e,m){return ms?m:e};
- var idle=Math.round(idleLimit()/60000*10)/10,csp=c.CSP!==false,sri=!!c.MSAL_SRI;
+ var idle=Math.round(idleLimit()/60000*10)/10,csp=c.CSP!==false,sri=!!c.MSAL_SRI,local=c.MSAL_LOCAL===true;
  var row=function(ok,txt){return '<div class="srow '+(ok?"ok":"no")+'"><b>'+(ok?"✓":"!")+'</b><span>'+esc(txt)+'</span></div>'};
  var h='<div class="panel secpanel" translate="no"><h2>'+t2("Security checks","Semakan keselamatan")+'</h2>';
  h+=row(csp,csp?t2("Content Security Policy is on. The page can only run its own code.","Content Security Policy aktif. Halaman hanya boleh menjalankan kodnya sendiri."):t2("Content Security Policy is off (CSP: false in config.js).","Content Security Policy dimatikan (CSP: false dalam config.js)."));
  h+=row(true,idle>0?t2("Signs out after "+idle+" minutes of inactivity.","Log keluar selepas "+idle+" minit tidak aktif."):t2("No automatic sign-out. People stay signed in until they tap sign out.","Tiada log keluar automatik. Pengguna kekal log masuk sehingga mereka menekan log keluar."));
- h+=row(sri,sri?t2("The Microsoft sign-in library is locked with a fingerprint.","Pustaka log masuk Microsoft dikunci dengan cap jari."):t2("The Microsoft sign-in library is not locked with a fingerprint yet.","Pustaka log masuk Microsoft belum dikunci dengan cap jari."));
- if(!sri){
+ h+=row(local||sri,local?t2("The Microsoft sign-in library is served from your own website. Nothing is downloaded from outside.","Pustaka log masuk Microsoft disajikan dari laman web anda sendiri. Tiada muat turun dari luar."):(sri?t2("The Microsoft sign-in library is locked with a fingerprint.","Pustaka log masuk Microsoft dikunci dengan cap jari."):t2("The Microsoft sign-in library is not locked with a fingerprint yet.","Pustaka log masuk Microsoft belum dikunci dengan cap jari.")));
+ if(!sri&&!local){
   h+='<p class="muted small" style="margin:8px 0">'+t2("Create the fingerprint of the library as it is today, copy the line into config.js on GitHub, and commit. After that the browser refuses to run the library if anyone changes it.","Cipta cap jari pustaka seperti hari ini, salin baris ke config.js di GitHub, dan commit. Selepas itu pelayar enggan menjalankan pustaka jika ada yang mengubahnya.")+'</p>';
   if(S.msalSri)h+='<div class="copyrow"><input readonly id="fp-line" value="'+esc('MSAL_SRI: "'+S.msalSri+'",')+'"><button class="btn sm" data-act="copyfp">'+t2("Copy","Salin")+'</button></div>';
   else h+='<button class="btn sm primary" data-act="mkfp">'+t2("Create the fingerprint","Cipta cap jari")+'</button>';
@@ -3359,6 +3364,159 @@ function heroFx(){
   if(!raf)raf=requestAnimationFrame(function(){raf=0;h.style.setProperty("--px",nx.toFixed(3));h.style.setProperty("--py",ny.toFixed(3));h.style.setProperty("--mx",mx.toFixed(0)+"px");h.style.setProperty("--my",my.toFixed(0)+"px")});
  });
  h.addEventListener("pointerleave",function(){h.style.setProperty("--px","0");h.style.setProperty("--py","0")});
+}
+
+/* ============ own server (BACKEND:"api") instead of OneDrive ============ */
+var API_MODE=CFG.BACKEND==="api";
+var API_SCOPE="api://"+CFG.CLIENT_ID+"/access_as_user";
+var AP={subs:[],timer:null};
+function dbPath(p){return p.split("/").map(encodeURIComponent).join("/")}
+async function apiToken(){
+ var acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
+ try{return (await msalApp.acquireTokenSilent({scopes:[API_SCOPE],account:acct})).accessToken}
+ catch(e){await msalApp.acquireTokenRedirect({scopes:[API_SCOPE],account:acct});throw new Error("Redirecting to Microsoft…")}
+}
+async function apiCall(method,path,body){
+ var t=await apiToken();
+ var r=await fetch((CFG.API_BASE||"")+"/api/"+path,{method:method,headers:{"X-Auth-Token":t,"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body),cache:"no-store"});
+ var txt=await r.text(),j={};try{j=txt?JSON.parse(txt):{}}catch(e){}
+ if(!r.ok){var er=new Error(j.error||("The server answered "+r.status));er.status=r.status;throw er}
+ return j;
+}
+function apSnapDoc(r){return {id:r.id,exists:!!r.exists,data:function(){return r.exists?clone(r.data):undefined}}}
+function apSnapQuery(r,f){
+ var docs=(r.docs||[]).filter(function(d){return (f||[]).every(function(w){return w[1]!=="=="||d.data[w[0]]===w[2]})});
+ docs=docs.map(function(d){return {id:d.id,data:function(){return clone(d.data)}}});
+ return {docs:docs,empty:!docs.length,size:docs.length};
+}
+function apQs(ord,lim){var q=[];if(ord)q.push("orderBy="+encodeURIComponent(ord[0]+","+ord[1]));if(lim)q.push("limit="+lim);return q.length?"?"+q.join("&"):""}
+function apDocUrl(path){return "db/"+dbPath(path)+(path.indexOf("images/")===0&&S.sel?"?t="+encodeURIComponent(S.sel):"")}
+function apWrote(){setTimeout(function(){AP.subs.slice().forEach(function(s){apFetch(s,false)})},150)}
+async function apFetch(sub,force){
+ if(sub.dead||sub.busy)return;sub.busy=true;
+ try{
+  var q=sub.q,snap;
+  if(q.kind==="doc")snap=apSnapDoc(await apiCall("GET",apDocUrl(q.path)));
+  else snap=apSnapQuery(await apiCall("GET","db/"+dbPath(q.path)+apQs(q.ord,q.lim)),q.f);
+  var sig=JSON.stringify(q.kind==="doc"?[snap.exists,snap.data()]:snap.docs.map(function(d){return [d.id,d.data()]}));
+  if(sub.dead)return;
+  if(force||sig!==sub.sig){sub.sig=sig;sub.cb(snap)}
+ }catch(e){if(sub.err)sub.err({code:"unavailable",message:e.message});else console.warn(e)}
+ finally{sub.busy=false}
+}
+function apSubscribe(q,cb,err){
+ var sub={q:q,cb:cb,err:err,sig:null,dead:false,busy:false};
+ AP.subs.push(sub);
+ if(!AP.timer){
+  AP.timer=setInterval(function(){if(document.hidden)return;AP.subs.slice().forEach(function(s){apFetch(s,false)})},(CFG.POLL_SECONDS||10)*1000);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)AP.subs.slice().forEach(function(s){apFetch(s,false)})});
+ }
+ apFetch(sub,true);
+ return function(){sub.dead=true;AP.subs=AP.subs.filter(function(x){return x!==sub})};
+}
+function apRef(path){
+ var id=path.split("/").pop();
+ return {path:path,id:id,kind:"doc",
+  get:async function(){return apSnapDoc(await apiCall("GET",apDocUrl(path)))},
+  set:async function(d){await apiCall("PUT","db/"+dbPath(path),d);apWrote()},
+  update:async function(p){await apiCall("PATCH","db/"+dbPath(path),p);apWrote()},
+  delete:async function(){await apiCall("DELETE","db/"+dbPath(path));apWrote()},
+  acquire:async function(){return {acquired:true}},
+  onSnapshot:function(cb,err){return apSubscribe({kind:"doc",path:path},cb,err)},
+  collection:function(sub){return apCol(path+"/"+sub,[],null,0)}
+ };
+}
+function apCol(path,f,ord,lim){
+ var q={kind:"query",path:path,f:f,ord:ord,lim:lim};
+ return {path:path,kind:"query",f:f,ord:ord,lim:lim,
+  where:function(a,op,v){return apCol(path,f.concat([[a,op,v]]),ord,lim)},
+  orderBy:function(a,d){return apCol(path,f,[a,d||"asc"],lim)},
+  limit:function(n){return apCol(path,f,ord,n)},
+  get:async function(){return apSnapQuery(await apiCall("GET","db/"+dbPath(path)+apQs(ord,lim)),f)},
+  onSnapshot:function(cb,err){return apSubscribe(q,cb,err)},
+  doc:function(id){return apRef(path+"/"+(id||rid()))},
+  add:async function(d){var r=await apiCall("POST","db/"+dbPath(path),d);apWrote();return apRef(path+"/"+r.id)}
+ };
+}
+function makeApiDb(){
+ return {
+  doc:apRef,
+  collection:function(p){return apCol(p,[],null,0)},
+  increment:function(){throw new Error("The server numbers complaints itself.")}
+ };
+}
+function loginRequest(){
+ return API_MODE?{scopes:[API_SCOPE],extraScopesToConsent:["User.Read"].concat(MAILMODE==="graph"?["Mail.Send"]:[]),prompt:"select_account"}:{scopes:SCOPES,prompt:"select_account"};
+}
+async function afterLoginApi(acct){
+ var email=String(acct.username||"").toLowerCase(),name=acct.name||email;
+ var dom=String(CFG.ALLOWED_DOMAIN||"").toLowerCase();
+ if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom){fatal("This page is only for @"+dom+" accounts. You signed in as "+email+".","Wrong account");return}
+ try{
+  S.db=makeApiDb();
+  var myMail=email;
+  try{var meR=await gf("/me?$select=mail,userPrincipalName");if(meR.ok){var mj=await meR.json();myMail=String(mj.mail||mj.userPrincipalName||email).toLowerCase()}}catch(e){console.warn(e)}
+  var me=await apiCall("GET","me");
+  if(!me.exists){S.pending={email:email,name:me.name||name,mail:myMail};S.loading=false;render();return}
+  var a=me.account;
+  if(a.active===false){fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");return}
+  if(a.mail!==myMail){a.mail=myMail;try{await S.db.doc("accounts/"+email).update({mail:myMail})}catch(e){console.warn(e)}}
+  if(!a.confirmedAt||!a.phone||!a.dept){S.pending={email:email,name:a.name||name,mail:myMail,dept:a.dept||"",phone:a.phone||"",existing:true};S.loading=false;render();return}
+  S.loading=false;
+  await startSession(Object.assign({},a,{username:email}));
+  var k="hd.logged."+email;
+  if(!sessionStorage.getItem(k)){try{sessionStorage.setItem(k,"1")}catch(e){}log("auth.login",email,ROLES[a.role])}
+ }catch(e){
+  console.warn(e);
+  if(e.status===403&&/disabled/i.test(e.message))fatal("This account is disabled. Ask an administrator to enable it.","Account disabled");
+  else fatal(e.message||"Something went wrong while connecting.","Can’t connect");
+ }
+}
+async function apiNewTicket(v,title,desc){
+ var imgs=S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}});
+ var r=await apiCall("POST","tickets",{title:title,description:desc,category:v.category,location:locFrom(v),images:imgs});
+ var id=r.id,now=Date.now();
+ var tk={id:id,title:title,category:v.category,priority:"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now};
+ tk.createdBy=S.me.username;tk.createdByMail=S.me.mail||tk.createdBy;
+ mailSafe("new",tk,{by:S.me.name});
+ mailStaff("staffnew",tk,{by:S.me.name});
+ S.att.new=[];S.newPrio=null;
+ toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
+ clearKeep();openTicket(id);
+}
+/* one-time import of the old OneDrive files (admins only) */
+async function importOld(files){
+ var total=0,skipped=0,batch={},size=0,n=0;
+ var say=function(t){S.impMsg=t;S.view==="accounts"&&renderContent()};
+ async function flush(){if(!size)return;var r=await apiCall("POST","admin/import",{docs:batch});total+=r.imported;skipped+=r.skipped;batch={};size=0;say("Imported "+total+" records…")}
+ async function put(path,data){var sz=JSON.stringify(data).length;if(sz>740000){skipped++;return}if(size+sz>600000)await flush();batch[path]=data;size+=sz}
+ try{
+  say("Reading the files…");
+  for(var i=0;i<files.length;i++){
+   var f=files[i],rel=f.webkitRelativePath||f.name,txt=await f.text(),obj;
+   try{obj=JSON.parse(txt)}catch(e){skipped++;continue}
+   if(/(^|\/)photos\/[^/]+\.json$/.test(rel)){await put("images/"+f.name.replace(/\.json$/,""),obj);n++}
+   else if(/^(users|tickets|notifs|settings)\.json$|^audit-\d{4}-\d{2}\.json$/.test(f.name)){var d=obj.docs||{};for(var p in d){await put(p,d[p]);n++}}
+   else skipped++;
+  }
+  await flush();
+  await log("data.import","old data",total+" records");
+  say("Done. "+total+" records were imported"+(skipped?(", "+skipped+" were skipped"):"")+".");
+ }catch(e){say("Stopped: "+(e.message||e))}
+}
+function importPanel(){
+ if(!API_MODE||!isAdmin())return "";
+ return '<div class="panel" translate="no" style="margin-bottom:14px"><h2>Import the old data</h2><p class="muted small" style="margin:6px 0 10px">One time only. Download the OneDrive folder SYSHHB-Helpdesk to a computer and unzip it. Choose its data files (users.json, tickets.json, notifs.json, settings.json and the audit-….json files), then its photos folder. Old complaint numbers and the numbering carry on from where they stopped.</p><label class="fld"><span>1. The data files</span><input type="file" id="imp-files" accept=".json" multiple></label><label class="fld" style="margin-top:8px"><span>2. The photos folder</span><input type="file" id="imp-photos" webkitdirectory multiple></label>'+(S.impMsg?'<p style="margin-top:10px"><b>'+esc(S.impMsg)+'</b></p>':'')+'</div>';
+}
+document.addEventListener("change",function(e){var t=e.target;if(t&&(t.id==="imp-files"||t.id==="imp-photos")&&t.files&&t.files.length)importOld(Array.prototype.slice.call(t.files))});
+if(API_MODE){
+ SCOPES=["User.Read"].concat(MAILMODE==="graph"?["Mail.Send"]:[]);      /* Microsoft Graph is only used to read the person's own mail address and to send email */
+ gToken=async function(){
+  var acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
+  return (await msalApp.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken;
+ };
+ makeDb=makeApiDb;resolveStorage=async function(){};afterLogin=afterLoginApi;processInbox=async function(){};
+ signupPanel=function(){return ""};autoLink=async function(){};inviteSafe=async function(){};
 }
 
 /* ============ touch: swipe month, swipe sheet down ============ */

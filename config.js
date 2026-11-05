@@ -50,6 +50,9 @@ window.HELPDESK_CONFIG = {
      CSP: true keeps the page limited to its own code (recommended). If something stops working
      after an update, set it to false, tell the developer, and set it back to true. */
   CSP: true,
+  /* The helpdesk refuses to be shown inside another website (protects against click-tricking).
+     Set to true only if you deliberately embed it, for example in a Teams tab. */
+  ALLOW_FRAMING: false,
   /* 0 = never sign people out automatically: they stay signed in until they tap sign out.
      To turn automatic sign-out on, put the number of idle minutes here, for example 30. */
   IDLE_MINUTES: 0,
@@ -59,6 +62,9 @@ window.HELPDESK_CONFIG = {
   /* Fingerprint that locks the Microsoft sign-in library. Create it in the helpdesk:
      Accounts > Security checks > Create the fingerprint, then paste the line here. */
   MSAL_SRI: "",
+  /* true = load the Microsoft sign-in library from your own website (the file msal-browser.min.js next to
+     index.html) instead of from the internet. Upload that file to GitHub first, then set this to true. */
+  MSAL_LOCAL: false,
 
   /* How often the page checks OneDrive for changes made by other people. */
   POLL_SECONDS: 10
