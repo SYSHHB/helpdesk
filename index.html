@@ -728,28 +728,28 @@ html,body{max-width:100%;overflow-x:clip}
 .hero .brand:hover .mark{transform:none}
 .splash{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;color:#fff;background:linear-gradient(180deg,#104424 0%,#0c371f 52%,#0a2f1b 100%)}
 .sp2{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;max-width:92vw;animation:spin-in .5s ease both}
-.sp-orbit{position:relative;width:244px;height:244px;display:grid;place-items:center}
-.sp-emblem{width:152px;height:152px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 6px #8c8447,0 0 0 8px rgba(168,152,111,.4),0 14px 40px rgba(0,0,0,.45);animation:spbreathe 3.4s ease-in-out infinite}
+.sp-orbit{position:relative;width:236px;height:236px;display:grid;place-items:center}
+.sp-emblem{width:148px;height:148px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 6px #a8986f,0 0 0 10px #607927,0 12px 36px rgba(0,0,0,.45);animation:spbreathe 3.4s ease-in-out infinite}
 .sp-petals{position:absolute;inset:0}
-.sp-petals i{position:absolute;left:50%;top:50%;width:15px;height:22px;margin:-11px 0 0 -7.5px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:linear-gradient(160deg,#fcf45a,#f6e72e 70%,#e8d630);box-shadow:0 0 9px rgba(248,232,48,.45);opacity:.55;animation:sppetal 2.4s ease-in-out infinite}
-.sp-petals i:nth-child(1){transform:rotate(0deg) translateY(-102px);animation-delay:0.0s}
-.sp-petals i:nth-child(2){transform:rotate(30deg) translateY(-102px);animation-delay:0.2s}
-.sp-petals i:nth-child(3){transform:rotate(60deg) translateY(-102px);animation-delay:0.4s}
-.sp-petals i:nth-child(4){transform:rotate(90deg) translateY(-102px);animation-delay:0.6s}
-.sp-petals i:nth-child(5){transform:rotate(120deg) translateY(-102px);animation-delay:0.8s}
-.sp-petals i:nth-child(6){transform:rotate(150deg) translateY(-102px);animation-delay:1.0s}
-.sp-petals i:nth-child(7){transform:rotate(180deg) translateY(-102px);animation-delay:1.2s}
-.sp-petals i:nth-child(8){transform:rotate(210deg) translateY(-102px);animation-delay:1.4s}
-.sp-petals i:nth-child(9){transform:rotate(240deg) translateY(-102px);animation-delay:1.6s}
-.sp-petals i:nth-child(10){transform:rotate(270deg) translateY(-102px);animation-delay:1.8s}
-.sp-petals i:nth-child(11){transform:rotate(300deg) translateY(-102px);animation-delay:2.0s}
-.sp-petals i:nth-child(12){transform:rotate(330deg) translateY(-102px);animation-delay:2.2s}
+.sp-petals i{position:absolute;left:50%;top:50%;width:23.5px;height:11.75px;margin:-5.875px 0 0 -11.75px;border-radius:11.75px 11.75px 0 0;background:repeating-conic-gradient(from -90deg at 50% 100%,#f9ee3c 0deg 21deg,#cdb41e 21deg 25.7deg);opacity:.6;animation:sppetal 2.4s ease-in-out infinite}
+.sp-petals i:nth-child(1){transform:rotate(15deg) translateY(-104px);animation-delay:0.0s}
+.sp-petals i:nth-child(2){transform:rotate(45deg) translateY(-104px);animation-delay:0.2s}
+.sp-petals i:nth-child(3){transform:rotate(75deg) translateY(-104px);animation-delay:0.4s}
+.sp-petals i:nth-child(4){transform:rotate(105deg) translateY(-104px);animation-delay:0.6s}
+.sp-petals i:nth-child(5){transform:rotate(135deg) translateY(-104px);animation-delay:0.8s}
+.sp-petals i:nth-child(6){transform:rotate(165deg) translateY(-104px);animation-delay:1.0s}
+.sp-petals i:nth-child(7){transform:rotate(195deg) translateY(-104px);animation-delay:1.2s}
+.sp-petals i:nth-child(8){transform:rotate(225deg) translateY(-104px);animation-delay:1.4s}
+.sp-petals i:nth-child(9){transform:rotate(255deg) translateY(-104px);animation-delay:1.6s}
+.sp-petals i:nth-child(10){transform:rotate(285deg) translateY(-104px);animation-delay:1.8s}
+.sp-petals i:nth-child(11){transform:rotate(315deg) translateY(-104px);animation-delay:2.0s}
+.sp-petals i:nth-child(12){transform:rotate(345deg) translateY(-104px);animation-delay:2.2s}
 
 .sp-title{margin:8px 0 0;font-family:var(--f-display,inherit);font-weight:800;font-size:clamp(1.1rem,5.2vw,1.9rem);line-height:1.15;letter-spacing:.01em;text-wrap:balance;animation:sprise .7s .2s ease both}
 .sp-sub{margin:0;color:#F8E830;font-weight:700;font-size:clamp(.85rem,3.6vw,1.05rem);letter-spacing:.03em;animation:sprise .7s .42s ease both}
 .sp2 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@keyframes sppetal{0%,100%{opacity:.55;scale:.88}35%{opacity:1;scale:1.12}}
-@keyframes spbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes sppetal{0%,100%{opacity:.6}35%{opacity:1}}
+@keyframes spbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 @keyframes sprise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.sp-petals i,.sp-emblem,.sp-title,.sp-sub,.sp2{animation:none!important}.sp-petals i{opacity:.9}}
 </style>
@@ -760,7 +760,7 @@ html,body{max-width:100%;overflow-x:clip}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-5ZQafy4gtFfQasFXaYL2ClxbJwZhQRP1p00gJyVSjSo=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-bBA0vcEwQJ2APmLBFu/C8C6fGl2wJOgeykZXufHTFSw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -2698,7 +2698,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-06 v67";
+var BUILD="2026-11-06 v69";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
