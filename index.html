@@ -760,7 +760,7 @@ html,body{max-width:100%;overflow-x:clip}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-CEJp1Tm70c0xjTLAyndAtRE+HxqXw1v6wlu5j2ytldA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-PNXz1p99LfhH2LADEJcdaaBEPHZqvhIhLqScbp5Nqe0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -777,7 +777,7 @@ function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer 
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
 "account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
-"ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Target date changed",
+"ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Expected Completion changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
 var DAY=864e5;
@@ -1225,7 +1225,7 @@ function pgDashStaff(){
  '<div class="grid2 mt"><section class="panel"><h2>Needs attention</h2>'+
   '<button class="attn'+(stale?" hot":"")+'" data-act="special" data-k="stale"><span>Open over 1 day, not attended</span><b>'+stale+'</b></button>'+
   '<button class="attn'+(unassigned?" hot":"")+'" data-act="special" data-k="unassigned"><span>Active complaints with no technician</span><b>'+unassigned+'</b></button>'+
-  '<button class="attn'+(overdue?" hot":"")+'" data-act="special" data-k="overdue"><span>Past their target date</span><b>'+overdue+'</b></button>'+
+  '<button class="attn'+(overdue?" hot":"")+'" data-act="special" data-k="overdue"><span>Past their expected completion</span><b>'+overdue+'</b></button>'+
   '<button class="attn'+(urgent?" hot":"")+'" data-act="special" data-k="urgent"><span>Urgent and still active</span><b>'+urgent+'</b></button></section>'+
   '<section class="panel"><h2>Performance</h2><div class="kpis"><div class="kpi"><b>'+resWeek+'</b><span>resolved in 7 days</span></div><div class="kpi"><b>'+esc(avgTxt.split(" ")[0]==="No"?"–":avgTxt.split(" ")[0])+'</b><span>'+(res.length?avgTxt.split(" ")[1]+" average to resolve":"average time to resolve")+'</span></div><div class="kpi"><b>'+res.length+'</b><span>resolved in total</span></div></div></section></div>'+
  '<section class="panel mt"><h2>Last 14 days</h2>'+svg+'<div class="legend"><span><i style="background:var(--s-progress)"></i>Submitted</span><span><i style="background:var(--s-resolved)"></i>Resolved</span></div></section>'+
@@ -1289,7 +1289,7 @@ function pgTicket(){
  var staff=isStaff(),mineT=t.createdBy===S.me.username;markSeen(t.id);
  var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t),t)+'</div>':'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
  '<div><dt>Category</dt><dd>'+catHTML(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
- '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Target date</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
+ '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Expected Completion</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
  '<div style="grid-column:1/-1"><dt>Progress '+(t.progress||0)+'%</dt><dd><div class="progress" role="progressbar" aria-valuenow="'+(t.progress||0)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+(t.progress||0)+'%"></i></div></dd></div></dl>';
  var reopen=(!staff&&mineT&&!isActive(t))?'<button class="btn" data-act="reopen">Reopen this complaint</button>':'';
  var composer=composerHTML(t,reopen);
@@ -1304,7 +1304,7 @@ function pgTicket(){
   '<label class="fld"><span>Progress<output id="u-prog-v">'+(t.progress||0)+'%</output></span><input type="range" id="u-prog" min="0" max="100" step="5" value="'+(t.progress||0)+'" data-keep></label>'+
   '<label class="fld"><span>Assigned to</span><select id="u-asg" data-keep><option value="">Unassigned</option>'+techs().map(function(a){return '<option value="'+esc(a.username)+'"'+(t.assignedTo===a.username?" selected":"")+'>'+esc(a.name)+'</option>'}).join("")+'</select>'+
   '<button type="button" class="link small" style="align-self:flex-start" data-act="assignme">Assign to me</button></label>'+
-  '<label class="fld"><span>Target date</span><input type="date" id="u-due" value="'+esc(t.due||"")+'" data-keep><span class="hint" id="u-due-h">'+(t.due&&hOK?"Hijri: "+esc(fmtH(fromYmd(t.due).getTime())):"")+'</span></label>'+
+  '<label class="fld"><span>Expected Completion</span><input type="date" id="u-due" value="'+esc(t.due||"")+'" data-keep><span class="hint" id="u-due-h">'+(t.due&&hOK?"Hijri: "+esc(fmtH(fromYmd(t.due).getTime())):"")+'</span></label>'+
   '<label class="fld"><span>Message to the requester <small>(optional)</small></span><textarea id="u-msg" rows="3" data-keep placeholder="What was done, or what happens next."></textarea></label>'+
   '<button class="btn primary"'+(S.busy?" disabled":"")+'>Save update</button></form></aside>';
  }
@@ -1350,13 +1350,13 @@ function pgCal(){
  var sd=fromYmd(S.cal.sel),a1=created[S.cal.sel]||[],a2=due[S.cal.sel]||[];
  var rowsF=function(arr){return arr.map(function(t){return '<button class="dayrow" data-act="open" data-id="'+esc(t.id)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.id)+', '+esc(stLbl(t.status))+', '+esc(t.assignedName||"Unassigned")+'</small></button>'}).join("")};
  var side='<aside class="panel sheet'+(S.sheet?" open":"")+'"><div class="grab" data-act="closesheet"></div><h2>'+gD.format(sd)+'</h2>'+(hOK?'<p class="hint" style="margin-bottom:12px">'+esc(fmtH(sd.getTime()))+'</p>':'')+
-  (a1.length?'<h3 style="font-size:.95rem;margin:10px 0 2px">Submitted</h3>'+rowsF(a1):'')+(a2.length?'<h3 style="font-size:.95rem;margin:14px 0 2px">Target date</h3>'+rowsF(a2):'')+
+  (a1.length?'<h3 style="font-size:.95rem;margin:10px 0 2px">Submitted</h3>'+rowsF(a1):'')+(a2.length?'<h3 style="font-size:.95rem;margin:14px 0 2px">Expected Completion</h3>'+rowsF(a2):'')+
   (!a1.length&&!a2.length?'<p class="muted">No complaints submitted or due on this day.</p>':'')+'</aside>';
  return '<div class="calbar"><div class="ttl2"><h2>'+esc(m.title)+'</h2>'+(m.sub?'<span>'+esc(m.sub)+'</span>':'')+'</div>'+
   '<div class="tabs" style="min-width:210px"><button type="button" class="'+(!m.hm?"on":"")+'" data-act="calmode" data-m="greg">Gregorian</button><button type="button" class="'+(m.hm?"on":"")+'" data-act="calmode" data-m="hijri"'+(hOK?"":" disabled")+'>Hijri</button></div>'+
   '<button class="icon-btn" data-act="calprev" aria-label="Previous month">'+ico("left")+'</button><button class="btn sm" data-act="caltoday">Today</button><button class="icon-btn" data-act="calnext" aria-label="Next month">'+ico("right")+'</button></div>'+
   '<div class="callayout"><div><div class="cal'+(m.hm?" hmode":"")+(S.cal.dir>0?" sl-n":S.cal.dir<0?" sl-p":"")+'"><div class="wd">'+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(function(x){return '<div>'+x+'</div>'}).join("")+'</div><div class="days">'+cells+'</div></div>'+
-  '<div class="legend"><span><i style="background:var(--s-progress);border-radius:50%"></i>Submitted</span><span><i style="border:2px solid var(--sun);border-radius:50%;width:11px;height:11px;vertical-align:-1px"></i>Target date</span>'+
+  '<div class="legend"><span><i style="background:var(--s-progress);border-radius:50%"></i>Submitted</span><span><i style="border:2px solid var(--sun);border-radius:50%;width:11px;height:11px;vertical-align:-1px"></i>Expected Completion</span>'+
   '</div>'+
   '<p class="muted small" style="margin-top:8px">Hijri dates follow the Brunei calendar, which is set by moon sighting. Until an official date is entered they are calculated and run one day behind Umm al-Qura.</p>'+hsPanel+'</div>'+side+'</div>'+(S.sheet?'<div class="sheet-bd" data-act="closesheet"></div>':'');
 }
@@ -1509,7 +1509,7 @@ var F={
   if(prog!==(t.progress||0)){patch.progress=prog;if(!patch.status)sum.push("progress is "+prog+"%");au.push(["ticket.progress",(t.progress||0)+"% to "+prog+"%"])}
   if((asg||null)!==(t.assignedTo||null)){var a=techs().filter(function(x){return x.username===asg})[0];patch.assignedTo=asg||null;patch.assignedName=a?a.name:"";patch.assignedMail=a?(a.mail||a.username):"";
    ev.push(a?"Assigned to "+a.name:"Assignment removed");sum.push(a?"assigned to "+a.name:"unassigned");au.push(["ticket.assign",a?a.name:"Unassigned"])}
-  if(due!==(t.due||null)){patch.due=due;ev.push(due?"Target date set to "+fmtG(fromYmd(due).getTime())+(hOK?" ("+fmtH(fromYmd(due).getTime())+")":""):"Target date cleared");sum.push(due?"target date "+fmtG(fromYmd(due).getTime()):"no target date");au.push(["ticket.due",due||"cleared"])}
+  if(due!==(t.due||null)){patch.due=due;ev.push(due?"Expected Completion set to "+fmtG(fromYmd(due).getTime())+(hOK?" ("+fmtH(fromYmd(due).getTime())+")":""):"Expected Completion cleared");sum.push(due?"expected completion "+fmtG(fromYmd(due).getTime()):"no expected completion");au.push(["ticket.due",due||"cleared"])}
   if(pri&&pri!==(t.priority||"medium")){patch.priority=pri;ev.push("Priority changed from "+prLbl(t.priority||"medium")+" to "+prLbl(pri));sum.push("priority is now "+prLbl(pri));au.push(["ticket.priority",prLbl(t.priority||"medium")+" to "+prLbl(pri)])}
   if(!Object.keys(patch).length&&!msg){toast("Nothing to update yet.",{kind:"warn"});return}
   if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
@@ -1584,7 +1584,7 @@ var A={
   mailStaff("staffreply",t,{by:S.me.name,msg:"Reopened this complaint."});
  })},
  exporttickets:function(){
-  var rows=[["ID","Title","Category","Priority","Status","Progress %","Requested by","Assigned to","Submitted (Gregorian)","Submitted (Hijri)","Target date","Last updated"]];
+  var rows=[["ID","Title","Category","Priority","Status","Progress %","Requested by","Assigned to","Submitted (Gregorian)","Submitted (Hijri)","Expected Completion","Last updated"]];
   filtered().forEach(function(t){rows.push([t.id,t.title,t.category,prLbl(t.priority),stLbl(t.status),t.progress||0,t.createdByName,t.assignedName||"",fmtG(t.createdAt),fmtH(t.createdAt),t.due||"",new Date(t.updatedAt||t.createdAt).toISOString()])});
   saveFile("complaints.csv",csvText(rows));log("export","complaints",rows.length-1+" rows");
  },
@@ -1646,7 +1646,7 @@ var A={
  rpprint:function(){log("export","report","Print: "+S.rp.title);try{window.print()}catch(e){toast("Printing is blocked here. Use Download report instead.",{kind:"warn"})}},
  rpdownload:function(){var h=rpStandalone();if(!h)return;log("export","report","HTML: "+S.rp.title);saveFile("helpdesk-report-"+todayKey()+".html",h)},
  rpcsv:function(){
-  var D=rpCompute(),rows=[["ID","Title","Category","Priority","Status","Progress %","Requested by","Assigned to","Submitted (Gregorian)","Submitted (Hijri)","Target date","First attended (Gregorian)","First attended (Hijri)","Attended by"]];
+  var D=rpCompute(),rows=[["ID","Title","Category","Priority","Status","Progress %","Requested by","Assigned to","Submitted (Gregorian)","Submitted (Hijri)","Expected Completion","First attended (Gregorian)","First attended (Hijri)","Attended by"]];
   D.recv.forEach(function(t){rows.push([t.id,t.title,t.category,prLbl(t.priority),stLbl(t.status),t.progress||0,t.createdByName,t.assignedName||"",fmtG(t.createdAt),fmtH(t.createdAt),t.due||"",t.attendedAt?fmtG(t.attendedAt):"",t.attendedAt?fmtH(t.attendedAt):"",t.attendedByName||""])});
   log("export","report","CSV: "+rows.length+" rows");saveFile("helpdesk-complaints-"+S.rp.from+"-to-"+S.rp.to+".csv",csvText(rows));
  },
@@ -1852,7 +1852,7 @@ function rpSheet(D){
    kpi(R.length,"Complaints received")+kpi(D.resolved.length,"Resolved in this period","var(--gold)")+
    kpi((R.length?Math.round(resolvedN/R.length*100):0)+"%","Of received are resolved or completed","var(--s-resolved)")+
    kpi(fmtDur(avgTime(R)),"Average time to resolve","var(--s-progress)")+
-   kpi(R.length-resolvedN,"Still active","var(--s-hold)")+kpi(R.filter(isOverdue).length,"Past target date","var(--s-open)")+'</div></section>';
+   kpi(R.length-resolvedN,"Still active","var(--s-hold)")+kpi(R.filter(isOverdue).length,"Past expected completion","var(--s-open)")+'</div></section>';
  }
  if(sec.status||sec.prio){
   var parts=STATUSES.map(function(s){return {n:R.filter(function(t){return t.status===s[0]}).length,color:"var(--s-"+s[0]+")",label:s[1]}});
@@ -1966,7 +1966,7 @@ var MS={
 "Comment by email":"Komen melalui e-mel","Email reply ignored":"Balasan e-mel diabaikan",", by email":", melalui e-mel",
 "Phone number":"Nombor telefon","Enter a valid phone number.":"Masukkan nombor telefon yang sah.","Brunei numbers can be typed without +673.":"Nombor Brunei boleh ditaip tanpa +673.","Call":"Telefon",
 "Tell us your staff group and phone number, so technicians can contact you by WhatsApp.":"Beritahu kami kumpulan kakitangan dan nombor telefon anda supaya juruteknik boleh menghubungi anda melalui WhatsApp.",
-"Report a problem":"Laporkan masalah","Open the complaint form":"Buka borang aduan","Add photos":"Tambah foto","On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.":"Pada borang aduan, ketik Tambah foto untuk melampirkan sehingga 4 gambar masalah. Foto membantu juruteknik memahaminya dengan lebih cepat.","Keep your complaint number":"Simpan nombor aduan anda","After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.":"Selepas menghantar, anda akan mendapat nombor seperti IT-2026-0005 di skrin dan dalam e-mel anda. Gunakan nombor ini apabila bertanya tentang aduan anda.","Follow the progress":"Ikuti perkembangan","Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.":"Aduan anda disenaraikan bersama statusnya: Terbuka, Dalam proses, Ditangguhkan, Diselesaikan atau Selesai. Ketik aduan untuk melihat butiran, kemajuan dan juruteknik yang mengendalikannya.","Show my complaints":"Tunjukkan aduan saya","Reply to the technician":"Balas kepada juruteknik","Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.":"Buka aduan dan tulis di Tambah komen, kemudian ketik Hantar komen. Juruteknik akan melihatnya serta-merta.","Get notified":"Terima pemberitahuan","The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.":"Loceng di bahagian atas menunjukkan kemas kini baharu. Anda juga menerima e-mel apabila juruteknik mengemas kini, memberi komen, menyelesaikan atau menutup aduan anda.","If the problem comes back":"Jika masalah berulang","If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.":"Jika aduan yang selesai sebenarnya belum baik, buka aduan itu dan ketik Buka semula aduan ini. Juruteknik akan dimaklumkan serta-merta.","Handy settings":"Tetapan berguna","BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.":"BM menukar bahasa kepada Bahasa Melayu. Ikon matahari atau bulan menukar mod cerah dan gelap. Kalendar menunjukkan tarikh Masihi dan Hijrah. Untuk memasang aplikasi, buka menu Edge atau Chrome dan pilih Pasang aplikasi.","Open the calendar":"Buka kalendar","See what needs attention":"Lihat apa yang perlu ditangani","The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.":"Papan pemuka menunjukkan aduan yang menunggu, belum ditugaskan, lewat dan segera. Sepanduk merah bermaksud aduan telah menunggu lebih 1 hari tanpa juruteknik.","Open the dashboard":"Buka papan pemuka","Start work":"Mula bekerja","Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.":"Buka aduan dan ketik Mula bekerja. Aduan ditugaskan kepada anda dan pelapor menerima e-mel.","Open the complaints":"Buka senarai aduan","Update the requester":"Kemas kini pelapor","Comment or internal note":"Komen atau nota dalaman","Comments are emailed to the requester. Tick Internal note to keep a message between staff only.":"Komen dihantar melalui e-mel kepada pelapor. Tandakan Nota dalaman untuk menyimpan mesej antara kakitangan sahaja.","Resolve and complete":"Baiki dan sahkan selesai","Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.":"Tandakan aduan sebagai Diselesaikan apabila sudah dibaiki, kemudian Selesai apabila disahkan. Pelapor menerima e-mel setiap kali.","Reports":"Laporan","Open Reports, choose the period and the report type, then print it or download it.":"Buka Laporan, pilih tempoh dan jenis laporan, kemudian cetak atau muat turunnya.","Open reports":"Buka laporan","Manage people":"Urus pengguna","On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.":"Di Akaun, orang baharu muncul secara automatik selepas log masuk kali pertama. Cari dan tapis, tukar peranan atau kumpulan kakitangan dengan Edit, atau gunakan Lumpuhkan dan Padam.","Open accounts":"Buka akaun","Check the emails":"Semak e-mel","On Accounts, tap Send a test email to me to check that email notifications are working.":"Di Akaun, ketik Hantar e-mel ujian kepada saya untuk memastikan pemberitahuan e-mel berfungsi.","Audit log":"Log audit","The Audit log records every sign-in, change, export and email, with the time and the person.":"Log audit merekodkan setiap log masuk, perubahan, eksport dan e-mel, bersama masa dan orangnya.","Open the audit log":"Buka log audit","Brunei Hijri calendar":"Kalendar Hijrah Brunei","In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.":"Di Kalendar, buka tetapan kalendar Brunei untuk memasukkan hari pertama rasmi setiap bulan Hijrah.","User guide":"Panduan pengguna","Guide":"Panduan","Using the helpdesk":"Menggunakan helpdesk","For technicians":"Untuk juruteknik","For administrators":"Untuk pentadbir","Follow the steps one at a time. Swipe or use Next and Back.":"Ikuti langkah satu demi satu. Leret atau gunakan Seterusnya dan Kembali.","Next":"Seterusnya","Back":"Kembali","Finish":"Selesai","All steps":"Semua langkah","Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.":"Ketik butang + hijau atau Aduan baharu. Tulis apa masalahnya dan pilih kategori dan lokasi. Kemudian ketik Hantar aduan. Juruteknik akan menetapkan tahap kecemasannya.","Tap Update to change the status, urgency, progress, technician or target date, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.":"Ketik Kemas kini untuk menukar status, tahap kecemasan, kemajuan, juruteknik atau tarikh sasaran, dan tulis mesej. Pelapor menerima e-mel tentang perubahan itu. Tetapkan tahap kecemasan kepada Tinggi atau Segera untuk meningkatkan keutamaan.",
+"Report a problem":"Laporkan masalah","Open the complaint form":"Buka borang aduan","Add photos":"Tambah foto","On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.":"Pada borang aduan, ketik Tambah foto untuk melampirkan sehingga 4 gambar masalah. Foto membantu juruteknik memahaminya dengan lebih cepat.","Keep your complaint number":"Simpan nombor aduan anda","After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.":"Selepas menghantar, anda akan mendapat nombor seperti IT-2026-0005 di skrin dan dalam e-mel anda. Gunakan nombor ini apabila bertanya tentang aduan anda.","Follow the progress":"Ikuti perkembangan","Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.":"Aduan anda disenaraikan bersama statusnya: Terbuka, Dalam proses, Ditangguhkan, Diselesaikan atau Selesai. Ketik aduan untuk melihat butiran, kemajuan dan juruteknik yang mengendalikannya.","Show my complaints":"Tunjukkan aduan saya","Reply to the technician":"Balas kepada juruteknik","Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.":"Buka aduan dan tulis di Tambah komen, kemudian ketik Hantar komen. Juruteknik akan melihatnya serta-merta.","Get notified":"Terima pemberitahuan","The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.":"Loceng di bahagian atas menunjukkan kemas kini baharu. Anda juga menerima e-mel apabila juruteknik mengemas kini, memberi komen, menyelesaikan atau menutup aduan anda.","If the problem comes back":"Jika masalah berulang","If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.":"Jika aduan yang selesai sebenarnya belum baik, buka aduan itu dan ketik Buka semula aduan ini. Juruteknik akan dimaklumkan serta-merta.","Handy settings":"Tetapan berguna","BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.":"BM menukar bahasa kepada Bahasa Melayu. Ikon matahari atau bulan menukar mod cerah dan gelap. Kalendar menunjukkan tarikh Masihi dan Hijrah. Untuk memasang aplikasi, buka menu Edge atau Chrome dan pilih Pasang aplikasi.","Open the calendar":"Buka kalendar","See what needs attention":"Lihat apa yang perlu ditangani","The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.":"Papan pemuka menunjukkan aduan yang menunggu, belum ditugaskan, lewat dan segera. Sepanduk merah bermaksud aduan telah menunggu lebih 1 hari tanpa juruteknik.","Open the dashboard":"Buka papan pemuka","Start work":"Mula bekerja","Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.":"Buka aduan dan ketik Mula bekerja. Aduan ditugaskan kepada anda dan pelapor menerima e-mel.","Open the complaints":"Buka senarai aduan","Update the requester":"Kemas kini pelapor","Comment or internal note":"Komen atau nota dalaman","Comments are emailed to the requester. Tick Internal note to keep a message between staff only.":"Komen dihantar melalui e-mel kepada pelapor. Tandakan Nota dalaman untuk menyimpan mesej antara kakitangan sahaja.","Resolve and complete":"Baiki dan sahkan selesai","Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.":"Tandakan aduan sebagai Diselesaikan apabila sudah dibaiki, kemudian Selesai apabila disahkan. Pelapor menerima e-mel setiap kali.","Reports":"Laporan","Open Reports, choose the period and the report type, then print it or download it.":"Buka Laporan, pilih tempoh dan jenis laporan, kemudian cetak atau muat turunnya.","Open reports":"Buka laporan","Manage people":"Urus pengguna","On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.":"Di Akaun, orang baharu muncul secara automatik selepas log masuk kali pertama. Cari dan tapis, tukar peranan atau kumpulan kakitangan dengan Edit, atau gunakan Lumpuhkan dan Padam.","Open accounts":"Buka akaun","Check the emails":"Semak e-mel","On Accounts, tap Send a test email to me to check that email notifications are working.":"Di Akaun, ketik Hantar e-mel ujian kepada saya untuk memastikan pemberitahuan e-mel berfungsi.","Audit log":"Log audit","The Audit log records every sign-in, change, export and email, with the time and the person.":"Log audit merekodkan setiap log masuk, perubahan, eksport dan e-mel, bersama masa dan orangnya.","Open the audit log":"Buka log audit","Brunei Hijri calendar":"Kalendar Hijrah Brunei","In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.":"Di Kalendar, buka tetapan kalendar Brunei untuk memasukkan hari pertama rasmi setiap bulan Hijrah.","User guide":"Panduan pengguna","Guide":"Panduan","Using the helpdesk":"Menggunakan helpdesk","For technicians":"Untuk juruteknik","For administrators":"Untuk pentadbir","Follow the steps one at a time. Swipe or use Next and Back.":"Ikuti langkah satu demi satu. Leret atau gunakan Seterusnya dan Kembali.","Next":"Seterusnya","Back":"Kembali","Finish":"Selesai","All steps":"Semua langkah","Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.":"Ketik butang + hijau atau Aduan baharu. Tulis apa masalahnya dan pilih kategori dan lokasi. Kemudian ketik Hantar aduan. Juruteknik akan menetapkan tahap kecemasannya.","Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.":"Ketik Kemas kini untuk menukar status, tahap kecemasan, kemajuan, juruteknik atau jangkaan siap, dan tulis mesej. Pelapor menerima e-mel tentang perubahan itu. Tetapkan tahap kecemasan kepada Tinggi atau Segera untuk meningkatkan keutamaan.",
 "SYSHHB IT Helpdesk System":"Sistem Helpdesk IT SYSHHB",
 "Thank you for your patience":"Terima kasih atas kesabaran anda",
 "# of your # complaints are still being handled.":"# daripada # aduan anda masih dikendalikan.",
@@ -2011,7 +2011,7 @@ var MS={
 /* categories */
 "Computer / laptop":"Komputer / komputer riba","Network / Wi-Fi":"Rangkaian / Wi-Fi","Printer / scanner":"Pencetak / pengimbas","Projector / Screen":"Projektor / Skrin","VM (Finance)":"VM (Kewangan)","Other":"Lain-lain","Software":"Perisian",
 /* dashboard */
-"Needs attention":"Perlu perhatian","Open over 1 day, not attended":"Terbuka lebih 1 hari, belum ditangani","Active complaints with no technician":"Aduan aktif tanpa juruteknik","Past their target date":"Melepasi tarikh sasaran","Urgent and still active":"Segera dan masih aktif",
+"Needs attention":"Perlu perhatian","Open over 1 day, not attended":"Terbuka lebih 1 hari, belum ditangani","Active complaints with no technician":"Aduan aktif tanpa juruteknik","Past their expected completion":"Melepasi jangkaan siap","Urgent and still active":"Segera dan masih aktif",
 "Performance":"Prestasi","resolved in 7 days":"selesai dalam 7 hari","hours average to resolve":"jam purata untuk selesai","days average to resolve":"hari purata untuk selesai","min average to resolve":"min purata untuk selesai","average time to resolve":"purata masa untuk selesai","resolved in total":"selesai keseluruhan",
 "Last 14 days":"14 hari lepas","Submitted":"Dihantar","Active by priority":"Aktif mengikut keutamaan","Active by category":"Aktif mengikut kategori","Technician workload":"Beban kerja juruteknik","No active complaints.":"Tiada aduan aktif.",
 "Recently updated":"Dikemas kini baru-baru ini","See all complaints":"Lihat semua aduan","No complaints yet":"Belum ada aduan","New complaints appear here and trigger a notification for technicians.":"Aduan baharu dipaparkan di sini dan menghantar pemberitahuan kepada juruteknik.",
@@ -2030,15 +2030,15 @@ var MS={
 "Photos":"Foto","Add photo":"Tambah foto","Up to 4 photos. They are resized to save data.":"Sehingga 4 foto. Saiznya dikecilkan untuk menjimatkan data.","Adding…":"Menambah…","Submit complaint":"Hantar aduan",
 /* ticket */
 "Back to complaints":"Kembali ke aduan","Requested by":"Diadukan oleh","Assigned to":"Ditugaskan kepada","Not assigned yet":"Belum ditugaskan","Not given":"Tidak diberikan","First attended":"Mula ditangani","Not yet":"Belum",
-"Target date":"Tarikh sasaran","Not set":"Belum ditetapkan","Progress #%":"Kemajuan #%","Progress":"Kemajuan","Activity":"Aktiviti","No activity yet.":"Belum ada aktiviti.","Add a comment":"Tambah komen","Post comment":"Hantar komen",
+"Expected Completion":"Jangkaan Siap","Not set":"Belum ditetapkan","Progress #%":"Kemajuan #%","Progress":"Kemajuan","Activity":"Aktiviti","No activity yet.":"Belum ada aktiviti.","Add a comment":"Tambah komen","Post comment":"Hantar komen",
 "Internal note, hidden from the requester":"Nota dalaman, disembunyikan daripada pengadu","Reopen this complaint":"Buka semula aduan ini","Start work":"Mula kerja","Mark resolved":"Tandakan diselesaikan","Resume work":"Sambung kerja","Close":"Tutup","Update…":"Kemas kini…","Comment":"Komen",
 "Technician update":"Kemas kini juruteknik","Status":"Status","Assign to me":"Tugaskan kepada saya","Message to the requester":"Mesej kepada pengadu","What was done, or what happens next.":"Apa yang telah dibuat, atau apa seterusnya.","Save update":"Simpan kemas kini",
 "Add more information or reply to the technician.":"Tambah maklumat atau balas kepada juruteknik.","Write to the requester, or tick internal note to keep it between staff.":"Tulis kepada pengadu, atau tandakan nota dalaman supaya hanya kakitangan boleh melihat.",
 "Complaint not found":"Aduan tidak dijumpai","It may have been removed, or you may not have access to it.":"Ia mungkin telah dipadam, atau anda tiada akses kepadanya.","Photo not available":"Foto tidak tersedia",
-"Complaint submitted":"Aduan dihantar","Complaint reopened":"Aduan dibuka semula","Assignment removed":"Tugasan dibatalkan","Target date cleared":"Tarikh sasaran dikosongkan","Photo":"Foto",
+"Complaint submitted":"Aduan dihantar","Complaint reopened":"Aduan dibuka semula","Assignment removed":"Tugasan dibatalkan","Expected Completion cleared":"Jangkaan Siap dikosongkan","Photo":"Foto",
 /* calendar */
 "Sun":"Ahd","Mon":"Isn","Tue":"Sel","Wed":"Rab","Thu":"Kha","Fri":"Jum","Sat":"Sab","Sunday":"Ahad","Monday":"Isnin","Tuesday":"Selasa","Wednesday":"Rabu","Thursday":"Khamis","Friday":"Jumaat","Saturday":"Sabtu",
-"Today":"Hari ini","No complaints submitted or due on this day.":"Tiada aduan dihantar atau sampai tarikh sasaran pada hari ini.",
+"Today":"Hari ini","No complaints submitted or due on this day.":"Tiada aduan dihantar atau sampai jangkaan siap pada hari ini.",
 "Hijri dates follow the Brunei calendar, which is set by moon sighting. Until an official date is entered they are calculated and run one day behind Umm al-Qura.":"Tarikh Hijrah mengikut kalendar Brunei, yang ditetapkan melalui cerapan anak bulan. Sehingga tarikh rasmi dimasukkan, tarikh dikira dan lewat satu hari daripada Umm al-Qura.",
 "Brunei calendar settings":"Tetapan kalendar Brunei","for administrators":"untuk pentadbir","Enter the first day of each Hijri month as announced by the Ministry of Religious Affairs. Everyone sees the same dates.":"Masukkan hari pertama setiap bulan Hijrah seperti yang diumumkan oleh Kementerian Hal Ehwal Ugama. Semua orang melihat tarikh yang sama.",
 "Calculated dates compared with Umm al-Qura":"Tarikh dikira berbanding Umm al-Qura","1 day behind (Brunei)":"Lewat 1 hari (Brunei)","Same":"Sama","1 day ahead":"Awal 1 hari","Save":"Simpan","Reset":"Set semula",
@@ -2051,7 +2051,7 @@ var MS={
 "If printing is blocked in this view, use Download report, open the file in your browser and print from there. Choose Save as PDF in the print window to keep a PDF copy.":"Jika pencetakan disekat dalam paparan ini, gunakan Muat turun laporan, buka fail dalam pelayar anda dan cetak dari sana. Pilih Simpan sebagai PDF dalam tetingkap cetak untuk menyimpan salinan PDF.",
 "Overall complaint report":"Laporan aduan keseluruhan","Technician performance report":"Laporan prestasi juruteknik","Complaints received report":"Laporan aduan diterima","Full complaint report":"Laporan aduan penuh",
 "Generated":"Dijana","No extra filters":"Tiada tapisan tambahan","Summary":"Ringkasan","Complaints received":"Aduan diterima","Resolved in this period":"Selesai dalam tempoh ini","Of received are resolved or completed":"daripada yang diterima telah diselesaikan atau selesai",
-"Average time to resolve":"Purata masa untuk selesai","Still active":"Masih aktif","Past target date":"Melepasi tarikh sasaran","No data":"Tiada data","By status":"Mengikut status","complaints":"aduan","By priority":"Mengikut keutamaan","By category":"Mengikut kategori","No complaints.":"Tiada aduan.",
+"Average time to resolve":"Purata masa untuk selesai","Still active":"Masih aktif","Past expected completion":"Melepasi jangkaan siap","No data":"Tiada data","By status":"Mengikut status","complaints":"aduan","By priority":"Mengikut keutamaan","By category":"Mengikut kategori","No complaints.":"Tiada aduan.",
 "Average per day":"Purata sehari","Average per week":"Purata seminggu","Average per month":"Purata sebulan","Received":"Diterima","Attended":"Ditangani","Attended by technician":"Ditangani juruteknik","By day of the week":"Mengikut hari dalam seminggu","Days with activity":"Hari yang ada aktiviti",
 "Only days with a complaint received, attended or resolved are listed. Attended means the first time a technician took action on it.":"Hanya hari yang ada aduan diterima, ditangani atau diselesaikan disenaraikan. Ditangani bermaksud kali pertama juruteknik mengambil tindakan.",
 "Only weeks with a complaint received, attended or resolved are listed. Attended means the first time a technician took action on it.":"Hanya minggu yang ada aduan diterima, ditangani atau diselesaikan disenaraikan. Ditangani bermaksud kali pertama juruteknik mengambil tindakan.",
@@ -2064,7 +2064,7 @@ var MS={
 "Every sign-in, complaint, update and account change. Showing the latest 500 entries.":"Setiap log masuk, aduan, kemas kini dan perubahan akaun. Memaparkan 500 entri terkini.","Filter by person, action or complaint ID":"Tapis mengikut orang, tindakan atau ID aduan",
 "When":"Bila","Who":"Siapa","Action":"Tindakan","Target":"Sasaran","Show more":"Tunjuk lagi","No entries":"Tiada entri","Activity will be recorded here.":"Aktiviti akan direkodkan di sini.","Nothing matches that filter.":"Tiada yang sepadan dengan tapisan itu.",
 "Signed in":"Log masuk","Signed out":"Log keluar","Failed sign-in":"Log masuk gagal","Registered":"Mendaftar","Account created":"Akaun dicipta","Account updated":"Akaun dikemas kini","Account enabled":"Akaun diaktifkan","Account disabled":"Akaun dinyahaktifkan",
-"Status changed":"Status ditukar","Assignment changed":"Tugasan ditukar","Target date changed":"Tarikh sasaran ditukar","Progress changed":"Kemajuan ditukar","Comment added":"Komen ditambah","Internal note added":"Nota dalaman ditambah","Calendar setting":"Tetapan kalendar","Export":"Eksport",
+"Status changed":"Status ditukar","Assignment changed":"Tugasan ditukar","Expected Completion changed":"Jangkaan Siap ditukar","Progress changed":"Kemajuan ditukar","Comment added":"Komen ditambah","Internal note added":"Nota dalaman ditambah","Calendar setting":"Tetapan kalendar","Export":"Eksport",
 "Unknown username":"Nama pengguna tidak diketahui","Wrong password":"Kata laluan salah","Disabled account":"Akaun dinyahaktifkan","First administrator":"Pentadbir pertama","Self-registered user":"Pengguna mendaftar sendiri","CSV: # rows":"CSV: # baris","# rows":"# baris","#% to #%":"#% kepada #%",
 /* accounts */
 "People register themselves as users. Create technician and administrator accounts here.":"Pengguna mendaftar sendiri. Cipta akaun juruteknik dan pentadbir di sini.","Person":"Orang","Role":"Peranan","Disabled":"Dinyahaktifkan","Edit":"Sunting","Disable":"Nyahaktif","Enable":"Aktifkan",
@@ -2130,8 +2130,8 @@ function tSum(x){
   if(m=/^progress is (\d+)%$/.exec(p))return "kemajuan "+m[1]+"%";
   if(m=/^assigned to (.+)$/.exec(p))return "ditugaskan kepada "+m[1];
   if(p==="unassigned")return "tidak ditugaskan";
-  if(m=/^target date (.+)$/.exec(p))return "tarikh sasaran "+m[1];
-  if(p==="no target date")return "tiada tarikh sasaran";
+  if(m=/^expected completion (.+)$/.exec(p))return "jangkaan siap "+m[1];
+  if(p==="no expected completion")return "tiada jangkaan siap";
   return p}).join(", ")+tail;
 }
 function tEv(e){
@@ -2139,7 +2139,7 @@ function tEv(e){
  if(Object.prototype.hasOwnProperty.call(MS,e))return MS[e];
  if(m=/^Status changed from (.+) to (.+)$/.exec(e))return "Status ditukar daripada "+T(m[1])+" kepada "+T(m[2]);
  if(m=/^Assigned to (.+)$/.exec(e))return "Ditugaskan kepada "+m[1];
- if(m=/^Target date set to (.+)$/.exec(e))return "Tarikh sasaran ditetapkan kepada "+m[1];
+ if(m=/^Expected Completion set to (.+)$/.exec(e))return "Jangkaan Siap ditetapkan kepada "+m[1];
  return e;
 }
 function numTpl(s){var nums=[],key=s.replace(/\d+(?:\.\d+)?/g,function(m){nums.push(m);return "#"});return {key:key,nums:nums}}
@@ -2161,7 +2161,7 @@ function TA(s){
  if(LANG!=="ms")return s;
  var r=T(s);
  if(r!==s)return r;
- return s.replace(/, (\d+) submitted/g,", $1 dihantar").replace(/, (\d+) due/g,", $1 sampai tarikh sasaran");
+ return s.replace(/, (\d+) submitted/g,", $1 dihantar").replace(/, (\d+) due/g,", $1 sampai jangkaan siap");
 }
 function i18nApply(el){
  if(el)idApply(el);
@@ -2275,14 +2275,25 @@ var G={drive:"",folder:"",base:"",mode:"",files:{},subs:[],timer:null,polling:fa
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
 function clone(o){return o===undefined?undefined:JSON.parse(JSON.stringify(o))}
 /* "Closed" was renamed "Completed". Records saved earlier still say Closed in their history lines, notifications and audit lines, so they are shown as Completed. */
-function fixSt(t){return String(t).replace(/\b(to|now|from) Closed\b/g,"$1 Completed").replace(/^Closed to /,"Completed to ")}
+function fixSt(t){return String(t).replace(/\b(to|now|from) Closed\b/g,"$1 Completed").replace(/^Closed to /,"Completed to ").replace(/^Status: Closed\b/,"Status: Completed")}
+/* The old name of the target-date field was renamed "Expected Completion". The pieces are joined so the build step that renames the screen texts leaves this alone. */
+var _TD="tar"+"get date";
+function fixTd(t){
+ return String(t).replace(new RegExp("^"+_TD+" set to ","i"),"Expected Completion set to ")
+  .replace(new RegExp("^"+_TD+" cleared$","i"),"Expected Completion cleared")
+  .replace(new RegExp("no "+_TD,"g"),"no expected completion")
+  .replace(new RegExp(_TD+" (?=\\d)","g"),"expected completion ")
+  .replace(new RegExp("^"+_TD+": ","i"),"Expected Completion: ");
+}
 function legacyFix(o){
  if(!o||typeof o!=="object")return o;
- if(o.type==="event"&&typeof o.text==="string")o.text=fixSt(o.text);
- else if(typeof o.text==="string"&&o.ticketId!==undefined&&o.to!==undefined)o.text=fixSt(o.text);
+ if(o.type==="event"&&typeof o.text==="string")o.text=fixTd(fixSt(o.text));
+ else if(typeof o.text==="string"&&o.ticketId!==undefined&&o.to!==undefined)o.text=fixTd(fixSt(o.text));
  else if(o.action==="ticket.status"&&typeof o.detail==="string")o.detail=fixSt(o.detail);
+ if(o.lastActKind==="update"&&typeof o.lastActText==="string")o.lastActText=fixTd(fixSt(o.lastActText));
  return o;
 }
+
 function b64url(x){return btoa(unescape(encodeURIComponent(x))).replace(/=+$/,"").replace(/\+/g,"-").replace(/\//g,"_")}
 function rid(){return randSalt().slice(0,20)}
 function msConfigured(){return !!CFG.CLIENT_ID&&String(CFG.CLIENT_ID).indexOf("PASTE")<0}
@@ -2628,8 +2639,8 @@ function chEn(c){
  if(c.k==="progress")return "Progress: "+c.v+"%";
  if(c.k==="assign")return "Assigned to: "+c.v;
  if(c.k==="unassign")return "Technician removed";
- if(c.k==="due")return "Target date: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
- return "Target date cleared";
+ if(c.k==="due")return "Expected Completion: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
+ return "Expected Completion cleared";
 }
 function chMs(c){
  if(c.k==="priority")return "Tahap kecemasan: "+Tm(prLbl(c.v));
@@ -2637,8 +2648,8 @@ function chMs(c){
  if(c.k==="progress")return "Kemajuan: "+c.v+"%";
  if(c.k==="assign")return "Ditugaskan kepada: "+c.v;
  if(c.k==="unassign")return "Juruteknik dibuang";
- if(c.k==="due")return "Tarikh sasaran: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
- return "Tarikh sasaran dikosongkan";
+ if(c.k==="due")return "Jangkaan Siap: "+fmtG(fromYmd(c.v).getTime())+(hOK?" ("+fmtH(fromYmd(c.v).getTime())+")":"");
+ return "Jangkaan Siap dikosongkan";
 }
 function mailBlock(lang,kind,t,o){
  var en=lang==="en";
@@ -2707,7 +2718,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-08 v70";
+var BUILD="2026-11-08 v71";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2766,7 +2777,7 @@ function idApply(el){
 }
 
 /* ============ user guide ============ */
-var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or target date, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
+var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
 function pgGuide(){
  var tabs=[["user","Using the helpdesk"]];if(isStaff())tabs.push(["tech","For technicians"]);if(isAdmin())tabs.push(["admin","For administrators"]);
  var g=S.guide=S.guide||{tab:"user",i:0};
@@ -2901,8 +2912,8 @@ function evSentence(c){
  if((m=x.match(/^Priority changed from (.+) to (.+)$/)))return (ms?"menukar tahap kecemasan daripada ":"changed urgency from ")+b(m[1])+" → "+b(m[2])+".";
  if((m=x.match(/^Assigned to (.+)$/)))return (ms?"menetapkan juruteknik kepada ":"set assignee to ")+'<b>'+esc(m[1])+'</b>.';
  if(x==="Assignment removed")return ms?"membuang juruteknik.":"removed the assignee.";
- if((m=x.match(/^Target date set to (.+)$/)))return (ms?"menetapkan tarikh sasaran kepada ":"set target date to ")+'<b>'+esc(m[1])+'</b>.';
- if(x==="Target date cleared")return ms?"mengosongkan tarikh sasaran.":"cleared the target date.";
+ if((m=x.match(/^Expected Completion set to (.+)$/)))return (ms?"menetapkan jangkaan siap kepada ":"set the expected completion to ")+'<b>'+esc(m[1])+'</b>.';
+ if(x==="Expected Completion cleared")return ms?"mengosongkan jangkaan siap.":"cleared the expected completion.";
  if(x==="Complaint submitted")return ms?"membuat aduan ini.":"created the complaint.";
  if(x==="Complaint reopened")return ms?"membuka semula aduan.":"reopened the complaint.";
  return esc(x);
@@ -3041,8 +3052,8 @@ function notifParse(n){
    else if((x=p.match(/^progress is (.+)$/)))L.push((ms?"Kemajuan: ":"Progress: ")+x[1]);
    else if((x=p.match(/^assigned to (.+)$/)))L.push((ms?"Ditugaskan kepada: ":"Assigned to: ")+x[1]);
    else if(p==="unassigned")L.push(ms?"Juruteknik dibuang":"Unassigned");
-   else if((x=p.match(/^target date (.+)$/)))L.push((ms?"Tarikh sasaran: ":"Target date: ")+x[1]);
-   else if(p==="no target date")L.push(ms?"Tarikh sasaran dikosongkan":"Target date cleared");
+   else if((x=p.match(/^expected completion (.+)$/)))L.push((ms?"Jangkaan Siap: ":"Expected Completion: ")+x[1]);
+   else if(p==="no expected completion")L.push(ms?"Jangkaan Siap dikosongkan":"Expected Completion cleared");
    else if(p)L.push(p);
   });
   if(msg)L.push(ms?"Memberi komen":"Commented");
@@ -3362,7 +3373,7 @@ function waMessage(t){
  if(t.assignedName)L.push((ms?"Ditugaskan kepada: ":"Assigned to: ")+t.assignedName);
  L.push((ms?"Dihantar: ":"Submitted: ")+dt(t.createdAt));
  if(t.attendedAt)L.push((ms?"Mula diambil tindakan: ":"First attended: ")+dt(t.attendedAt)+(t.attendedByName?(ms?" oleh ":" by ")+t.attendedByName:""));
- if(dueTs)L.push((ms?"Tarikh sasaran: ":"Target date: ")+fmtG(dueTs)+hj(dueTs));
+ if(dueTs)L.push((ms?"Jangkaan Siap: ":"Expected Completion: ")+fmtG(dueTs)+hj(dueTs));
  L.push((ms?"Kemajuan: ":"Progress: ")+(t.progress||0)+"%");
  L.push("");
  L.push(ms?"Terima kasih.":"Thank you.");
