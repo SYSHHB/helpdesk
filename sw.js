@@ -1,6 +1,6 @@
 /* Keeps the app shell available and lets the phone offer "Install app".
    Data and Microsoft sign-in are never cached. */
-var CACHE = "syshhb-helpdesk-v8";
+var CACHE = "syshhb-helpdesk-v10";
 var SHELL = ["./", "index.html", "config.js", "manifest.json", "app-icon-192.png", "app-icon-512.png", "msal-browser.min.js"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
