@@ -375,9 +375,12 @@ words are shown with the new words too. The date itself is saved exactly as befo
 ---------------------------------------------------------------------------
 ## Part 19. The loading screen (refresh screen)
 
-The emblem fades in, the title and "Yayasan Sultan Haji Hassanal Bolkiah" appear, and under them a slim loading
-meter fills from green to lemon yellow. It fills fast at first, then slows down and stays near the end until the app
-is ready. People who have switched off animations on their phone see a still bar.
+The emblem fades in with a thin ring around it. A yellow arc on the ring, the loading meter under "Yayasan Sultan
+Haji Hassanal Bolkiah" and the number in "Loading... 63%" all grow together (they are one animation), first fast
+and then slowly, and wait near the end until the app is ready. Under it: "Thank you for your patience."
+In Malay it reads "Memuatkan... 63%" and "Terima kasih kerana bersabar.".
+The bar is time-based, not a measure of the real download, and it never shows 100% because the app takes over first.
+People who have switched off animations on their phone see a still ring and bar.
 
 ---------------------------------------------------------------------------
 ## Part 20. The helpdesk now looks like the SYSHHB Portal
