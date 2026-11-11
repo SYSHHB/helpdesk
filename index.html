@@ -756,18 +756,18 @@ body{background:linear-gradient(180deg,#e4f3e1 0%,#c3e1bf 100%) fixed;min-height
 :root[data-theme="dark"] body{background:linear-gradient(180deg,#334d34 0%,#2a412d 30%,#1b2c1c 68%,#132114 100%) fixed}
 body::before{background:#509e52}
 .top{position:static;display:block;background:none;border:0;padding:0;min-height:0;margin:0;z-index:30}
-.ph{position:relative;margin:12px 12px 4px;border-radius:22px;padding:14px 14px 12px;background:linear-gradient(180deg,#4a864a 0%,#3a7440 38%,#2b5a30 70%,#244b2c 100%);border:1.5px solid rgba(214,246,205,.38);box-shadow:0 10px 26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.35)}
-.ph::before{content:"";position:absolute;left:2px;right:2px;top:2px;height:46%;border-radius:20px 20px 60% 60%/20px 20px 24px 24px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));pointer-events:none}
+.pghd{position:relative;margin:12px 12px 4px;border-radius:22px;padding:14px 14px 12px;background:linear-gradient(180deg,#4a864a 0%,#3a7440 38%,#2b5a30 70%,#244b2c 100%);border:1.5px solid rgba(214,246,205,.38);box-shadow:0 10px 26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.35)}
+.pghd::before{content:"";position:absolute;left:2px;right:2px;top:2px;height:46%;border-radius:20px 20px 60% 60%/20px 20px 24px 24px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));pointer-events:none}
 .ph-row{position:relative;display:flex;align-items:flex-start;gap:8px}
 .ph-title{flex:1;min-width:0;text-align:center;padding:2px 0 0}
 .ph-h{font-family:var(--f-display);font-weight:800;font-size:clamp(1.02rem,4.9vw,1.55rem);line-height:1.12;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.55);text-wrap:balance}
 .ph-sub{margin-top:4px;color:#eaf6e6;font-weight:600;font-size:.74rem;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 .ph-btns{display:grid;grid-template-columns:repeat(2,34px);gap:5px;flex:none}
 .ph-btns .bellwrap{width:34px;height:34px}
-.ph .icon-btn,.ph .lang-btn{width:34px;height:34px;min-height:0;padding:0;border-radius:10px;border:1.5px solid rgba(255,255,255,.72);background:linear-gradient(180deg,#9bdc98,#58a85c 58%,#3f8844);color:#fff;font-weight:800;font-size:.8rem;display:inline-grid;place-items:center;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.5)}
-.ph .lang-btn{background:linear-gradient(180deg,#d4f0c9,#9ed393 60%,#6fb468);color:#14391b}
-.ph .icon-btn:hover,.ph .lang-btn:hover{filter:brightness(1.08);background:linear-gradient(180deg,#9bdc98,#58a85c 58%,#3f8844)}
-.ph .badge{top:-5px;right:-5px}
+.pghd .icon-btn,.pghd .lang-btn{width:34px;height:34px;min-height:0;padding:0;border-radius:10px;border:1.5px solid rgba(255,255,255,.72);background:linear-gradient(180deg,#9bdc98,#58a85c 58%,#3f8844);color:#fff;font-weight:800;font-size:.8rem;display:inline-grid;place-items:center;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.5)}
+.pghd .lang-btn{background:linear-gradient(180deg,#d4f0c9,#9ed393 60%,#6fb468);color:#14391b}
+.pghd .icon-btn:hover,.pghd .lang-btn:hover{filter:brightness(1.08);background:linear-gradient(180deg,#9bdc98,#58a85c 58%,#3f8844)}
+.pghd .badge{top:-5px;right:-5px}
 .ph-dates{position:relative;display:flex;gap:8px;margin-top:10px}
 .ph-card{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;background:rgba(16,28,19,.82);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .ph-ic{flex:none;width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#ffd84a}
@@ -789,10 +789,22 @@ body::before{background:#509e52}
 .nav button.nv{border-radius:14px}
 .nav button.nv.on{background:linear-gradient(180deg,#63b563,#2f7a35);color:#fff;border:1px solid rgba(255,255,255,.4);box-shadow:0 3px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4)}
 .fab{background:linear-gradient(180deg,#86e594,#3fae52);border:1.5px solid rgba(255,255,255,.6)}
-@media (min-width:821px){.ph{margin:16px clamp(16px,3vw,32px) 4px}.top h1.pg-title{margin-left:clamp(16px,3vw,32px)}.ph-h{font-size:1.7rem}}
+@media (min-width:821px){.pghd{margin:16px clamp(16px,3vw,32px) 4px}.top h1.pg-title{margin-left:clamp(16px,3vw,32px)}.ph-h{font-size:1.7rem}}
 @media (max-width:360px){.ph-h{font-size:.98rem}}
 @media (max-width:430px){.ph-card .ph-ic{display:none}.ph-card{padding:8px 11px}.ph-tx b{font-size:.78rem}}
 @media (min-width:821px){.top h1.pg-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0;white-space:nowrap}}
+.rp-controls input,.rp-controls select,.rp-controls textarea{box-sizing:border-box;max-width:100%}
+.nav .brand{justify-content:center;padding:6px 0 22px}
+.nav .brand .mark{width:76px;height:76px;border-width:3px}
+.cv-list{list-style:none;margin:0 0 12px;padding:0}
+.cv-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.cv-row.off{opacity:.72}
+.cv-row .av{flex:none}
+.cv-id{flex:1;min-width:0}
+.cv-form{display:grid;gap:10px;margin-top:10px}
+.cv-form .chk{display:flex;align-items:flex-start;gap:10px;font-weight:500;line-height:1.35}
+.cv-form .chk input{width:20px;height:20px;padding:0;flex:none;margin-top:1px}
+.cv-form .btn{justify-self:start}
 </style>
 </head>
 <body>
@@ -801,7 +813,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-Ep7EWOt1BfXwjfUqUwSu0CUY1S8RvfO/QlLshoouHbg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-hIHp5BtdW4yn+Of+fzLEXOYWCYwX1qg/o9y2iWvCLak=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -817,7 +829,7 @@ var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network /
 function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6],"Biztrack System (FINANCE COUNTER ONLY)":CATS[5],"VM - Virtual Machine (FINANCE COUNTER ONLY)":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
-"account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
+"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
 "ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Expected Completion changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
@@ -1061,6 +1073,7 @@ function startSubs(){
  seenMap();
  S.dataReady=false;clearTimeout(S.dataT);S.dataT=setTimeout(function(){if(!S.dataReady){S.dataReady=true;render()}},6000);
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
+ S.unsubs.push(S.db.doc("settings/cover").onSnapshot(function(sn){S.cover=(sn.exists&&sn.data().items)||[];if(S.view==="accounts")renderContent()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
  S.unsubs.push(watch(tq,function(s){S.tickets=s.docs.map(function(d){var x=d.data();x.id=d.id;x.category=normCat(x.category);return x});S.dataReady=true;clearTimeout(S.dataT);render();checkStale();tryOpenWanted()},"tickets"));
@@ -1170,13 +1183,13 @@ function bellHTML(){
 function renderChrome(){
  if(!S.me||root.dataset.mode!=="app")return;
  var nav=$("#nav");if(!nav)return;
- nav.innerHTML='<div class="brand"><span class="mark"><img src="'+LOGO+'" alt=""></span><span class="bt">SYSHHB IT Helpdesk System</span></div>'+
+ nav.innerHTML='<div class="brand" role="img" aria-label="SYSHHB IT Helpdesk System"><span class="mark"><img src="'+LOGO+'" alt=""></span></div>'+
   navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span>'+((i[0]==="tickets"&&isStaff())||(i[0]==="dashboard"&&!isStaff())?navBadge():'')+'</button>'}).join("")+
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
  var dark=(document.documentElement.dataset.theme==="dark")||(!document.documentElement.dataset.theme&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
  var wd="";try{wd=new Date().toLocaleDateString(LANG==="ms"?"ms":"en-GB",{weekday:"short",timeZone:"Asia/Brunei"})}catch(e){}
-$("#top").innerHTML='<div class="ph"><div class="ph-row"><div class="ph-title"><p class="ph-h">SYSHHB IT Helpdesk System</p><p class="ph-sub">Yayasan Sultan Haji Hassanal Bolkiah</p></div><div class="ph-btns">'+bellHTML()+'<button class="lang-btn" data-act="lang" data-l="'+(LANG==="ms"?"en":"ms")+'" translate="no" aria-label="Language / Bahasa" title="Language / Bahasa">'+(LANG==="ms"?"EN":"BM")+'</button><button class="icon-btn" data-act="theme" aria-label="Switch light or dark theme">'+ico(dark?"sun":"moon")+'</button><button class="icon-btn" data-act="logout" aria-label="Sign out">'+ico("out")+'</button></div></div>'+
+$("#top").innerHTML='<div class="pghd"><div class="ph-row"><div class="ph-title"><p class="ph-h">SYSHHB IT Helpdesk System</p><p class="ph-sub">Yayasan Sultan Haji Hassanal Bolkiah</p></div><div class="ph-btns">'+bellHTML()+'<button class="lang-btn" data-act="lang" data-l="'+(LANG==="ms"?"en":"ms")+'" translate="no" aria-label="Language / Bahasa" title="Language / Bahasa">'+(LANG==="ms"?"EN":"BM")+'</button><button class="icon-btn" data-act="theme" aria-label="Switch light or dark theme">'+ico(dark?"sun":"moon")+'</button><button class="icon-btn" data-act="logout" aria-label="Sign out">'+ico("out")+'</button></div></div>'+
  '<div class="ph-dates"><div class="ph-card"><span class="ph-ic">'+ico("cal")+'</span><span class="ph-tx"><small><span>Gregorian</span>'+(wd?" \u00b7 "+esc(wd):"")+'</small><b>'+esc(fmtG(Date.now()))+'</b></span></div>'+(h?'<div class="ph-card"><span class="ph-ic">'+ico("moon")+'</span><span class="ph-tx"><small>Hijri</small><b>'+esc(h.d+" "+h.name+"\u00a0"+h.y+"H")+'</b></span></div>':'')+'</div>'+
  '<div class="ph-clock" translate="no">'+ico("clock")+'<span id="hd-clock2">'+clockHTML()+'</span></div></div><h1 class="pg-title">'+titleOf()+'</h1>';
  var fb=$("#fab");if(fb){fb.hidden=["new","audit","accounts","ticket","reports"].indexOf(S.view)>=0||S.sheet;fb.setAttribute("aria-label",T("New complaint"))}
@@ -1470,7 +1483,7 @@ function pgAccounts(){
   '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- mailPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+coverPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
@@ -1988,6 +2001,25 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Cover technician":"Juruteknik ganti",
+"When a technician is on leave, add another person here. They also get the email alerts (new complaints, replies, reopened and escalated complaints) until the end date or until you stop it.":"Apabila juruteknik bercuti, tambah orang lain di sini. Mereka turut menerima e-mel amaran (aduan baharu, balasan, aduan dibuka semula dan dinaikkan) sehingga tarikh tamat atau sehingga anda menghentikannya.",
+"Nobody is covering right now.":"Tiada sesiapa yang menggantikan buat masa ini.",
+"Note":"Catatan",
+"For example: covering for Zulfa":"Contoh: menggantikan Zulfa",
+"Until":"Sehingga",
+"Ended on":"Tamat pada",
+"Until you stop it":"Sehingga anda hentikan",
+"Ended":"Tamat",
+"Stop":"Henti",
+"Also make them a technician so they can see and answer complaints":"Jadikan mereka juruteknik juga supaya boleh melihat dan menjawab aduan",
+"Add cover technician":"Tambah juruteknik ganti",
+"Choose the person first.":"Pilih orang itu dahulu.",
+"The end date is in the past.":"Tarikh tamat sudah berlalu.",
+"Leave empty to cover until you stop it.":"Biarkan kosong untuk menggantikan sehingga anda hentikan.",
+"Cover technician added":"Juruteknik ganti ditambah",
+"Cover technician stopped":"Juruteknik ganti dihentikan",
+"Stop sending alerts to":"Hentikan penghantaran amaran kepada",
+"Their role goes back to User.":"Peranan mereka kembali menjadi Pengguna.",
 "Welcome":"Selamat datang","Sign in to continue":"Log masuk untuk meneruskan","Report a problem":"Laporkan masalah","Track progress":"Jejak kemajuan","Get updates":"Dapatkan kemas kini","Secure sign-in with your school Microsoft account":"Log masuk selamat dengan akaun Microsoft sekolah anda",
 "Security checks":"Semakan keselamatan","Create the fingerprint":"Cipta cap jari","Stay signed in":"Kekal log masuk","Signed out (inactive)":"Dilog keluar (tidak aktif)",
 "Loading…":"Memuatkan…",
@@ -2760,7 +2792,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-11 v74";
+var BUILD="2026-11-12 v77";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3025,7 +3057,7 @@ function auditKind(a){
  var x=String(a.action||"");
  if(/failed|ignored/.test(x))return "bad";
  if(x.indexOf("auth.")===0)return "auth";
- if(x.indexOf("account.")===0||x.indexOf("settings.")===0)return "acct";
+ if(x.indexOf("account.")===0||x.indexOf("settings.")===0||x.indexOf("cover.")===0)return "acct";
  if(x.indexOf("email.")===0)return "mail";
  if(x.indexOf("comment.")===0||x==="update.message")return "cmt";
  if(x.indexOf("ticket.")===0)return "tkt";
@@ -3059,6 +3091,7 @@ function staffRecipients(t){
  var list=base.slice();
  var tech=String(t.assignedMail||t.assignedTo||"");
  if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tech))list.push(tech);
+ coverEmails().forEach(function(x){list.push(x)});
  var me=S.me?[String(S.me.mail||"").toLowerCase(),String(S.me.username||"").toLowerCase()]:[],seen={},out=[];
  list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x]||me.indexOf(x)>=0)return;seen[x]=1;out.push(x)});
  return out;
@@ -3607,6 +3640,72 @@ if(API_MODE){
  makeDb=makeApiDb;resolveStorage=async function(){};afterLogin=afterLoginApi;processInbox=async function(){};
  signupPanel=function(){return ""};autoLink=async function(){};inviteSafe=async function(){};
 }
+
+/* ============ cover technicians: extra people who also get the helpdesk alert emails ============ */
+function todayBn(){try{return new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Brunei"})}catch(e){return new Date().toISOString().slice(0,10)}}
+function coverActive(c){return !c.until||String(c.until)>=todayBn()}
+function coverEmails(){return (S.cover||[]).filter(coverActive).map(function(c){return String(c.email||"").toLowerCase()}).filter(Boolean)}
+async function saveCover(items,act,target,detail){
+ await S.db.doc("settings/cover").set({items:items});
+ S.cover=items;
+ try{await log(act,target,detail)}catch(e){}
+}
+function coverPanel(){
+ if(!isAdmin())return "";
+ var items=S.cover||[],used={};
+ items.forEach(function(c){used[String(c.email).toLowerCase()]=1});
+ (CFG.NOTIFY_EMAILS||CFG.ADMIN_EMAILS||[]).forEach(function(x){used[String(x).toLowerCase()]=1});
+ var people=(S.accounts||[]).filter(function(a){return a.active!==false&&!used[a.username]}).sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
+ var rows=items.map(function(c,i){
+  var on=coverActive(c);
+  return '<li class="cv-row'+(on?'':' off')+'"><span class="av" style="background:'+avColor(c.name||c.email)+'" aria-hidden="true">'+esc(initials(c.name||c.email))+'</span>'+
+   '<div class="cv-id"><b translate="no">'+esc(c.name||c.email)+'</b> <span class="pill '+(on?'s-resolved':'s-closed')+'">'+(on?'Active':'Ended')+'</span>'+
+   '<div class="muted small" translate="no">'+esc(c.email)+'</div>'+
+   '<div class="small">'+(c.note?esc(c.note)+' \u00b7 ':'')+(c.until?(on?T("Until"):T("Ended on"))+' '+esc(fmtG(fromYmd(c.until).getTime())):T("Until you stop it"))+'</div></div>'+
+   '<button class="btn sm danger" data-act="coverstop" data-i="'+i+'">Stop</button></li>';
+ }).join("");
+ return '<section class="panel cv-panel" style="margin-bottom:14px"><h2>Cover technician</h2>'+
+  '<p class="muted small" style="margin:6px 0 10px">When a technician is on leave, add another person here. They also get the email alerts (new complaints, replies, reopened and escalated complaints) until the end date or until you stop it.</p>'+
+  (rows?'<ul class="cv-list">'+rows+'</ul>':'<p class="muted small">Nobody is covering right now.</p>')+
+  '<div class="cv-form">'+
+   '<label class="fld"><span>Person</span><select id="cv-who" data-keep><option value="">Select\u2026</option>'+people.map(function(a){return '<option value="'+esc(a.username)+'" data-role="'+esc(a.role)+'">'+esc(a.name)+' \u00b7 '+ROLES[a.role]+'</option>'}).join("")+'</select></label>'+
+   '<label class="fld"><span>Note</span><input id="cv-note" data-keep maxlength="60" placeholder="For example: covering for Zulfa"></label>'+
+   '<label class="fld"><span>Until</span><input type="date" id="cv-until" data-keep min="'+todayBn()+'"><small class="muted">Leave empty to cover until you stop it.</small></label>'+
+   '<label class="chk"><input type="checkbox" id="cv-tech" data-keep checked><span>Also make them a technician so they can see and answer complaints</span></label>'+
+   '<button class="btn primary" data-act="coveradd">Add cover technician</button>'+
+  '</div></section>';
+}
+async function coverAdd(){
+ var who=($("#cv-who")||{}).value,note=(($("#cv-note")||{}).value||"").trim().slice(0,60),until=($("#cv-until")||{}).value||"",tech=!!($("#cv-tech")||{}).checked;
+ if(!who){toast(T("Choose the person first."),{kind:"warn"});return}
+ var acc=S.accounts.filter(function(a){return a.username===who})[0];if(!acc)return;
+ if(until&&until<todayBn()){toast(T("The end date is in the past."),{kind:"warn"});return}
+ try{
+  var madeTech=false;
+  if(tech&&acc.role==="user"){await S.db.doc("accounts/"+who).update({role:"technician"});madeTech=true;await log("account.update",who,"Role changed to Technician (cover)")}
+  var items=(S.cover||[]).concat([{email:who,name:acc.name,note:note,until:until||null,addedBy:S.me.username,addedAt:Date.now(),madeTech:madeTech}]);
+  await saveCover(items,"cover.add",who,(note||"")+(until?" until "+until:""));
+  clearKeep();
+  toast(T("Cover technician added")+" - "+acc.name,{kind:"",ms:6000});
+ }catch(e){errToast(e)}
+ renderContent();
+}
+async function coverStop(i){
+ var items=(S.cover||[]).slice(),c=items[i];if(!c)return;
+ if(!window.confirm(T("Stop sending alerts to")+" "+(c.name||c.email)+"?"+(c.madeTech?"\n\n"+T("Their role goes back to User."):"")))return;
+ try{
+  items.splice(i,1);
+  if(c.madeTech){var acc=S.accounts.filter(function(a){return a.username===c.email})[0];if(acc&&acc.role==="technician"){await S.db.doc("accounts/"+c.email).update({role:"user"});await log("account.update",c.email,"Role changed to User (cover ended)")}}
+  await saveCover(items,"cover.stop",c.email,"");
+  toast(T("Cover technician stopped")+" - "+(c.name||c.email),{kind:"",ms:5000});
+ }catch(e){errToast(e)}
+ renderContent();
+}
+document.addEventListener("click",function(e){
+ var b=e.target.closest&&e.target.closest("[data-act=coveradd],[data-act=coverstop]");
+ if(!b||!isAdmin())return;
+ if(b.dataset.act==="coveradd")coverAdd();else coverStop(parseInt(b.dataset.i,10));
+});
 
 /* ============ touch: swipe month, swipe sheet down ============ */
 var tx=0,ty=0,tt=null;

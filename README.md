@@ -137,9 +137,9 @@ After you commit, reload the site. The yellow note disappears and everyone can s
 
 The person who made a complaint gets an email (English and Bahasa Melayu together) when:
 - they submit it (with the complaint ID and the details),
-- a technician or administrator changes the status, progress, technician or target date,
+- a technician or administrator changes the status, progress, technician or expected completion,
 - a technician or administrator replies with a comment (internal notes are never emailed),
-- the complaint is marked resolved or closed.
+- the complaint is marked resolved or completed.
 
 Choose one way to send them in `config.js` (`EMAIL_MODE`).
 
@@ -205,7 +205,7 @@ That button works without any setup.
 2. make.powerautomate.com > **Create** > **Automated cloud flow**. Name: `Helpdesk email replies`.
    Trigger: **When a new email arrives (V3)** (Office 365 Outlook). Click Create.
    - Folder: **Inbox**.
-   - Under advanced parameters, **Subject Filter**: `SYSHHB-IT-`
+   - Under advanced parameters, **Subject Filter**: `IT-20`
 3. Add the action **Create file** (OneDrive for Business):
    - Folder Path: click the folder icon and pick **SYSHHB-Helpdesk > inbox** (do not type it).
    - File Name: click the box, choose **fx**, paste `concat(guid(),'.json')`, click Add.
@@ -307,7 +307,104 @@ developer. The fingerprint is created from the library as it is today, so create
 do not change the library version without making a new one.
 
 **3. Automatic sign-out (`IDLE_MINUTES`)**
-After 30 minutes without touching the app, the person is signed out of the helpdesk. A message
-warns them one minute before, with a **Stay signed in** button. It also works if the app was
-closed and opened again later. Set `IDLE_MINUTES: 0` to turn it off. With
-`IDLE_FULL_SIGNOUT: true` the Microsoft account on that phone is signed out too.
+It is OFF (`IDLE_MINUTES: 0`). People stay signed in until they tap the sign-out button. To turn it
+on, put a number of minutes there, for example `30`: after that long without touching the app the
+person is signed out of the helpdesk, with a warning one minute before and a **Stay signed in**
+button. With `IDLE_FULL_SIGNOUT: true` the Microsoft account on that phone is signed out too.
+
+Note: Microsoft itself can still ask someone to sign in again, for example after about a day of
+not using the app or after a password change. This is Microsoft's rule for web apps, not the
+helpdesk's. The helpdesk renews the sign-in quietly in the background and, if Microsoft needs
+more, sends the person to Microsoft, who usually bring them straight back without asking for a
+password.
+
+---------------------------------------------------------------------------
+## Part 15. Answers to the security assessment
+
+* **Roles are only checked in the browser (high).** True: this system has no server of its own.
+  Every signed-in person has a Microsoft token that can open the OneDrive data folder, so the
+  admin / technician / user roles protect the screens, not the files. Real protection needs a small
+  server that checks each person's role (see the plan given with this update).
+* **Sharing link in config.js (high).** The link is created by the helpdesk as an "organization"
+  link, so only signed-in people from the school can use it. Check in OneDrive: open the folder
+  `SYSHHB-Helpdesk`, choose Manage access, and make sure the link says "People in your organization"
+  and not "Anyone". The link is not a secret: it only works for people who already have school accounts.
+* **Security headers (medium).** GitHub Pages cannot send headers. Put Cloudflare (free) in front
+  of `helpdesk.syayasan.edu.bn` and add the headers there: Strict-Transport-Security,
+  X-Content-Type-Options: nosniff, and a Content-Security-Policy with frame-ancestors 'none'.
+  Until then the page protects itself: it refuses to run when shown inside another website
+  (`ALLOW_FRAMING: false`), and it applies its own Content Security Policy.
+* **Public details in config.js (info).** The Client ID, Tenant ID, admin emails and folder IDs are
+  not secrets. They are in every web app of this kind.
+
+---------------------------------------------------------------------------
+## Part 16. Microsoft sign-in library from your own website (no outside download)
+
+The sign-in library (`msal-browser.min.js`, version 2.38.3) normally comes from jsDelivr on the internet.
+You can serve it from your own website instead, so no outside code is loaded at all:
+1. Upload `msal-browser.min.js` to GitHub, in the same place as `index.html`.
+2. In `config.js` change `MSAL_LOCAL: false,` to `MSAL_LOCAL: true,` and commit.
+3. Wait 2 minutes, close the app completely and open it again. Accounts > Security checks now says
+   "The Microsoft sign-in library is served from your own website."
+If sign-in ever stops working after this, set `MSAL_LOCAL` back to `false`.
+
+The other way (still loading from the internet, but refusing a changed file) is the fingerprint in
+`MSAL_SRI`. For the exact file version 2.38.3 the fingerprint is:
+`MSAL_SRI: "sha384-OJTwghM0Gh3Zc+gmd6l0lz1pFw9KuHHq0mSEZgmQEKgMnuSWWDb3bU9KzuD7w2hU",`
+Use only one of the two ways. Serving your own copy is simpler and safer.
+
+---------------------------------------------------------------------------
+## Part 17. The status "Closed" is now called "Completed"
+
+Everywhere people read it (dashboard, complaint list, complaint page, history, notifications, emails,
+WhatsApp message, exports, user guide), the last status is now **Completed** (Malay: **Selesai**).
+The technician button is now **Complete**, and the switch in the reply box is **Complete on send**.
+Old complaints, history lines and notifications that were saved with the word "Closed" are shown as "Completed" too.
+Nothing in the data changes: the status is still saved as `closed` inside, so no old record breaks.
+In Malay, **Resolved** is now **Diselesaikan** so it is not the same word as **Selesai** (Completed).
+
+---------------------------------------------------------------------------
+## Part 18. "Target date" is now called "Expected Completion"
+
+Everywhere people read it, the date a technician sets for finishing a complaint is now called
+**Expected Completion** (Malay: **Jangkaan Siap**): the complaint page, the Update panel, the dashboard card
+"Past their expected completion", the reports, the history lines, notifications, emails, the WhatsApp message,
+the CSV exports and the user guide. History lines and notifications that were saved earlier with the old
+words are shown with the new words too. The date itself is saved exactly as before, so nothing breaks.
+
+---------------------------------------------------------------------------
+## Part 19. The loading screen (refresh screen)
+
+The emblem fades in, the title and "Yayasan Sultan Haji Hassanal Bolkiah" appear, and under them a slim loading
+meter fills from green to lemon yellow. It fills fast at first, then slows down and stays near the end until the app
+is ready. People who have switched off animations on their phone see a still bar.
+
+---------------------------------------------------------------------------
+## Part 20. The helpdesk now looks like the SYSHHB Portal
+
+The page is a dark green gradient. The top of every screen is a glossy green panel with the system name,
+"Yayasan Sultan Haji Hassanal Bolkiah", the bell, language, light/dark and sign-out buttons, the Gregorian and
+Hijri date cards and the clock (yellow seconds). Cards are dark and rounded, the active tab in the bottom bar is a
+glossy green pill, and the phone's status bar colour is the same green as the Portal. In light mode the page is a
+light green gradient with white cards and the same green header panel. Nothing in the data or the settings changes.
+
+---------------------------------------------------------------------------
+## Part 21. Cover technician (for when a technician is on leave)
+
+Accounts page (administrators only), panel **Cover technician**:
+1. Choose the person, optionally write a note (for example "covering for Zulfa") and an end date.
+2. Leave the box "Also make them a technician" ticked if the person is a normal user, so they can see and answer
+   complaints. If they are already a technician or administrator nothing changes.
+3. Press **Add cover technician**.
+
+While the cover is active, that person also gets the email alerts that the helpdesk mailbox and the assigned
+technician get: a new complaint, a reply from the person who complained, a reopened complaint and an escalation.
+The cover ends after the end date, or when you press **Stop** (an ended cover stays in the list as "Ended" until you stop it).
+Stop also puts the person back to User if the system had made them a technician; you are asked first.
+Everything is written in the audit log (Cover technician added / stopped).
+
+Good to know:
+* The alert emails are sent from the phone of the person who acts (as before), so the cover receives them when
+  someone uses the helpdesk. Status changes made by a technician still go to the person who complained only.
+* The end date counts in Brunei time and the cover is active through the end date itself.
+* Everyone who is signed in can read the cover list (it is needed to address the emails); only administrators can change it.
