@@ -61,7 +61,7 @@ window.HELPDESK_CONFIG = {
   IDLE_FULL_SIGNOUT: false,
   /* Fingerprint that locks the Microsoft sign-in library. Create it in the helpdesk:
      Accounts > Security checks > Create the fingerprint, then paste the line here. */
-  MSAL_SRI: "",
+  MSAL_SRI: "sha384-OJTwghM0Gh3Zc+gmd6l0lz1pFw9KuHHq0mSEZgmQEKgMnuSWWDb3bU9KzuD7w2hU",
   /* true = load the Microsoft sign-in library from your own website (the file msal-browser.min.js next to
      index.html) instead of from the internet. Upload that file to GitHub first, then set this to true. */
   MSAL_LOCAL: false,
