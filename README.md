@@ -411,3 +411,12 @@ Good to know:
   someone uses the helpdesk. Status changes made by a technician still go to the person who complained only.
 * The end date counts in Brunei time and the cover is active through the end date itself.
 * Everyone who is signed in can read the cover list (it is needed to address the emails); only administrators can change it.
+
+---------------------------------------------------------------------------
+## Part 22. Wide screens follow the Document Storage layout
+
+On computer screens (wider than about 820 pixels) the helpdesk uses the same frame as the SYSHHB Document Storage:
+a 241-pixel side menu with a bigger logo and bold menu names, a taller green header panel (bigger title, taller date
+cards, a bigger clock), page content that fills the full width next to the header panel, and a larger page heading.
+The date is not repeated beside the page heading any more because the header already shows it.
+Phones are unchanged.

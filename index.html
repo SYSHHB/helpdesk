@@ -800,6 +800,32 @@ body::before{background:#509e52}
 @media (max-width:430px){.ph-card .ph-ic{display:none}.ph-card{padding:8px 11px}.ph-tx b{font-size:.78rem}}
 @media (min-width:821px){.top h1.pg-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0;white-space:nowrap}}
 .rp-controls input,.rp-controls select,.rp-controls textarea{box-sizing:border-box;max-width:100%}
+/* ===== v80: wide screens follow the Document Storage layout (same frame, full-width content) ===== */
+@media (min-width:821px){
+ .shell{grid-template-columns:241px minmax(0,1fr)}
+ .nav{padding:14px 12px 18px}
+ .shell .nav .brand{padding:0 0 18px}
+ .shell .nav .brand .mark{width:92px;height:92px;border-width:3px}
+ .shell .nav button.nv{font-weight:700;font-size:1rem;padding:10px 14px;margin-bottom:6px;border-radius:12px}
+ .content{max-width:none;padding:22px 28px 56px 29px}
+ .pghd{margin:18px 28px 6px 29px;padding:20px 25px 22px;border-radius:28px}
+ .ph-title{padding:4px 150px 0}
+ .ph-h{font-size:2.3rem;line-height:1.1;letter-spacing:.005em}
+ .ph-sub{font-size:1.06rem;margin-top:6px}
+ .ph-btns{top:-2px;right:-6px;gap:7px}
+ .pghd .icon-btn,.pghd .lang-btn{width:40px;height:40px;border-radius:11px}
+ .ph-dates{gap:15px;margin-top:16px}
+ .ph-card{min-height:64px;padding:8px 16px;border-radius:16px;gap:12px}
+ .ph-ic{width:34px;height:34px;border-radius:10px}
+ .ph-tx small{font-size:.76rem}
+ .ph-tx b{font-size:1.05rem}
+ .ph-clock{min-height:63px;margin-top:13px;font-size:2rem;border-radius:16px;gap:12px}
+ .ph-clock em{font-size:.4em}
+ .page-h h1{font-size:2.4rem;letter-spacing:-.01em}
+ .page-h .muted{font-size:.95rem}
+ .page-h .dd{display:none}
+}
+
 .nav .brand{justify-content:center;padding:6px 0 22px}
 .nav .brand .mark{width:76px;height:76px;border-width:3px}
 .cv-list{list-style:none;margin:0 0 12px;padding:0}
@@ -819,7 +845,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-MrlF4pAQ45edLQlEl5hkfvsTFknaHLJKuTmcwccX0l8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-FocFClFKqi80+5xxvbipTAEJ9CLqakwqURlrR1bfo7c=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -2800,7 +2826,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-13 v79";
+var BUILD="2026-11-14 v80";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
