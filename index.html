@@ -758,11 +758,11 @@ body::before{background:#509e52}
 .top{position:static;display:block;background:none;border:0;padding:0;min-height:0;margin:0;z-index:30}
 .pghd{position:relative;margin:12px 12px 4px;border-radius:22px;padding:14px 14px 12px;background:linear-gradient(180deg,#4a864a 0%,#3a7440 38%,#2b5a30 70%,#244b2c 100%);border:1.5px solid rgba(214,246,205,.38);box-shadow:0 10px 26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.35)}
 .pghd::before{content:"";position:absolute;left:2px;right:2px;top:2px;height:46%;border-radius:20px 20px 60% 60%/20px 20px 24px 24px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));pointer-events:none}
-.ph-row{position:relative;display:flex;align-items:flex-start;gap:8px}
-.ph-title{flex:1;min-width:0;text-align:center;padding:2px 0 0}
-.ph-h{font-family:var(--f-display);font-weight:800;font-size:clamp(1.02rem,4.9vw,1.55rem);line-height:1.12;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.55);text-wrap:balance}
-.ph-sub{margin-top:4px;color:#eaf6e6;font-weight:600;font-size:.74rem;text-shadow:0 1px 2px rgba(0,0,0,.45)}
-.ph-btns{display:grid;grid-template-columns:repeat(2,34px);gap:5px;flex:none}
+.ph-row{position:relative;display:flex;flex-direction:column;gap:6px}
+.ph-title{min-width:0;text-align:center;padding:0}
+.ph-h{font-family:var(--f-display);font-weight:800;font-size:clamp(1.1rem,5.2vw,1.9rem);letter-spacing:.01em;line-height:1.15;color:#fff;text-shadow:none;text-wrap:balance}
+.ph-sub{margin-top:6px;color:#F8E830;font-weight:700;font-size:clamp(.85rem,3.6vw,1.05rem);letter-spacing:.03em;text-shadow:none}
+.ph-btns{order:-1;display:flex;justify-content:flex-end;gap:5px;flex:none}
 .ph-btns .bellwrap{width:34px;height:34px}
 .pghd .icon-btn,.pghd .lang-btn{width:34px;height:34px;min-height:0;padding:0;border-radius:10px;border:1.5px solid rgba(255,255,255,.72);background:linear-gradient(180deg,#9bdc98,#58a85c 58%,#3f8844);color:#fff;font-weight:800;font-size:.8rem;display:inline-grid;place-items:center;box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.5)}
 .pghd .lang-btn{background:linear-gradient(180deg,#d4f0c9,#9ed393 60%,#6fb468);color:#14391b}
@@ -789,8 +789,8 @@ body::before{background:#509e52}
 .nav button.nv{border-radius:14px}
 .nav button.nv.on{background:linear-gradient(180deg,#63b563,#2f7a35);color:#fff;border:1px solid rgba(255,255,255,.4);box-shadow:0 3px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4)}
 .fab{background:linear-gradient(180deg,#86e594,#3fae52);border:1.5px solid rgba(255,255,255,.6)}
-@media (min-width:821px){.pghd{margin:16px clamp(16px,3vw,32px) 4px}.top h1.pg-title{margin-left:clamp(16px,3vw,32px)}.ph-h{font-size:1.7rem}}
-@media (max-width:360px){.ph-h{font-size:.98rem}}
+@media (min-width:821px){.pghd{margin:16px clamp(16px,3vw,32px) 4px}.top h1.pg-title{margin-left:clamp(16px,3vw,32px)}.ph-row{display:block}.ph-btns{position:absolute;top:0;right:0}.ph-title{padding:6px 150px 0}.ph-h{font-size:1.9rem}}
+@media (max-width:360px){.ph-h{font-size:1.02rem}}
 @media (max-width:430px){.ph-card .ph-ic{display:none}.ph-card{padding:8px 11px}.ph-tx b{font-size:.78rem}}
 @media (min-width:821px){.top h1.pg-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0;white-space:nowrap}}
 .rp-controls input,.rp-controls select,.rp-controls textarea{box-sizing:border-box;max-width:100%}
@@ -813,7 +813,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-hIHp5BtdW4yn+Of+fzLEXOYWCYwX1qg/o9y2iWvCLak=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-DmVzMUIbSj40o/UqnKa2eRFfDHjZk+auvG30ydC5l7U=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -2792,7 +2792,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-12 v77";
+var BUILD="2026-11-12 v78";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
