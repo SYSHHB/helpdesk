@@ -579,7 +579,7 @@ html,body{max-width:100%;overflow-x:clip}
 .pc-acts{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:10px}
 .pc-acts .btn{flex:1 1 auto}
 .pc-acts .danger{color:var(--s-open)}
-.pill.rp-admin{--c:var(--s-hold)}.pill.rp-technician{--c:var(--s-progress)}.pill.rp-user{--c:var(--s-closed)}
+.pill.rp-admin{--c:var(--s-hold)}.pill.rp-technician{--c:var(--s-progress)}.pill.rp-user{--c:var(--s-closed)}.pill.rp-supervisor{--c:#9b7be0}
 .acct-add summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:1.1rem;list-style:none}
 .acct-add summary::-webkit-details-marker{display:none}
 .acct-add.only-m{display:none;margin-bottom:12px}
@@ -845,7 +845,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-FocFClFKqi80+5xxvbipTAEJ9CLqakwqURlrR1bfo7c=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-w3Br7MLmh2WHWGVXnF/9+8t8e4nl8rO93F95IxeVXAk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -859,9 +859,9 @@ var STATUSES=[["open","Open"],["progress","In progress"],["hold","On hold"],["re
 var PRIORITIES=[["low","Low",1],["medium","Medium",2],["high","High",3],["urgent","Urgent",4]];
 var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network / WiFi / LAN / Internet","Printer","Projector / Screen / Socket / Cable","Biztrack System (Finance Counter Only)","VM - Virtual Machine (Finance Counter Only)"];
 function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6],"Biztrack System (FINANCE COUNTER ONLY)":CATS[5],"VM - Virtual Machine (FINANCE COUNTER ONLY)":CATS[6]}[c]||c}
-var ROLES={user:"User",technician:"Technician",admin:"Admin"};
+var ROLES={user:"User",technician:"Technician",supervisor:"Supervisor",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
-"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
+"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","alert.stale":"Pending alert sent","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
 "ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Expected Completion changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
@@ -985,31 +985,116 @@ var S={db:null,userCap:null,me:null,accounts:[],tickets:[],notifs:[],audit:[],co
  auth:"login",noAccounts:false,bell:false,unsubs:[],cUnsub:null,canWrite:true,busy:false,err:"",loading:true,
  sessionStart:Date.now(),lastSeen:0,acctEdit:"",auditQ:"",auditN:80,notifReady:false,sheet:false,remPending:{},staleShown:false,staleTimer:null,holder:"",att:{new:[],comment:[]},upBusy:0,imgCache:{},imgLoading:{},newPrio:null,assetsCap:undefined};
 var root=document.getElementById("root");
-function isStaff(){return !!S.me&&(S.me.role==="admin"||S.me.role==="technician")}
+function isStaff(){return !!S.me&&(S.me.role==="admin"||S.me.role==="technician"||S.me.role==="supervisor")}
+function isSup(){return !!S.me&&S.me.role==="supervisor"}
+function isMonitor(){return !!S.me&&(S.me.role==="admin"||S.me.role==="supervisor")}
+function RK(r){var k={admin:0,supervisor:1,technician:2}[r];return k===undefined?3:k}
+function supFromAccounts(){return (S.accounts||[]).filter(function(a){return a.role==="supervisor"&&a.active!==false}).map(function(a){return String(a.mail||a.username||"").toLowerCase()}).filter(function(m){return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)})}
+/* staff know the supervisors from the account list; a requester's browser cannot read that list, so it uses a small shared list kept up to date by the administrator's browser */
+function supEmails(){
+ var l=(S.accounts&&S.accounts.length)?supFromAccounts():(S.team||[]),seen={},out=[];
+ l.forEach(function(x){x=String(x).toLowerCase();if(x&&!seen[x]){seen[x]=1;out.push(x)}});
+ return out;
+}
+function syncTeam(){
+ if(!isAdmin()||!S.teamLoaded||S.teamBusy||!S.accounts||!S.accounts.length)return;
+ var want=supFromAccounts().sort(),have=(S.team||[]).slice().sort();
+ if(JSON.stringify(want)===JSON.stringify(have))return;
+ S.teamBusy=true;
+ S.db.doc("settings/team").set({supervisors:want}).then(function(){S.team=want}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
+}
 function isAdmin(){return !!S.me&&S.me.role==="admin"}
 function isActive(t){return t.status!=="resolved"&&t.status!=="closed"}
 function todayKey(){return ymd(new Date())}
 function isOverdue(t){return isActive(t)&&!!t.due&&t.due<todayKey()}
 function isStale(t){return t.status==="open"&&!t.attendedAt&&(Date.now()-t.createdAt)>DAY}
+function isPending(t){return (t.status==="open"||t.status==="progress"||t.status==="hold")&&(Date.now()-t.createdAt)>DAY}
 function staleBar(){
  if(!isStaff())return "";
- var n=S.tickets.filter(isStale).length;if(!n)return "";
- return '<button class="alertbar" data-act="special" data-k="stale"><b>'+n+' complaint'+(n>1?"s":"")+' waiting over 1 day</b><span>No technician has attended yet. Tap to see '+(n>1?"them":"it")+'.</span></button>';
+ var n=S.tickets.filter(isPending).length;if(!n)return "";
+ return '<button class="alertbar" data-act="special" data-k="pending"><b>'+n+' complaint'+(n>1?"s":"")+' waiting over 1 day</b><span>Still open, in progress or on hold. Tap to see '+(n>1?"them":"it")+'.</span></button>';
 }
-function checkStale(){
- if(!S.me||!isStaff()||!S.notifReady)return;
- var now=Date.now(),list=S.tickets.filter(isStale);
- list.forEach(function(t){
-  var n=Math.floor((now-t.createdAt)/DAY),id="rem-"+t.id+"-"+n,txt="Attend now: "+t.id+" has waited "+n+(n===1?" day":" days")+" and no technician has attended. "+t.title;
-  function send(docId,to){
-   if(S.notifs.some(function(x){return x.id===docId})||S.remPending[docId])return;
-   S.remPending[docId]=1;
-   S.db.doc("notifs/"+docId).set({ts:now,to:to,text:txt,ticketId:t.id,kind:"overdue",by:"system",byName:"Reminder"}).catch(function(e){delete S.remPending[docId];console.warn(e)});
-  }
-  send(id,t.assignedTo||"staff");
-  if(t.assignedTo)send(id+"-a","admin");
+/* everybody who should get the reminder email: the helpdesk mailbox, every active technician and administrator, and cover technicians */
+function staleRecipients(){
+ var base=(CFG.NOTIFY_EMAILS&&CFG.NOTIFY_EMAILS.length?CFG.NOTIFY_EMAILS:CFG.ADMIN_EMAILS)||[];
+ var list=base.slice();
+ (S.accounts||[]).forEach(function(a){
+  if(a.active!==false&&(a.role==="technician"||a.role==="admin"||a.role==="supervisor")){var m=String(a.mail||a.username||"");if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m))list.push(m)}
  });
- if(list.length&&!S.staleShown){S.staleShown=true;buzz([40,80,40]);toast("Reminder: "+list.length+" complaint"+(list.length>1?"s":"")+" open for over 1 day need a technician. Tap to see.",{kind:"new",ms:12000,special:"stale"})}
+ coverEmails().forEach(function(x){list.push(x)});
+ var seen={},out=[];
+ list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x])return;seen[x]=1;out.push(x)});
+ return out;
+}
+function buildStaleMail(items){
+ var n=items.length,link=pageUrl(),td='padding:8px 10px;border-bottom:1px solid #E3E8D8;vertical-align:top;font-size:14px';
+ var rows=items.map(function(d){
+  var t=d.t,asg=t.assignedName?esc(t.assignedName):"Not assigned yet | Belum ditugaskan",st=stLbl(t.status)+" | "+Tm(stLbl(t.status));
+  return '<tr><td style="'+td+'"><a href="'+esc(link+"#t="+encodeURIComponent(fmtIds(t.id)))+'" style="color:#1D8A3A;font-weight:700;text-decoration:none">'+esc(fmtIds(t.id))+'</a></td>'+
+   '<td style="'+td+'">'+esc(t.title)+'<br><span style="color:#55665A;font-size:12px">'+esc(t.createdByName||"")+(t.location?" \u00b7 "+esc(t.location):"")+'</span></td>'+
+   '<td style="'+td+'">'+esc(st)+'</td><td style="'+td+';white-space:nowrap">'+d.n+(d.n===1?" day":" days")+' | '+d.n+' hari</td><td style="'+td+'">'+asg+'</td></tr>';
+ }).join("");
+ var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:640px;margin:0 auto;color:#13241A">'+
+  '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"app-icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
+  '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
+  '<p style="margin:0 0 6px;font-size:16px"><b>'+n+' complaint'+(n>1?'s are':' is')+' still open, in progress or on hold after more than 1 day.</b></p>'+
+  '<p style="margin:0 0 14px">Please attend to '+(n>1?'them':'it')+' or update the status.</p>'+
+  '<p style="margin:0 0 6px;font-size:16px"><b>'+n+' aduan masih terbuka, dalam tindakan atau ditangguhkan selepas lebih daripada 1 hari.</b></p>'+
+  '<p style="margin:0 0 14px">Sila tangani atau kemas kini status.</p>'+
+  '<table style="width:100%;border-collapse:collapse;border:1px solid #E3E8D8"><tr style="background:#F0F4EC;text-align:left;font-size:12px;color:#55665A"><th style="padding:8px 10px">ID</th><th style="padding:8px 10px">Complaint | Aduan</th><th style="padding:8px 10px">Status</th><th style="padding:8px 10px">Waiting | Menunggu</th><th style="padding:8px 10px">Technician | Juruteknik</th></tr>'+rows+'</table>'+
+  '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">Open the helpdesk | Buka helpdesk</a></p>'+
+  '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic reminder, sent once a day for each complaint until it is resolved or completed. | Ini ialah peringatan automatik, dihantar sekali sehari bagi setiap aduan sehingga diselesaikan atau selesai.</p></div></div>';
+ return {subject:fmtIds("[ALERT] "+n+" complaint"+(n>1?"s":"")+" still pending after more than 1 day | "+n+" aduan masih tertunggak lebih 1 hari"),html:fmtIds(html)};
+}
+async function checkStale(){
+ if(!S.me||!isStaff()||!S.notifReady||S.staleBusy)return;
+ var now=Date.now(),list=S.tickets.filter(isPending);
+ if(list.length&&!S.staleShown){S.staleShown=true;buzz([40,80,40]);toast("Reminder: "+list.length+" complaint"+(list.length>1?"s":"")+" still open, in progress or on hold after more than 1 day. Tap to see.",{kind:"new",ms:12000,special:"pending"})}
+ var due=[];
+ list.forEach(function(t){
+  var n=Math.floor((now-t.createdAt)/DAY),id="rem-"+t.id+"-"+n;
+  if(n>=1&&!S.notifs.some(function(x){return x.id===id})&&!S.remPending[id])due.push({t:t,n:n,id:id});
+ });
+ if(!due.length)return;
+ S.staleBusy=true;
+ try{
+  /* a short random pause, so that when several team members open the helpdesk at the same moment, one of them usually claims every reminder and sends a single email */
+  await new Promise(function(r){setTimeout(r,Math.floor(Math.random()*2500))});
+  due=due.filter(function(d){return !S.notifs.some(function(x){return x.id===d.id})});
+  if(!due.length){return}
+  var tok=Math.random().toString(36).slice(2)+Date.now().toString(36),written=[];
+  for(var i=0;i<due.length;i++){
+   var d=due[i],t=d.t,ref=S.db.doc("notifs/"+d.id);
+   S.remPending[d.id]=1;
+   try{
+    var ex=await ref.get();if(ex.exists)continue;
+    var unatt=t.status==="open"&&!t.attendedAt;
+    var txt=unatt?"Attend now: "+t.id+" has waited "+d.n+(d.n===1?" day":" days")+" and no technician has attended. "+t.title
+                 :"Still pending: "+t.id+" is "+stLbl(t.status)+" after "+d.n+(d.n===1?" day":" days")+". "+t.title;
+    await ref.set({ts:now,to:"staff",text:txt,ticketId:t.id,kind:"overdue",by:"system",byName:"Reminder",tok:tok});
+    written.push(d);
+   }catch(e){delete S.remPending[d.id];if(!(e&&e.status===409))console.warn(e)}
+  }
+  if(!written.length)return;
+  var mine=written;
+  if(!API_MODE){
+   /* the files are shared, so whoever wrote last owns the reminder: read it back and only send for the ones that are still ours */
+   await new Promise(function(r){setTimeout(r,1200)});
+   mine=[];
+   for(var j=0;j<written.length;j++){var g=await S.db.doc("notifs/"+written[j].id).get();if(g.exists&&g.data().tok===tok)mine.push(written[j])}
+  }
+  if(mine.length&&MAILMODE!=="off"){
+   var to=staleRecipients();
+   if(to.length){
+    var m=buildStaleMail(mine);
+    try{
+     await sendMail(to,m.subject,m.html);
+     log("alert.stale",mine.length+" complaint"+(mine.length>1?"s":""),(mine.map(function(x){return x.t.id}).join(", ")+" -> "+to.length+" email"+(to.length>1?"s":"")).slice(0,480));
+    }catch(e){console.warn("stale email failed",e);log("email.failed","stale reminder",String((e&&e.message)||e).slice(0,200))}
+   }
+  }
+ }catch(e){console.warn(e)}
+ finally{S.staleBusy=false}
 }
 function col(n){return S.db.collection(n)}
 function techs(){return S.accounts.filter(function(a){return (a.role==="technician"||a.role==="admin")&&a.active!==false}).sort(function(a,b){return a.name.localeCompare(b.name)})}
@@ -1075,7 +1160,7 @@ async function notify(to,text,ticketId,kind){
 }
 function mineNotifs(){
  if(!S.me)return [];
- return S.notifs.filter(function(n){return n.by!==S.me.username&&(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isAdmin()))});
+ return S.notifs.filter(function(n){return n.by!==S.me.username&&(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isMonitor()))});
 }
 function unreadCount(){return mineNotifs().filter(function(n){return n.ts>S.lastSeen}).length}
 
@@ -1105,6 +1190,7 @@ function startSubs(){
  seenMap();
  S.dataReady=false;clearTimeout(S.dataT);S.dataT=setTimeout(function(){if(!S.dataReady){S.dataReady=true;render()}},6000);
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
+ S.unsubs.push(S.db.doc("settings/team").onSnapshot(function(sn){S.team=(sn.exists&&sn.data().supervisors)||[];S.teamLoaded=true;syncTeam()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/cover").onSnapshot(function(sn){S.cover=(sn.exists&&sn.data().items)||[];if(S.view==="accounts")renderContent()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
@@ -1116,12 +1202,12 @@ function startSubs(){
   S.notifReady=true;checkStale();
   added.forEach(function(n){
    if(n.ts<S.sessionStart||n.by===S.me.username)return;
-   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isAdmin())){var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(notifLine(n),{kind:hot?"new":"",ticket:n.ticketId})}
+   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isMonitor())){var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(notifLine(n),{kind:hot?"new":"",ticket:n.ticketId})}
   });
   renderChrome();
  },"notifications"));
- if(isStaff())S.unsubs.push(watch(col("accounts"),function(s){S.accounts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});render()},"accounts"));
- if(isAdmin())S.unsubs.push(watch(col("audit").orderBy("ts","desc").limit(500),function(s){S.audit=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});if(S.view==="audit")renderContent()},"audit log"));
+ if(isStaff())S.unsubs.push(watch(col("accounts"),function(s){S.accounts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});syncTeam();render()},"accounts"));
+ if(isMonitor())S.unsubs.push(watch(col("audit").orderBy("ts","desc").limit(500),function(s){S.audit=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});if(S.view==="audit")renderContent()},"audit log"));
 }
 function subComments(id){
  if(S.cUnsub){S.cUnsub();S.cUnsub=null}
@@ -1196,7 +1282,8 @@ function navItems(){
  if(!isStaff())it=[["dashboard","dash","My complaints","Complaints"],["new","plus","New complaint"],["calendar","cal","Calendar"]];
  if(!isStaff())it.push(["guide","help","User guide","Guide"]);
  if(isStaff())it.push(["reports","chart","Reports"]);
- if(isAdmin()){it.push(["audit","shield","Audit log","Audit"]);it.push(["accounts","users","Accounts","Users"])}
+ if(isMonitor())it.push(["audit","shield","Audit log","Audit"]);
+ if(isAdmin())it.push(["accounts","users","Accounts","Users"]);
  if(isStaff())it.push(["guide","help","User guide","Guide"]);
  return it;
 }
@@ -1239,7 +1326,7 @@ function renderContent(){
   else if(v==="calendar")html=pgCal();
   else if(v==="guide")html=pgGuide();
   else if(v==="reports"&&isStaff())html=pgReports();
-  else if(v==="audit"&&isAdmin())html=pgAudit();
+  else if(v==="audit"&&isMonitor())html=pgAudit();
   else if(v==="accounts"&&isAdmin())html=pgAccounts();
   c.innerHTML=(v==='reports'?'':syncBar()+setupBar())+html;c.dataset.view=v;hydrateImgs();i18nApply(c);
  });
@@ -1282,7 +1369,7 @@ function statStrip(T,filterable){
 function pgDashStaff(){
  var T=S.tickets,act=T.filter(isActive);
  var unassigned=act.filter(function(t){return !t.assignedTo}).length,overdue=act.filter(isOverdue).length,urgent=act.filter(function(t){return t.priority==="urgent"}).length;
- var mine=act.filter(function(t){return t.assignedTo===S.me.username}).length,stale=T.filter(isStale).length;
+ var mine=act.filter(function(t){return t.assignedTo===S.me.username}).length,stale=T.filter(isStale).length,pend=T.filter(isPending).length;
  var res=T.filter(function(t){return t.resolvedAt&&t.createdAt});
  var avg=res.length?res.reduce(function(a,t){return a+(t.resolvedAt-t.createdAt)},0)/res.length:0;
  var avgTxt=!res.length?"No data yet":(avg<36e5*48?(avg/36e5).toFixed(1)+" hours":(avg/864e5).toFixed(1)+" days");
@@ -1311,6 +1398,7 @@ function pgDashStaff(){
  return staleBar()+'<div class="page-h"><div><h1 class="dupt">Status dashboard</h1><p class="muted">'+act.length+' active of '+T.length+' complaints. '+mine+' assigned to you.</p></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+dual(Date.now())+'<button class="btn sm" data-act="nav" data-v="guide">'+ico("help")+'User guide</button></div></div>'+
  statStrip(T)+
  '<div class="grid2 mt"><section class="panel"><h2>Needs attention</h2>'+
+  '<button class="attn'+(pend?" hot":"")+'" data-act="special" data-k="pending"><span>Open, in progress or on hold over 1 day</span><b>'+pend+'</b></button>'+
   '<button class="attn'+(stale?" hot":"")+'" data-act="special" data-k="stale"><span>Open over 1 day, not attended</span><b>'+stale+'</b></button>'+
   '<button class="attn'+(unassigned?" hot":"")+'" data-act="special" data-k="unassigned"><span>Active complaints with no technician</span><b>'+unassigned+'</b></button>'+
   '<button class="attn'+(overdue?" hot":"")+'" data-act="special" data-k="overdue"><span>Past their expected completion</span><b>'+overdue+'</b></button>'+
@@ -1339,6 +1427,7 @@ function filtered(){
   if(S.f.special==="overdue"&&!isOverdue(t))return false;
   if(S.f.special==="urgent"&&!(isActive(t)&&t.priority==="urgent"))return false;
   if(S.f.special==="stale"&&!isStale(t))return false;
+  if(S.f.special==="pending"&&!isPending(t))return false;
   if(q&&(t.id+" "+fmtIds(t.id)+" "+t.title+" "+t.description+" "+t.createdByName+" "+(t.location||"")+" "+t.category).toLowerCase().indexOf(q)<0)return false;
   return true;
  }).sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0)});
@@ -1347,8 +1436,8 @@ function pgTickets(noHead){
  var L=filtered();
  var chips=[["all","All"]].concat(STATUSES).map(function(s){var n=s[0]==="all"?S.tickets.length:S.tickets.filter(function(t){return t.status===s[0]}).length;
   return '<button class="chip'+(S.f.status===s[0]?" on":"")+'" data-act="chip" data-s="'+s[0]+'">'+s[1]+' '+n+'</button>'}).join("");
- var sp={unassigned:"Unassigned",overdue:"Overdue",urgent:"Urgent",stale:"Not attended 1 day+"};
- return (S.f.special==="stale"?"":staleBar())+(noHead?'':'<div class="page-h"><h1>'+(isStaff()?"All complaints":"My complaints")+'</h1><div style="display:flex;gap:8px">'+
+ var sp={unassigned:"Unassigned",overdue:"Overdue",urgent:"Urgent",stale:"Not attended 1 day+",pending:"Waiting over 1 day"};
+ return (S.f.special==="stale"||S.f.special==="pending"?"":staleBar())+(noHead?'':'<div class="page-h"><h1>'+(isStaff()?"All complaints":"My complaints")+'</h1><div style="display:flex;gap:8px">'+
   (isStaff()?'<button class="btn" data-act="exporttickets">'+ico("down")+'Export CSV</button>':'')+'<button class="btn primary" data-act="nav" data-v="new">'+ico("plus")+'New complaint</button></div></div>')+
  '<div class="filters chips">'+chips+'</div><div class="filters"><input class="q" id="f-q" data-filter="q" data-keep type="search" placeholder="Search by ID, title, person or place" value="'+esc(S.f.q)+'" aria-label="Search complaints">'+
   '<select id="f-prio" data-filter="prio" data-keep aria-label="Priority"><option value="all">All priorities</option>'+PRIORITIES.map(function(p){return '<option value="'+p[0]+'"'+(S.f.prio===p[0]?" selected":"")+'>'+p[1]+'</option>'}).join("")+'</select>'+
@@ -1391,7 +1480,7 @@ function pgTicket(){
   '<label class="fld"><span>Status</span><select id="u-status" data-keep>'+STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(t.status===s[0]?" selected":"")+'>'+s[1]+'</option>'}).join("")+'</select></label>'+
   '<label class="fld"><span>Progress<output id="u-prog-v">'+(t.progress||0)+'%</output></span><input type="range" id="u-prog" min="0" max="100" step="5" value="'+(t.progress||0)+'" data-keep></label>'+
   '<label class="fld"><span>Assigned to</span><select id="u-asg" data-keep><option value="">Unassigned</option>'+techs().map(function(a){return '<option value="'+esc(a.username)+'"'+(t.assignedTo===a.username?" selected":"")+'>'+esc(a.name)+'</option>'}).join("")+'</select>'+
-  '<button type="button" class="link small" style="align-self:flex-start" data-act="assignme">Assign to me</button></label>'+
+  (isSup()?'':'<button type="button" class="link small" style="align-self:flex-start" data-act="assignme">Assign to me</button>')+'</label>'+
   '<label class="fld"><span>Expected Completion</span><input type="date" id="u-due" value="'+esc(t.due||"")+'" data-keep><span class="hint" id="u-due-h">'+(t.due&&hOK?"Hijri: "+esc(fmtH(fromYmd(t.due).getTime())):"")+'</span></label>'+
   '<label class="fld"><span>Message to the requester <small>(optional)</small></span><textarea id="u-msg" rows="3" data-keep placeholder="What was done, or what happens next."></textarea></label>'+
   '<button class="btn primary"'+(S.busy?" disabled":"")+'>Save update</button></form></aside>';
@@ -1489,7 +1578,7 @@ function pgAccounts(){
   if(F2.dept!=="all"&&F2.dept!=="none"&&a.dept!==F2.dept)return false;
   if(q&&(a.name+" "+a.username+" "+(a.dept||"")+" "+(a.phone||"")).toLowerCase().indexOf(q)<0)return false;
   return true;
- }).sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(a.role==="admin"?-1:b.role==="admin"?1:a.role==="technician"?-1:1)});
+ }).sort(function(a,b){return a.role===b.role?a.name.localeCompare(b.name):(RK(a.role)-RK(b.role))});
  var cards=list.map(function(a){
   var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week,off=a.active===false;
   return '<li class="pc'+(off?" off":"")+'"><div class="pc-top"><span class="av" style="background:'+avColor(a.name)+'" aria-hidden="true">'+esc(initials(a.name))+'</span><div class="pc-id"><b translate="no">'+esc(a.name)+'</b>'+(self?' <span class="muted small">(you)</span>':'')+'<div class="muted small" translate="no">'+esc(a.username)+'</div></div></div>'+
@@ -1502,21 +1591,21 @@ function pgAccounts(){
    (self?'':'<button class="btn sm danger" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</div></li>';
  }).join("");
  var dom=CFG.ALLOWED_DOMAIN?'@'+CFG.ALLOWED_DOMAIN:'';
- var nAdm=S.accounts.filter(function(a){return a.role==="admin"}).length,nTech=S.accounts.filter(function(a){return a.role==="technician"}).length,nUsr=S.accounts.length-nAdm-nTech;
+ var nAdm=S.accounts.filter(function(a){return a.role==="admin"}).length,nTech=S.accounts.filter(function(a){return a.role==="technician"}).length,nSup=S.accounts.filter(function(a){return a.role==="supervisor"}).length,nUsr=S.accounts.length-nAdm-nTech-nSup;
  var filt='<div class="acf"><input class="q" id="ac-q" data-filter="acq" data-keep type="search" value="'+esc(F2.q)+'" placeholder="Search name, email, phone or group" aria-label="Search people">'+
-  '<select data-filter="acrole" aria-label="Role"><option value="all"'+(F2.role==="all"?" selected":"")+'>All roles</option><option value="admin"'+(F2.role==="admin"?" selected":"")+'>Admin</option><option value="technician"'+(F2.role==="technician"?" selected":"")+'>Technician</option><option value="user"'+(F2.role==="user"?" selected":"")+'>User</option></select>'+
+  '<select data-filter="acrole" aria-label="Role"><option value="all"'+(F2.role==="all"?" selected":"")+'>All roles</option><option value="admin"'+(F2.role==="admin"?" selected":"")+'>Admin</option><option value="supervisor"'+(F2.role==="supervisor"?" selected":"")+'>Supervisor</option><option value="technician"'+(F2.role==="technician"?" selected":"")+'>Technician</option><option value="user"'+(F2.role==="user"?" selected":"")+'>User</option></select>'+
   '<select data-filter="acstatus" aria-label="Status"><option value="all"'+(F2.status==="all"?" selected":"")+'>All statuses</option><option value="active"'+(F2.status==="active"?" selected":"")+'>Active</option><option value="disabled"'+(F2.status==="disabled"?" selected":"")+'>Disabled</option></select>'+
   '<select data-filter="acdept" aria-label="Staff group"><option value="all"'+(F2.dept==="all"?" selected":"")+'>All staff groups</option>'+groups.map(function(d){return '<option value="'+esc(d)+'"'+(F2.dept===d?" selected":"")+'>'+esc(d)+'</option>'}).join("")+'<option value="none"'+(F2.dept==="none"?" selected":"")+'>No group</option></select></div>';
  var form='<details class="panel acct-add" id="acctwrap"'+(ed||S.acctFormOpen?" open":"")+'><summary><span>'+(ed?"Edit account":"Add account")+'</span>'+ico(ed?"users":"plus")+'</summary>'+
   '<form class="stack" data-form="account" id="acctform" style="margin-top:14px">'+
   '<label class="fld"><span>Full name</span><input id="ac-name" name="name" required data-keep value="'+esc(ed?ed.name:"")+'"></label>'+
   '<label class="fld"><span>Email</span><input id="ac-user" name="email" type="email" required data-keep translate="no" placeholder="name'+esc(dom)+'" value="'+esc(ed?ed.username:"")+'"'+(ed?" readonly":"")+'></label>'+
-  '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
+  '<label class="fld"><span>Role</span><select id="ac-role" name="role" data-keep><option value="user"'+(ed&&ed.role==="user"?" selected":"")+'>User</option><option value="technician"'+(ed&&ed.role==="technician"?" selected":"")+'>Technician</option><option value="supervisor"'+(ed&&ed.role==="supervisor"?" selected":"")+'>Supervisor</option><option value="admin"'+(ed&&ed.role==="admin"?" selected":"")+'>Admin</option></select></label>'+
   '<label class="fld"><span>Phone number</span><input id="ac-phone" name="phone" type="tel" inputmode="tel" required data-keep placeholder="712 3456" value="'+esc(ed?ed.phone||"":"")+'"></label>'+
   '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- mailPanel()+coverPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+coverPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nSup+' supervisor, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
@@ -1600,7 +1689,7 @@ var F={
   if(due!==(t.due||null)){patch.due=due;ev.push(due?"Expected Completion set to "+fmtG(fromYmd(due).getTime())+(hOK?" ("+fmtH(fromYmd(due).getTime())+")":""):"Expected Completion cleared");sum.push(due?"expected completion "+fmtG(fromYmd(due).getTime()):"no expected completion");au.push(["ticket.due",due||"cleared"])}
   if(pri&&pri!==(t.priority||"medium")){patch.priority=pri;ev.push("Priority changed from "+prLbl(t.priority||"medium")+" to "+prLbl(pri));sum.push("priority is now "+prLbl(pri));au.push(["ticket.priority",prLbl(t.priority||"medium")+" to "+prLbl(pri)])}
   if(!Object.keys(patch).length&&!msg){toast("Nothing to update yet.",{kind:"warn"});return}
-  if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
+  if(!t.attendedAt&&!isSup()){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
   patch.updatedAt=now;Object.assign(patch,lastActPatch("update",msg||sum.join(", "),false));
   await S.db.doc("tickets/"+t.id).update(patch);
   for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
@@ -1746,8 +1835,8 @@ var A={
   var t=curTicket();if(!t||!isStaff())return;var st=el.dataset.s,now=Date.now();
   var patch=Object.assign({status:st,updatedAt:now},lastActPatch("update","Status: "+stLbl(st),false)),ev=["Status changed from "+stLbl(t.status)+" to "+stLbl(st)];
   if(st==="resolved"){patch.resolvedAt=now;patch.progress=100}else if(st==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;patch.progress=100}else patch.resolvedAt=null;
-  if(st==="progress"&&!t.assignedTo){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;patch.assignedMail=S.me.mail||S.me.username;ev.push("Assigned to "+S.me.name)}
-  if(!t.attendedAt){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
+  if(st==="progress"&&!t.assignedTo&&!isSup()){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;patch.assignedMail=S.me.mail||S.me.username;ev.push("Assigned to "+S.me.name)}
+  if(!t.attendedAt&&!isSup()){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
   await S.db.doc("tickets/"+t.id).update(patch);
   for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
   if(t.createdBy!==S.me.username)await notify(t.createdBy,t.id+" updated by "+S.me.name+": status is now "+stLbl(st),t.id,"update");
@@ -1800,7 +1889,7 @@ var RP_PRESETS={
  recv:{title:"Complaints received report",gran:"day",sec:{summary:1,status:0,prio:0,trend:1,tech:0,techd:0,list:0}},
  full:{title:"Full complaint report",gran:"week",sec:{summary:1,status:1,prio:1,trend:1,tech:1,techd:0,list:1}}
 };
-function rpDefaults(){var p=RP_PRESETS.overall;return {preset:"month",kind:"overall",from:"",to:"",status:"all",prio:"all",cat:"all",tech:isAdmin()?"all":S.me.username,gran:p.gran,sec:Object.assign({},p.sec),title:p.title}}
+function rpDefaults(){var p=RP_PRESETS.overall;return {preset:"month",kind:"overall",from:"",to:"",status:"all",prio:"all",cat:"all",tech:isMonitor()?"all":S.me.username,gran:p.gran,sec:Object.assign({},p.sec),title:p.title}}
 function rpRange(p){
  var t=noon(new Date()),f=t,to=t;
  if(p==="today"){}
@@ -2034,6 +2123,28 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Supervisor":"Penyelia",
+"For supervisors":"Untuk penyelia",
+"Watch the whole helpdesk":"Pantau seluruh helpdesk",
+"The dashboard shows every complaint: open, in progress, on hold, resolved and completed. The banner and Needs attention show the complaints that have waited over 1 day.":"Papan pemuka menunjukkan setiap aduan: terbuka, dalam tindakan, ditangguhkan, diselesaikan dan selesai. Sepanduk dan Perlu perhatian menunjukkan aduan yang telah menunggu lebih 1 hari.",
+"Get the same alerts as the administrators":"Terima amaran yang sama seperti pentadbir",
+"You are told about new complaints, replies, reopened and escalated complaints, and the daily reminder for complaints still pending after 1 day. They arrive in the bell and by email.":"Anda dimaklumkan tentang aduan baharu, balasan, aduan yang dibuka semula dan dinaikkan, serta peringatan harian bagi aduan yang masih tertunggak selepas 1 hari. Ia sampai di loceng dan melalui e-mel.",
+"Assign a complaint to a technician":"Tugaskan aduan kepada juruteknik",
+"Open a complaint, tap Update and choose the technician under Assigned to. Save the update. The technician is told and the person who reported it gets an email.":"Buka aduan, ketik Kemas kini dan pilih juruteknik di bawah Ditugaskan kepada. Simpan kemas kini. Juruteknik dimaklumkan dan pengadu menerima e-mel.",
+"Create reports":"Buat laporan",
+"Open Reports, choose the report type, the period and the technician, then read it on the screen or print it.":"Buka Laporan, pilih jenis laporan, tempoh dan juruteknik, kemudian baca di skrin atau cetak.",
+"Open the reports":"Buka laporan",
+"Check the audit log":"Semak log audit",
+"The Audit log shows every sign-in, change and email, with the time and the person. You can read it. Only administrators manage accounts and settings.":"Log audit menunjukkan setiap log masuk, perubahan dan e-mel, bersama masa dan orangnya. Anda boleh membacanya. Hanya pentadbir menguruskan akaun dan tetapan.",
+"Still open, in progress or on hold. Tap to see them.":"Masih terbuka, dalam tindakan atau ditangguhkan. Ketik untuk melihat semuanya.",
+"Still open, in progress or on hold. Tap to see it.":"Masih terbuka, dalam tindakan atau ditangguhkan. Ketik untuk melihatnya.",
+"Reminder: # complaints still open, in progress or on hold after more than # day. Tap to see.":"Peringatan: # aduan masih terbuka, dalam tindakan atau ditangguhkan selepas lebih # hari. Ketik untuk melihat.",
+"Reminder: # complaint still open, in progress or on hold after more than # day. Tap to see.":"Peringatan: # aduan masih terbuka, dalam tindakan atau ditangguhkan selepas lebih # hari. Ketik untuk melihat.",
+"Open, in progress or on hold over 1 day":"Terbuka, dalam tindakan atau ditangguhkan lebih 1 hari",
+"Waiting over 1 day":"Menunggu lebih 1 hari",
+"Waiting over 1 day \u00d7":"Menunggu lebih 1 hari \u00d7",
+"Waiting #d":"Menunggu # hari",
+"Pending alert sent":"Amaran tertunggak dihantar",
 "Thank you for your patience.":"Terima kasih kerana bersabar.",
 "Cover technician":"Juruteknik ganti",
 "When a technician is on leave, add another person here. They also get the email alerts (new complaints, replies, reopened and escalated complaints) until the end date or until you stop it.":"Apabila juruteknik bercuti, tambah orang lain di sini. Mereka turut menerima e-mel amaran (aduan baharu, balasan, aduan dibuka semula dan dinaikkan) sehingga tarikh tamat atau sehingga anda menghentikannya.",
@@ -2228,7 +2339,8 @@ var PAT=[
  [/^(\S+) updated by (.+?): (.*)$/,function(m){return m[1]+" dikemas kini oleh "+m[2]+": "+tSum(m[3])}],
  [/^You were assigned (\S+): (.*)$/,function(m){return "Anda ditugaskan "+m[1]+": "+m[2]}],
  [/^(.+?) reopened (\S+): (.*)$/,function(m){return m[1]+" membuka semula "+m[2]+": "+m[3]}],
- [/^Attend now: (\S+) has waited (\d+) days? and no technician has attended\. (.*)$/,function(m){return "Tangani sekarang: "+m[1]+" telah menunggu "+m[2]+" hari dan belum ada juruteknik yang menangani. "+m[3]}]
+ [/^Attend now: (\S+) has waited (\d+) days? and no technician has attended\. (.*)$/,function(m){return "Tangani sekarang: "+m[1]+" telah menunggu "+m[2]+" hari dan belum ada juruteknik yang menangani. "+m[3]}],
+ [/^Still pending: (\S+) is (Open|In progress|On hold) after (\d+) days?\. (.*)$/,function(m){return "Masih tertunggak: "+m[1]+" berstatus "+Tm(m[2])+" selepas "+m[3]+" hari. "+m[4]}]
 ];
 function tSum(x){
  var tail="",k=x.indexOf(". “");
@@ -2826,7 +2938,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-14 v80";
+var BUILD="2026-11-16 v82";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -2886,9 +2998,9 @@ function idApply(el){
 }
 
 /* ============ user guide ============ */
-var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
+var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],sup:[{"ic": "dash", "t": "Watch the whole helpdesk", "d": "The dashboard shows every complaint: open, in progress, on hold, resolved and completed. The banner and Needs attention show the complaints that have waited over 1 day.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "bell", "t": "Get the same alerts as the administrators", "d": "You are told about new complaints, replies, reopened and escalated complaints, and the daily reminder for complaints still pending after 1 day. They arrive in the bell and by email.", "go": "", "gl": ""}, {"ic": "users", "t": "Assign a complaint to a technician", "d": "Open a complaint, tap Update and choose the technician under Assigned to. Save the update. The technician is told and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "chart", "t": "Create reports", "d": "Open Reports, choose the report type, the period and the technician, then read it on the screen or print it.", "go": "reports", "gl": "Open the reports"}, {"ic": "shield", "t": "Check the audit log", "d": "The Audit log shows every sign-in, change and email, with the time and the person. You can read it. Only administrators manage accounts and settings.", "go": "audit", "gl": "Open the audit log"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
 function pgGuide(){
- var tabs=[["user","Using the helpdesk"]];if(isStaff())tabs.push(["tech","For technicians"]);if(isAdmin())tabs.push(["admin","For administrators"]);
+ var tabs=[["user","Using the helpdesk"]];if(isStaff())tabs.push(["tech","For technicians"]);if(isSup())tabs.push(["sup","For supervisors"]);if(isAdmin())tabs.push(["admin","For administrators"]);
  var g=S.guide=S.guide||{tab:"user",i:0};
  if(!tabs.some(function(x){return x[0]===g.tab})){g.tab="user";g.i=0}
  var L=GUIDE[g.tab],i=Math.max(0,Math.min(g.i,L.length-1)),s=L[i];g.i=i;
@@ -2977,7 +3089,7 @@ async function processInbox(){
    if(!t){if(S.tickets.length){await del();log("email.ignored",idm?idm[0]:"","No matching complaint for reply from "+from)}continue}
    var acct=S.accounts.filter(function(a){return a.username===from||a.mail===from})[0]||null;
    var requester=[String(t.createdBy||"").toLowerCase(),String(t.createdByMail||"").toLowerCase(),String(addrFor(t)||"").toLowerCase()].indexOf(from)>=0;
-   var staffSender=acct&&(acct.role==="technician"||acct.role==="admin");
+   var staffSender=acct&&(acct.role==="technician"||acct.role==="admin"||acct.role==="supervisor");
    if(!requester&&!staffSender){await del();log("email.ignored",t.id,"Reply from "+from+" is not the requester or staff");continue}
    var body=replyPart(m.isHtml===false?String(m.body||""):htmlToText(m.body||m.bodyPreview||""));
    if(!body){await del();continue}
@@ -3092,7 +3204,7 @@ function auditKind(a){
  if(/failed|ignored/.test(x))return "bad";
  if(x.indexOf("auth.")===0)return "auth";
  if(x.indexOf("account.")===0||x.indexOf("settings.")===0||x.indexOf("cover.")===0)return "acct";
- if(x.indexOf("email.")===0)return "mail";
+ if(x.indexOf("email.")===0||x.indexOf("alert.")===0)return "mail";
  if(x.indexOf("comment.")===0||x==="update.message")return "cmt";
  if(x.indexOf("ticket.")===0)return "tkt";
  return "other";
@@ -3126,6 +3238,7 @@ function staffRecipients(t){
  var tech=String(t.assignedMail||t.assignedTo||"");
  if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tech))list.push(tech);
  coverEmails().forEach(function(x){list.push(x)});
+ supEmails().forEach(function(x){list.push(x)});
  var me=S.me?[String(S.me.mail||"").toLowerCase(),String(S.me.username||"").toLowerCase()]:[],seen={},out=[];
  list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x]||me.indexOf(x)>=0)return;seen[x]=1;out.push(x)});
  return out;
@@ -3178,6 +3291,7 @@ function notifParse(n){
  if((m=t.match(/^You were assigned (\S+): (.*)$/)))return {id:m[1],lines:[ms?"Ditugaskan kepada anda":"Assigned to you"],sub:m[2]};
  if((m=t.match(/^.+? reopened (\S+): (.*)$/)))return {id:m[1],lines:[ms?"Dibuka semula":"Reopened"],sub:m[2]};
  if((m=t.match(/^Attend now: (\S+) has waited (\d+) days? and no technician has attended\. (.*)$/)))return {id:m[1],lines:[ms?"Menunggu "+m[2]+" hari, belum ada juruteknik":"Waiting "+m[2]+(+m[2]===1?" day":" days")+", no technician yet"],sub:m[3]};
+ if((m=t.match(/^Still pending: (\S+) is (Open|In progress|On hold) after (\d+) days?\. (.*)$/)))return {id:m[1],lines:[ms?"Masih "+Tm(m[2]).toLowerCase()+" selepas "+m[3]+" hari":"Still "+m[2].toLowerCase()+" after "+m[3]+(+m[3]===1?" day":" days")],sub:m[4]};
  return {id:id,lines:[t],sub:""};
 }
 function notifBody(n){
@@ -3197,7 +3311,7 @@ function cardExtras(t){
  var p=[],n=t.images?t.images.length:0;
  if(n)p.push(n+" photo"+(n>1?"s":""));
  if(isOverdue(t))p.push('<span class="over">Overdue</span>');
- if(isStale(t))p.push('<span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>');
+ if(isStale(t))p.push('<span class="over">Not attended '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>');else if(isPending(t))p.push('<span class="over">Waiting '+Math.floor((Date.now()-t.createdAt)/DAY)+'d</span>');
  return p.length?'<small>'+p.join(", ")+'</small>':"";
 }
 
