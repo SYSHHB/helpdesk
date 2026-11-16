@@ -420,3 +420,75 @@ a 241-pixel side menu with a bigger logo and bold menu names, a taller green hea
 cards, a bigger clock), page content that fills the full width next to the header panel, and a larger page heading.
 The date is not repeated beside the page heading any more because the header already shows it.
 Phones are unchanged.
+
+---------------------------------------------------------------------------
+## Part 23. Alerts for complaints that stay pending for more than 1 day
+
+A complaint that is still **Open, In progress or On hold** more than 1 day (24 hours) after it was submitted triggers
+an alert, and again for every further day until it is Resolved or Completed:
+* **In the system:** a notification for every administrator and every technician (the bell, plus a message when the
+  helpdesk opens). The dashboard shows a banner and a new first row in "Needs attention" ("Open, in progress or on hold
+  over 1 day"); tapping either lists those complaints. Complaint cards show "Waiting 2d" (or "Not attended 2d" when nobody has attended an open one).
+* **By email:** ONE email per round, listing every complaint that crossed a new day, with a link to each. It goes to the
+  helpdesk mailbox (NOTIFY_EMAILS), every active technician and administrator, and any cover technician.
+  The person who complained is not emailed. The subject starts with "[ALERT]" and is in English and Malay.
+* Each complaint gets at most one reminder per day. If several team members have the helpdesk open at the same moment,
+  only one of them creates each reminder, and usually the same person sends the one email (in rare cases of exactly
+  simultaneous opening it can be split into two emails, but no complaint is ever listed twice).
+* The audit log records every round ("Pending alert sent").
+
+Good to know:
+* The alerts are produced by the helpdesk itself, so they appear when at least one technician or administrator has the
+  helpdesk open (it checks when it opens and every 5 minutes). If nobody opens it for a day, the alerts for that day come
+  out the next time someone does. The "Needs attention" row and the banner always show the true count.
+* The 1 day is counted from the moment the complaint was submitted, whatever its status is now.
+* The emails are sent from the mailbox of the person whose helpdesk made the reminder (as with the other alert emails).
+* The server version (helpdesk-server) lets only a technician or administrator create a reminder, only for a complaint that really
+  is pending that long, and only once.
+
+---------------------------------------------------------------------------
+## Part 24. The Supervisor role
+
+A new role, **Supervisor**, for someone who monitors the whole helpdesk. An administrator chooses it on the
+Accounts page (Role: User, Technician, Supervisor, Admin). Malay name: **Penyelia**.
+
+A supervisor CAN:
+* see every complaint, the dashboard, the calendar and the reports, and create reports (the technician filter starts on "all");
+* read the Audit log (read-only);
+* get the same notifications as the administrators (the bell and the pop-ups), including the daily reminder for complaints
+  pending over 1 day;
+* get the same alert emails (new complaint, reply, reopened, escalated, and the daily reminder email);
+* assign a complaint to a technician (Update, then Assigned to) and use the normal update panel and comments, including internal notes;
+* use the user guide tab "For supervisors".
+
+A supervisor CANNOT: open the Accounts page, add or change accounts and roles, use the cover-technician panel, import data,
+change the Brunei calendar or the security settings, or delete complaints. Those stay with the administrators.
+
+Details:
+* A supervisor is not a technician: she does not appear in the "Assigned to" list, there is no "Assign to me" button, her
+  "Start work" does not assign the complaint to her, and her updates do not count as "a technician has attended".
+* Requesters' browsers cannot read the account list, so the administrator's browser keeps a small shared list of the
+  supervisors' email addresses up to date automatically (it updates when an administrator opens the helpdesk after a role change).
+  Until an administrator has opened the helpdesk once after you upgrade, a requester's action may not email the supervisors yet.
+* In the server version (helpdesk-server) the same rules are enforced on the server.
+
+---------------------------------------------------------------------------
+## Part 25. Administrators can delete a complaint
+
+On a complaint page, administrators see a **Delete** button (next to Comment). It asks for confirmation, then
+permanently removes the complaint and every one of its comments (public and internal). This cannot be undone.
+Nothing else is touched: other complaints, accounts, the audit log and past notifications are unaffected.
+Only an administrator can do this — technicians, supervisors and the person who complained never see the button,
+and the server refuses the request from anyone else. Every deletion is written to the audit log.
+
+---------------------------------------------------------------------------
+## Part 26. Administrators can reset the ticket numbering
+
+Accounts page, panel **Reset ticket numbering** (administrators only): one row per year that has ever had a
+complaint, plus the current year. Each row shows the next number that would be given out, and you can either type
+a new number and press **Save**, or press **Reset to 0** to start that year's numbering over from `IT-year-0001`.
+
+Only lower a number if you are sure no complaint already uses it or a higher one in that year. If you do, new
+complaints for that year automatically skip past any numbers already in use (the server and the OneDrive version
+both guarantee a number is never given out twice), so nothing breaks, but the numbers will not be perfectly
+sequential. Every change is written to the audit log.

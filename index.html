@@ -845,7 +845,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-w3Br7MLmh2WHWGVXnF/9+8t8e4nl8rO93F95IxeVXAk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-67EjTHgE3/ON0cmk7xgEGEYLotlhIjw/fG1LwUyvdD8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -861,7 +861,7 @@ var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network /
 function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6],"Biztrack System (FINANCE COUNTER ONLY)":CATS[5],"VM - Virtual Machine (FINANCE COUNTER ONLY)":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",supervisor:"Supervisor",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
-"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","alert.stale":"Pending alert sent","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
+"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","settings.counter":"Ticket numbering changed","alert.stale":"Pending alert sent","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
 "ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Expected Completion changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
@@ -886,6 +886,7 @@ function stLbl(k){var f=STATUSES.filter(function(s){return s[0]===k})[0];return 
 function prLbl(k){var f=PRIORITIES.filter(function(s){return s[0]===k})[0];return f?f[1]:k}
 function ago(t){var s=Math.max(0,(Date.now()-t)/1000);if(s<60)return "just now";if(s<3600)return Math.floor(s/60)+" min ago";if(s<86400)return Math.floor(s/3600)+" h ago";return Math.floor(s/86400)+" d ago"}
 var ICONS={
+trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
 dash:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
 list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
 plus:'<path d="M12 5v14M5 12h14"/>',
@@ -1207,6 +1208,7 @@ function startSubs(){
   renderChrome();
  },"notifications"));
  if(isStaff())S.unsubs.push(watch(col("accounts"),function(s){S.accounts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});syncTeam();render()},"accounts"));
+ if(isAdmin())S.unsubs.push(S.db.doc("settings/ticketcounter").onSnapshot(function(sn){S.counter=sn.exists?sn.data():{};if(S.view==="accounts")renderContent()},function(e){console.warn(e)}));
  if(isMonitor())S.unsubs.push(watch(col("audit").orderBy("ts","desc").limit(500),function(s){S.audit=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});if(S.view==="audit")renderContent()},"audit log"));
 }
 function subComments(id){
@@ -1486,7 +1488,7 @@ function pgTicket(){
   '<button class="btn primary"'+(S.busy?" disabled":"")+'>Save update</button></form></aside>';
  }
  var nx={open:["progress","Start work"],progress:["resolved","Mark resolved"],hold:["progress","Resume work"],resolved:["closed","Complete"]}[t.status];
- var bar='<div class="actbar">'+(staff&&nx?'<button class="btn primary" data-act="quick" data-s="'+nx[0]+'">'+nx[1]+'</button>':'')+(staff?'<button class="btn" data-act="opensheet">Update…</button>':'')+'<button class="btn'+(staff?'':' primary')+'" data-act="focuscomment">Comment</button></div>';
+ var bar='<div class="actbar">'+(staff&&nx?'<button class="btn primary" data-act="quick" data-s="'+nx[0]+'">'+nx[1]+'</button>':'')+(staff?'<button class="btn" data-act="opensheet">Update…</button>':'')+'<button class="btn'+(staff?'':' primary')+'" data-act="focuscomment">Comment</button>'+(isAdmin()?'<button class="btn sm danger" data-act="deleteticket" style="margin-left:auto">'+ico("trash")+'Delete</button>':'')+'</div>';
  return '<div class="crumb"><button class="link" data-act="nav" data-v="tickets">Back to complaints</button></div><div class="tdetail">'+main+side+'</div>'+(S.sheet&&staff?'<div class="sheet-bd" data-act="closesheet"></div>':'')+bar;
 }
 
@@ -1605,7 +1607,7 @@ function pgAccounts(){
   '<label class="fld"><span>Staff group</span>'+deptSel("ac-dept","dept",ed?ed.dept||"":"",true)+'</label>'+
   '<div style="display:flex;gap:8px"><button class="btn primary"'+(S.busy?" disabled":"")+'>'+(ed?"Save changes":"Add account")+'</button>'+(ed?'<button type="button" class="btn" data-act="editacct" data-u="">Cancel</button>':'')+'</div></form></details>';
  return '<div class="page-h"><div><h1>Accounts</h1><p class="muted">People who sign in with a school Microsoft account for the first time appear here automatically as Users. Edit their details, change their role, disable or delete them.</p></div></div>'+
- mailPanel()+coverPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nSup+' supervisor, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
+ mailPanel()+coverPanel()+counterPanel()+securityPanel()+importPanel()+'<p class="muted small" style="margin-bottom:10px">'+S.accounts.length+' people: '+nAdm+' admin, '+nSup+' supervisor, '+nTech+' technician, '+nUsr+' user. Showing '+list.length+'.</p>'+filt+
  '<div class="acctlayout"><div>'+form.replace('class="panel acct-add"','class="panel acct-add only-m"')+(cards?'<ol class="plist">'+cards+'</ol>':'<div class="panel empty"><b>No one matches those filters.</b></div>')+'</div>'+form.replace('class="panel acct-add"','class="panel acct-add only-d"').replace(/id="(acctwrap|acctform|ac-name|ac-user|ac-role|ac-phone|ac-dept)"/g,'id="$1-d"')+'</div>';
 }
 
@@ -1806,6 +1808,19 @@ var A={
   if(!window.confirm(T("Delete this account? The person can sign in again later and will be added as a normal user.")+"\n\n"+u))return;
   return withBusy(async function(){await S.db.doc("accounts/"+u).delete();await log("account.delete",u,"");toast("Account deleted.")});
  },
+ deleteticket:function(){
+  if(!isAdmin())return;
+  var t=curTicket();if(!t)return;
+  if(!window.confirm(T("Delete this complaint permanently? This cannot be undone. All its comments and history will be removed too.")+"\n\n"+fmtIds(t.id)))return;
+  return withBusy(async function(){
+   var cs=(S.comments||[]).slice();
+   for(var i=0;i<cs.length;i++){try{await col("tickets/"+t.id+"/comments").doc(cs[i].id).delete()}catch(e){console.warn(e)}}
+   await S.db.doc("tickets/"+t.id).delete();
+   await log("ticket.delete",t.id,(t.title||"")+" ("+cs.length+" comment"+(cs.length===1?"":"s")+")");
+   toast(T("Complaint deleted."));
+   go("tickets");
+  });
+ },
  resync:function(){S.syncErr="";S.tickets=[];startSubs();render()},
  lang:function(el){setLang(el.dataset.l)},
  zoom:function(el){zoom(el.getAttribute("src"))},
@@ -1828,6 +1843,8 @@ var A={
   log("export","report","CSV: "+rows.length+" rows");saveFile("helpdesk-complaints-"+S.rp.from+"-to-"+S.rp.to+".csv",csvText(rows));
  },
  savestart:function(el){var k=el.dataset.k,inp=$("#hs-"+k);if(!inp||!inp.value||!isAdmin())return;var st=Object.assign({},hStarts);st[k]=inp.value;inp.removeAttribute("data-keep");var p=k.split("-");return saveHijri(hOff,st,"1 "+HM[+p[1]-1]+"\u00a0"+p[0]+"H = "+inp.value)},
+ savecounter:function(el){var k=el.dataset.k,yr=+el.dataset.y,inp=$("#ct-"+k);if(!inp)return;return saveCounter(k,yr,parseInt(inp.value,10))},
+ resetcounter:function(el){var k=el.dataset.k,yr=+el.dataset.y;var inp=$("#ct-"+k);if(inp)inp.value="0";return saveCounter(k,yr,0)},
  clearstart:function(el){var k=el.dataset.k,inp=$("#hs-"+k);if(!isAdmin())return;var st=Object.assign({},hStarts);delete st[k];if(inp)inp.removeAttribute("data-keep");var p=k.split("-");return saveHijri(hOff,st,"Reset 1 "+HM[+p[1]-1]+"\u00a0"+p[0]+"H")},
  opensheet:function(){S.sheet=true;render()},
  focuscomment:function(){var ta=$("#c-text");if(ta){ta.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){ta.focus({preventScroll:true})},250)}},
@@ -1880,6 +1897,41 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&S.bell){S.b
 
 async function saveHijri(adj,starts,note){
  try{await S.db.doc("settings/hijri").set({adj:adj,starts:starts});await log("settings.hijri","hijri",note||"")}catch(e){errToast(e)}
+}
+
+/* ============ reset ticket numbering ============ */
+function counterFields(){
+ var cur=ticketYear(Date.now()),curField=cur===LEGACY_YEAR?"n":"y"+cur,map={};
+ map[curField]=cur;
+ Object.keys(S.counter||{}).forEach(function(k){
+  if(k==="n")map[k]=LEGACY_YEAR;else{var m=/^y(\d{4})$/.exec(k);if(m)map[k]=+m[1]}
+ });
+ return map;
+}
+function counterPanel(){
+ if(!isAdmin())return "";
+ var map=counterFields(),vals=S.counter||{};
+ var rows=Object.keys(map).sort().map(function(k){
+  var yr=map[k],cur=vals[k]||0;
+  return '<div class="hsrow"><label class="fld"><span>'+T("Year")+' '+yr+'</span><input type="number" min="0" max="9999" id="ct-'+k+'" data-keep value="'+cur+'"></label>'+
+   '<button class="btn sm primary" data-act="savecounter" data-k="'+k+'" data-y="'+yr+'">'+T("Save")+'</button>'+
+   (cur!==0?'<button class="btn sm" data-act="resetcounter" data-k="'+k+'" data-y="'+yr+'">'+T("Reset to 0")+'</button>':'')+'</div>';
+ }).join("");
+ return '<details class="panel mt hs"><summary><b>'+T("Reset ticket numbering")+'</b> '+T("for administrators")+'</summary><p class="muted small" style="margin:8px 0 12px">'+
+  T("The next complaint of a year gets the number right after what is shown here. Only lower a number if you are sure no complaint already uses it or a higher one this year \u2014 otherwise new complaints may collide and have to skip ahead automatically.")+
+  '</p>'+rows+'</details>';
+}
+async function saveCounter(k,yr,v){
+ if(!isAdmin())return;
+ if(!(Number.isInteger(v)&&v>=0&&v<=9999)){toast(T("Enter a number from 0 to 9999."),{kind:"warn"});return}
+ if(!window.confirm(T("Set the next complaint number for")+" "+yr+" "+T("to")+" "+(v+1)+"? "+T("Do this only if you are sure no complaint already uses that number or a higher one this year.")))return;
+ return withBusy(async function(){
+  var patch={};patch[k]=v;
+  await S.db.doc("settings/ticketcounter").update(patch);
+  var inp=$("#ct-"+k);if(inp)inp.removeAttribute("data-keep");
+  await log("settings.counter",T("Year")+" "+yr,T("Set to")+" "+v);
+  toast(T("Counter updated."));
+ });
 }
 
 /* ============ reports ============ */
@@ -2123,6 +2175,17 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Delete this complaint permanently? This cannot be undone. All its comments and history will be removed too.":"Padamkan aduan ini secara kekal? Ini tidak boleh dibuat asal. Semua komen dan sejarahnya turut dipadamkan.",
+"Complaint deleted.":"Aduan dipadam.",
+"Reset ticket numbering":"Tetapkan semula penomboran aduan",
+"The next complaint of a year gets the number right after what is shown here. Only lower a number if you are sure no complaint already uses it or a higher one this year — otherwise new complaints may collide and have to skip ahead automatically.":"Aduan seterusnya bagi sesuatu tahun akan mendapat nombor sejurus selepas yang ditunjukkan di sini. Rendahkan nombor hanya jika anda pasti tiada aduan yang sudah menggunakan nombor itu atau yang lebih tinggi pada tahun ini — jika tidak, aduan baharu mungkin bertembung dan terpaksa melangkau secara automatik.",
+"Year":"Tahun",
+"Reset to 0":"Tetapkan semula kepada 0",
+"Enter a number from 0 to 9999.":"Masukkan nombor dari 0 hingga 9999.",
+"Set the next complaint number for":"Tetapkan nombor aduan seterusnya bagi",
+"to":"kepada",
+"Do this only if you are sure no complaint already uses that number or a higher one this year.":"Lakukan ini hanya jika anda pasti tiada aduan yang sudah menggunakan nombor itu atau yang lebih tinggi pada tahun ini.",
+"Counter updated.":"Pembilang dikemas kini.",
 "Supervisor":"Penyelia",
 "For supervisors":"Untuk penyelia",
 "Watch the whole helpdesk":"Pantau seluruh helpdesk",
@@ -2938,7 +3001,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-16 v82";
+var BUILD="2026-11-17 v83";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
