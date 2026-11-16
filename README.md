@@ -520,3 +520,18 @@ The complaint's history keeps an honest record of this: a line reading "Complain
 complaint form is unchanged. The server enforces the same rule: only an administrator may set who a complaint
 is really from, the email must be a `syayasan.edu.bn` address, and a name is required for anyone not already
 registered.
+
+---------------------------------------------------------------------------
+## Part 29. The requester's email, and a safer place for Delete
+
+**Email on the complaint page.** Staff now see the requester's email under "Requested by", next to the
+phone number. If there is none on file — this is common for the complaints imported from the old
+Spiceworks system, which had no email for many of them — administrators see **Add their email**
+instead. Typing it in fixes future update emails for that complaint; it does not resend anything that
+already failed to send. Only an administrator can add or change it, and it must be a `syayasan.edu.bn`
+address. If the complaint's owner wasn't a real email (as with every Spiceworks import), saving a real
+one also makes that the owner, so the real person can see the complaint as their own once they sign in.
+
+**Delete moved out of the row of everyday buttons.** It used to sit at the end of Update.../Comment and
+could be cramped or pushed out of view on some phones. It is now its own clearly marked row underneath,
+so it is easy to find and hard to tap by accident.
