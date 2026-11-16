@@ -845,7 +845,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-67EjTHgE3/ON0cmk7xgEGEYLotlhIjw/fG1LwUyvdD8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-Yb9Dom5wfBR02VhoPCvKh2XV8CYl0pWvRKGp4RnSbEw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -3001,7 +3001,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-17 v83";
+var BUILD="2026-11-18 v84";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3828,28 +3828,44 @@ async function apiNewTicket(v,title,desc){
  clearKeep();openTicket(id);
 }
 /* one-time import of the old OneDrive files (admins only) */
+/* OneDrive mode: all the new docs for one shared file (for example tickets.json) are merged in with ONE
+   network read+write, instead of one per record (which would be far too slow and could race with other people). */
+function bulkMergeFile(name,patch){return gMutate(name,function(docs){Object.keys(patch).forEach(function(p){docs[p]=patch[p]});return true})}
 async function importOld(files){
- var total=0,skipped=0,batch={},size=0,n=0;
+ var total=0,skipped=0,n=0;
  var say=function(t){S.impMsg=t;S.view==="accounts"&&renderContent()};
- async function flush(){if(!size)return;var r=await apiCall("POST","admin/import",{docs:batch});total+=r.imported;skipped+=r.skipped;batch={};size=0;say("Imported "+total+" records…")}
- async function put(path,data){var sz=JSON.stringify(data).length;if(sz>740000){skipped++;return}if(size+sz>600000)await flush();batch[path]=data;size+=sz}
+ var apiBatch={},apiSize=0,odGroups={};
+ async function apiFlush(){if(!apiSize)return;var r=await apiCall("POST","admin/import",{docs:apiBatch});total+=r.imported;skipped+=r.skipped;apiBatch={};apiSize=0;say("Imported "+total+" records…")}
+ async function put(path,data){
+  var sz=JSON.stringify(data).length;
+  if(sz>740000){skipped++;return}
+  if(API_MODE){if(apiSize+sz>600000)await apiFlush();apiBatch[path]=data;apiSize+=sz}
+  else{var fn=writeFileName(path,data);(odGroups[fn]=odGroups[fn]||{})[path]=data}
+  n++;
+ }
  try{
   say("Reading the files…");
   for(var i=0;i<files.length;i++){
    var f=files[i],rel=f.webkitRelativePath||f.name,txt=await f.text(),obj;
    try{obj=JSON.parse(txt)}catch(e){skipped++;continue}
-   if(/(^|\/)photos\/[^/]+\.json$/.test(rel)){await put("images/"+f.name.replace(/\.json$/,""),obj);n++}
-   else if(/^(users|tickets|notifs|settings)\.json$|^audit-\d{4}-\d{2}\.json$/.test(f.name)){var d=obj.docs||{};for(var p in d){await put(p,d[p]);n++}}
+   if(/(^|\/)photos\/[^/]+\.json$/.test(rel)){await put("images/"+f.name.replace(/\.json$/,""),obj)}
+   else if(/^(users|tickets|notifs|settings)\.json$|^audit-\d{4}-\d{2}\.json$/.test(f.name)){var d=obj.docs||{};for(var p in d)await put(p,d[p])}
    else skipped++;
   }
-  await flush();
-  await log("data.import","old data",total+" records");
+  if(API_MODE){await apiFlush()}
+  else{
+   var names=Object.keys(odGroups);
+   say("Writing "+names.length+" file"+(names.length===1?"":"s")+"…");
+   for(var k=0;k<names.length;k++){await bulkMergeFile(names[k],odGroups[names[k]])}
+   total=n;
+  }
+  await log("data.import","data",total+" records");
   say("Done. "+total+" records were imported"+(skipped?(", "+skipped+" were skipped"):"")+".");
  }catch(e){say("Stopped: "+(e.message||e))}
 }
 function importPanel(){
- if(!API_MODE||!isAdmin())return "";
- return '<div class="panel" translate="no" style="margin-bottom:14px"><h2>Import the old data</h2><p class="muted small" style="margin:6px 0 10px">One time only. Download the OneDrive folder SYSHHB-Helpdesk to a computer and unzip it. Choose its data files (users.json, tickets.json, notifs.json, settings.json and the audit-….json files), then its photos folder. Old complaint numbers and the numbering carry on from where they stopped.</p><label class="fld"><span>1. The data files</span><input type="file" id="imp-files" accept=".json" multiple></label><label class="fld" style="margin-top:8px"><span>2. The photos folder</span><input type="file" id="imp-photos" webkitdirectory multiple></label>'+(S.impMsg?'<p style="margin-top:10px"><b>'+esc(S.impMsg)+'</b></p>':'')+'</div>';
+ if(!isAdmin())return "";
+ return '<div class="panel" translate="no" style="margin-bottom:14px"><h2>Import data</h2><p class="muted small" style="margin:6px 0 10px">One time only. Upload prepared data files (each a JSON file with a top-level "docs" object: users.json, tickets.json, notifs.json, settings.json or an audit-….json file), and, if there are any, the photos folder. Old complaint numbers and the numbering carry on from where they stopped.</p><label class="fld"><span>1. The data files</span><input type="file" id="imp-files" accept=".json" multiple></label><label class="fld" style="margin-top:8px"><span>2. The photos folder (if any)</span><input type="file" id="imp-photos" webkitdirectory multiple></label>'+(S.impMsg?'<p style="margin-top:10px"><b>'+esc(S.impMsg)+'</b></p>':'')+'</div>';
 }
 document.addEventListener("change",function(e){var t=e.target;if(t&&(t.id==="imp-files"||t.id==="imp-photos")&&t.files&&t.files.length)importOld(Array.prototype.slice.call(t.files))});
 if(API_MODE){

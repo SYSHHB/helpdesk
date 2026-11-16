@@ -492,3 +492,13 @@ Only lower a number if you are sure no complaint already uses it or a higher one
 complaints for that year automatically skip past any numbers already in use (the server and the OneDrive version
 both guarantee a number is never given out twice), so nothing breaks, but the numbers will not be perfectly
 sequential. Every change is written to the audit log.
+
+---------------------------------------------------------------------------
+## Part 27. Import data (the panel works without the server now)
+
+Accounts page, panel **Import data** (administrators only): upload one or more JSON files, each with a
+top-level `"docs"` object, named `users.json`, `tickets.json`, `notifs.json`, `settings.json` or
+`audit-YYYY-MM.json` (and a photos folder, if there is one). This now works on the live OneDrive-based
+helpdesk too, not only after switching to the server. On OneDrive, all the new records for one shared file
+(for example every complaint in `tickets.json`) are merged in with **one** read-and-write, so importing
+hundreds of records takes a few seconds instead of minutes.
