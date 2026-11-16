@@ -502,3 +502,21 @@ top-level `"docs"` object, named `users.json`, `tickets.json`, `notifs.json`, `s
 helpdesk too, not only after switching to the server. On OneDrive, all the new records for one shared file
 (for example every complaint in `tickets.json`) are merged in with **one** read-and-write, so importing
 hundreds of records takes a few seconds instead of minutes.
+
+---------------------------------------------------------------------------
+## Part 28. Administrators can submit a complaint on behalf of someone else
+
+On **New complaint**, administrators see an extra field, **Submit on behalf of**:
+* **Myself** (default): works exactly as before.
+* **Anyone already in Accounts**: pick them from the list. The complaint is filed under their real
+  name, email and phone, and the "we received your complaint" email goes to them, not to the admin.
+* **Someone not listed...**: type their school email and their name. If they have never signed in before,
+  nothing is created for them yet — the complaint is simply filed under that email and name. The **first
+  time they do sign in**, they go through the normal "Confirm your details" step, exactly like anyone else's
+  first sign-in, and from then on they see this complaint as their own.
+
+The complaint's history keeps an honest record of this: a line reading "Complaint submitted on behalf of
+&lt;name&gt; by &lt;admin's name&gt;." Only an administrator sees or can use this field; everyone else's New
+complaint form is unchanged. The server enforces the same rule: only an administrator may set who a complaint
+is really from, the email must be a `syayasan.edu.bn` address, and a name is required for anyone not already
+registered.

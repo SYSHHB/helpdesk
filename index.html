@@ -845,7 +845,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-Yb9Dom5wfBR02VhoPCvKh2XV8CYl0pWvRKGp4RnSbEw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-bj8yck3RRR5Aob38OuLQ8RqlgLBObxyzY4cMNZXB3N0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -1449,9 +1449,34 @@ function pgTickets(noHead){
 }
 
 /* ============ page: new complaint ============ */
+function onBehalfOptions(){
+ return (S.accounts||[]).filter(function(a){return a.username!==S.me.username&&a.active!==false}).sort(function(a,b){return a.name.localeCompare(b.name)})
+  .map(function(a){return '<option value="'+esc(a.username)+'">'+esc(a.name)+' \u00b7 '+esc(a.username)+'</option>'}).join("");
+}
+function onBehalfPanel(){
+ if(!isAdmin())return "";
+ return '<label class="fld"><span>Submit on behalf of</span><select id="n-onbehalf" name="onbehalf" data-keep><option value="">Myself</option>'+onBehalfOptions()+'<option value="__other__">Someone not listed\u2026</option></select></label>'+
+  '<div id="n-onbehalf-new" class="grid2" style="display:none"><label class="fld"><span>Their email</span><input id="n-ob-email" name="obemail" maxlength="160" data-keep placeholder="name@syayasan.edu.bn"></label>'+
+  '<label class="fld"><span>Their name</span><input id="n-ob-name" name="obname" maxlength="120" data-keep placeholder="Full name"></label></div>';
+}
+function resolveOnBehalf(v){
+ if(!isAdmin()||!v.onbehalf)return null;
+ if(v.onbehalf==="__other__"){
+  var em=(v.obemail||"").trim().toLowerCase(),nm=(v.obname||"").trim(),dom=(CFG.ALLOWED_DOMAIN||"").toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)||(dom&&em.slice(em.lastIndexOf("@")+1)!==dom))return {error:T("Enter a valid")+(dom?" @"+dom:"")+" "+T("email address for them.")};
+  if(!nm)return {error:T("Enter their name.")};
+  var existing=(S.accounts||[]).filter(function(a){return a.username===em})[0];
+  if(existing)return {email:existing.username,name:existing.name,mail:existing.mail||existing.username,phone:existing.phone||""};
+  return {email:em,name:nm,mail:em,phone:""};
+ }
+ var a=(S.accounts||[]).filter(function(a){return a.username===v.onbehalf})[0];
+ if(!a)return {error:T("Choose a person from the list.")};
+ return {email:a.username,name:a.name,mail:a.mail||a.username,phone:a.phone||""};
+}
 function pgNew(){
  return '<div class="page-h"><div><h1>New complaint</h1><p class="muted">Technicians are notified as soon as you submit.</p></div></div>'+
  '<form class="panel form stack" data-form="newticket">'+
+ onBehalfPanel()+
  '<label class="fld"><span>What’s the problem?</span><input id="n-title" name="title" required maxlength="120" data-keep placeholder="For example: Projector in Room 4 shows no signal"></label>'+
  '<div class="grid2"><label class="fld"><span>Category</span><div class="pick"><input type="hidden" id="n-cat" name="category" data-keep value=""><button type="button" class="pick-btn" id="n-cat-btn" data-act="pickopen" aria-haspopup="listbox"><span class="pick-v ph" translate="no">Select…</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></label>'+
  '<label class="fld"><span>Location</span>'+locSel()+'</label></div>'+
@@ -1648,17 +1673,21 @@ var F={
   if(!v.category||!v.location){toast("Choose the category and the location.",{kind:"warn"});return}
   if(!(v.room||"").trim()){toast("Enter the room or place.",{kind:"warn"});return}
   if(!(S.att.new||[]).length){toast("Add at least 1 photo.",{kind:"warn"});return}
-  if(API_MODE){await apiNewTicket(v,title,desc);return}
+  var ob=resolveOnBehalf(v);
+  if(ob&&ob.error){toast(ob.error,{kind:"warn"});return}
+  var req=ob||{email:S.me.username,name:S.me.name,mail:S.me.mail||S.me.username,phone:S.me.phone||""};
+  if(API_MODE){await apiNewTicket(v,title,desc,ob);return}
   var id=await nextTicketId(),now=Date.now();
+  var subText=ob?("Complaint submitted on behalf of "+req.name+" by "+S.me.name+"."):"Complaint submitted";
   await S.db.doc("tickets/"+id).set({title:title,description:desc,category:v.category,priority:v.priority||"medium",location:locFrom(v),status:"open",progress:0,
-   lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username,createdByPhone:S.me.phone||"",createdByName:S.me.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
+   lastActAt:now,lastActBy:S.me.username,lastActByName:S.me.name,lastActKind:"created",lastActText:title,createdBy:req.email,createdByMail:req.mail,createdByPhone:req.phone,createdByName:req.name,createdAt:now,updatedAt:now,assignedTo:null,assignedName:"",due:null,resolvedAt:null,images:S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}})});
   try{
-   await col("tickets/"+id+"/comments").add({type:"event",text:"Complaint submitted",by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
-   await notify("staff","New complaint "+id+" from "+S.me.name+": "+title,id,"new");
-   await log("ticket.create",id,prLbl(v.priority)+" priority, "+v.category+": "+title);
+   await col("tickets/"+id+"/comments").add({type:"event",text:subText,by:S.me.username,byName:S.me.name,role:S.me.role,ts:now});
+   await notify("staff","New complaint "+id+" from "+req.name+": "+title,id,"new");
+   await log("ticket.create",id,prLbl(v.priority)+" priority, "+v.category+": "+title+(ob?" ("+T("on behalf of")+" "+req.email+")":""));
   }catch(e){console.warn("follow-up writes failed",e)}
-  mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username},{by:S.me.name});
-  mailStaff("staffnew",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:S.me.username,createdByMail:S.me.mail||S.me.username},{by:S.me.name});
+  mailSafe("new",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:req.email,createdByMail:req.mail},{by:req.name});
+  mailStaff("staffnew",{id:id,title:title,category:v.category,priority:v.priority||"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now,createdBy:req.email,createdByMail:req.mail},{by:req.name});
   S.att.new=[];S.newPrio=null;toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
   clearKeep();openTicket(id);
  })},
@@ -2175,6 +2204,16 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Submit on behalf of":"Hantar bagi pihak",
+"Myself":"Diri sendiri",
+"Someone not listed…":"Seseorang yang tiada dalam senarai…",
+"Their email":"E-mel mereka",
+"Their name":"Nama mereka",
+"Enter a valid":"Masukkan yang sah",
+"email address for them.":"alamat e-mel untuk mereka.",
+"Enter their name.":"Masukkan nama mereka.",
+"Choose a person from the list.":"Pilih seseorang daripada senarai.",
+"on behalf of":"bagi pihak",
 "Delete this complaint permanently? This cannot be undone. All its comments and history will be removed too.":"Padamkan aduan ini secara kekal? Ini tidak boleh dibuat asal. Semua komen dan sejarahnya turut dipadamkan.",
 "Complaint deleted.":"Aduan dipadam.",
 "Reset ticket numbering":"Tetapkan semula penomboran aduan",
@@ -3001,7 +3040,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-18 v84";
+var BUILD="2026-11-19 v85";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3399,7 +3438,8 @@ function newReady(){
  var f=document.querySelector("form[data-form=newticket]");
  if(!f)return null;
  var g=function(id){var e=document.getElementById(id);return e?String(e.value||"").trim():""};
- return !!(g("n-title")&&g("n-cat")&&g("n-loc")&&g("n-room")&&g("n-desc")&&(S.att.new||[]).length>0&&!S.upBusy);
+ var ob=isAdmin()&&g("n-onbehalf")==="__other__";
+ return !!(g("n-title")&&g("n-cat")&&g("n-loc")&&g("n-room")&&g("n-desc")&&(S.att.new||[]).length>0&&!S.upBusy&&(!ob||(g("n-ob-email")&&g("n-ob-name"))));
 }
 function syncNew(){
  var r=newReady();if(r===null)return;
@@ -3410,6 +3450,7 @@ function syncNew(){
 setInterval(syncNew,300);
 document.addEventListener("input",function(e){if(e.target&&e.target.closest&&e.target.closest("form[data-form=newticket]"))syncNew()},true);
 document.addEventListener("change",function(e){if(e.target&&e.target.closest&&e.target.closest("form[data-form=newticket]"))syncNew()},true);
+document.addEventListener("change",function(e){if(e.target&&e.target.id==="n-onbehalf"){var box=$("#n-onbehalf-new");if(box)box.style.display=e.target.value==="__other__"?"":"none"}});
 
 /* ============ install the app on the phone ============ */
 var IP=null;
@@ -3815,14 +3856,17 @@ async function afterLoginApi(acct){
   else fatal(e.message||"Something went wrong while connecting.","Can’t connect");
  }
 }
-async function apiNewTicket(v,title,desc){
+async function apiNewTicket(v,title,desc,ob){
  var imgs=S.att.new.map(function(x){return {k:x.k,id:x.id,n:x.n}});
- var r=await apiCall("POST","tickets",{title:title,description:desc,category:v.category,location:locFrom(v),images:imgs});
+ var body={title:title,description:desc,category:v.category,location:locFrom(v),images:imgs};
+ if(ob){body.onBehalfEmail=ob.email;body.onBehalfName=ob.name}
+ var r=await apiCall("POST","tickets",body);
  var id=r.id,now=Date.now();
+ var req=ob||{email:S.me.username,name:S.me.name,mail:S.me.mail||S.me.username};
  var tk={id:id,title:title,category:v.category,priority:"medium",location:locFrom(v),description:desc,status:"open",assignedName:"",createdAt:now};
- tk.createdBy=S.me.username;tk.createdByMail=S.me.mail||tk.createdBy;
- mailSafe("new",tk,{by:S.me.name});
- mailStaff("staffnew",tk,{by:S.me.name});
+ tk.createdBy=req.email;tk.createdByMail=req.mail||req.email;
+ mailSafe("new",tk,{by:req.name});
+ mailStaff("staffnew",tk,{by:req.name});
  S.att.new=[];S.newPrio=null;
  toast("Your complaint number is "+id+". Keep it to follow up. Technicians have been notified.",{kind:"",ms:10000});
  clearKeep();openTicket(id);
