@@ -847,7 +847,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-JlrrRg+2lEb6YPRIAcRJk9rKybIh+Kw8B8R0dj65+W4=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-pEOSFsELxPfHvjCScG2EI7hxNfW403A/LNw2qWagqkA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -993,19 +993,16 @@ function isStaff(){return !!S.me&&(S.me.role==="admin"||S.me.role==="technician"
 function isSup(){return !!S.me&&S.me.role==="supervisor"}
 function isMonitor(){return !!S.me&&(S.me.role==="admin"||S.me.role==="supervisor")}
 function RK(r){var k={admin:0,supervisor:1,technician:2}[r];return k===undefined?3:k}
-function supFromAccounts(){return (S.accounts||[]).filter(function(a){return a.role==="supervisor"&&a.active!==false}).map(function(a){return String(a.mail||a.username||"").toLowerCase()}).filter(function(m){return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)})}
-/* staff know the supervisors from the account list; a requester's browser cannot read that list, so it uses a small shared list kept up to date by the administrator's browser */
-function supEmails(){
- var l=(S.accounts&&S.accounts.length)?supFromAccounts():(S.team||[]),seen={},out=[];
- l.forEach(function(x){x=String(x).toLowerCase();if(x&&!seen[x]){seen[x]=1;out.push(x)}});
- return out;
-}
+/* every active technician, supervisor and administrator, by account — what staff themselves can always see */
+function staffFromAccounts(){return (S.accounts||[]).filter(function(a){return a.active!==false&&(a.role==="technician"||a.role==="admin"||a.role==="supervisor")}).map(function(a){return String(a.mail||a.username||"").toLowerCase()}).filter(function(m){return ID_EMAIL.test(m)})}
+/* a requester's browser cannot read the account list on the server-backed version, so it uses a small shared
+   directory of staff e-mails kept up to date by the administrator's browser, in both modes */
 function syncTeam(){
  if(!isAdmin()||!S.teamLoaded||S.teamBusy||!S.accounts||!S.accounts.length)return;
- var want=supFromAccounts().sort(),have=(S.team||[]).slice().sort();
+ var want=staffFromAccounts().sort(),have=(S.team||[]).slice().sort();
  if(JSON.stringify(want)===JSON.stringify(have))return;
  S.teamBusy=true;
- S.db.doc("settings/team").set({supervisors:want}).then(function(){S.team=want}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
+ S.db.doc("settings/team").set({staff:want}).then(function(){S.team=want}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
 }
 function isAdmin(){return !!S.me&&S.me.role==="admin"}
 function isActive(t){return t.status!=="resolved"&&t.status!=="closed"}
@@ -1020,14 +1017,8 @@ function staleBar(){
 }
 /* everybody who should get the reminder email: the helpdesk mailbox, every active technician and administrator, and cover technicians */
 function staleRecipients(){
- var base=(CFG.NOTIFY_EMAILS&&CFG.NOTIFY_EMAILS.length?CFG.NOTIFY_EMAILS:CFG.ADMIN_EMAILS)||[];
- var list=base.slice();
- (S.accounts||[]).forEach(function(a){
-  if(a.active!==false&&(a.role==="technician"||a.role==="admin"||a.role==="supervisor")){var m=String(a.mail||a.username||"");if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m))list.push(m)}
- });
- coverEmails().forEach(function(x){list.push(x)});
  var seen={},out=[];
- list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x])return;seen[x]=1;out.push(x)});
+ allStaffEmails().forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x])return;seen[x]=1;out.push(x)});
  return out;
 }
 function buildStaleMail(items){
@@ -1194,7 +1185,7 @@ function startSubs(){
  seenMap();
  S.dataReady=false;clearTimeout(S.dataT);S.dataT=setTimeout(function(){if(!S.dataReady){S.dataReady=true;render()}},6000);
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
- S.unsubs.push(S.db.doc("settings/team").onSnapshot(function(sn){S.team=(sn.exists&&sn.data().supervisors)||[];S.teamLoaded=true;syncTeam()},function(e){console.warn(e)}));
+ S.unsubs.push(S.db.doc("settings/team").onSnapshot(function(sn){S.team=(sn.exists&&sn.data().staff)||[];S.teamLoaded=true;syncTeam()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/cover").onSnapshot(function(sn){S.cover=(sn.exists&&sn.data().items)||[];if(S.view==="accounts")renderContent()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
@@ -3068,7 +3059,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-20 v86";
+var BUILD="2026-11-21 v87";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3369,15 +3360,19 @@ function signinText(){
 }
 
 /* ============ email the helpdesk team about user activity ============ */
-function staffRecipients(t){
+/* every active technician, supervisor and administrator, plus the helpdesk mailbox and any cover technician —
+   used for both the e-mail that goes out right now (staffRecipients, which leaves out whoever is doing the
+   action) and the once-a-day pending reminder (staleRecipients, which has no single actor to leave out).
+   Staff themselves can always see the full account list; a requester falls back to the shared directory. */
+function allStaffEmails(){
  var base=(CFG.NOTIFY_EMAILS&&CFG.NOTIFY_EMAILS.length?CFG.NOTIFY_EMAILS:CFG.ADMIN_EMAILS)||[];
- var list=base.slice();
- var tech=String(t.assignedMail||t.assignedTo||"");
- if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tech))list.push(tech);
+ var list=base.concat(isStaff()?staffFromAccounts():(S.team||[]));
  coverEmails().forEach(function(x){list.push(x)});
- supEmails().forEach(function(x){list.push(x)});
+ return list;
+}
+function staffRecipients(t){
  var me=S.me?[String(S.me.mail||"").toLowerCase(),String(S.me.username||"").toLowerCase()]:[],seen={},out=[];
- list.forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x]||me.indexOf(x)>=0)return;seen[x]=1;out.push(x)});
+ allStaffEmails().forEach(function(x){x=String(x).toLowerCase();if(!x||seen[x]||me.indexOf(x)>=0)return;seen[x]=1;out.push(x)});
  return out;
 }
 function mailStaff(kind,t,o){
