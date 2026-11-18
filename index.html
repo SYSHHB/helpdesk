@@ -93,6 +93,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 
 /* shell */
 .shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.nav .nv-sec-h{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--nav-text);opacity:.5;font-weight:700;padding:14px 12px 2px}
+.nav .nv-sec-h:first-child{padding-top:2px}
 .nav{background:var(--nav);color:var(--nav-text);position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:20px 12px;display:flex;flex-direction:column;gap:4px}
 .nav .brand{color:#fff;padding:0 8px 18px}
 .nav button.nv{display:flex;align-items:center;gap:11px;border:0;background:transparent;color:inherit;padding:10px 12px;border-radius:9px;text-align:left;font-weight:550}
@@ -271,7 +273,7 @@ html,body{max-width:100%;overflow-x:clip}
  .twin .num{font-size:4.4rem}
  .shell{grid-template-columns:minmax(0,1fr)}
  .nav{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:25;gap:0;border-top:1px solid rgba(255,255,255,.1)}
- .nav .brand,.nav .sp,.nav .who{display:none}
+ .nav .brand,.nav .sp,.nav .who,.nav .nv-sec-h{display:none}
  .nav button.nv{flex-direction:column;gap:2px;font-size:.7rem;padding:6px 8px;flex:1;align-items:center;text-align:center}
  .nav button.nv.on{box-shadow:none}
  .content{padding-bottom:96px}
@@ -859,7 +861,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-zokPg+0VrnE7XciBg/TeiTSwcuaSsn2uUfLLrZby6Lk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-wpX7JhHSymorsuBlTG6Qvr2zyrKsdfV98BxwfDCitTs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -1286,14 +1288,20 @@ function authHTML(){
 }
 /* ============ chrome ============ */
 function navItems(){
- var it=[["dashboard","dash","Dashboard","Home"],["tickets","list",isStaff()?"Complaints":"My complaints",isStaff()?"Cases":"Mine"],["new","plus","New complaint"],["calendar","cal","Calendar"]];
- if(!isStaff())it=[["dashboard","dash","My complaints","Complaints"],["new","plus","New complaint"],["calendar","cal","Calendar"]];
- if(!isStaff())it.push(["guide","help","User guide","Guide"]);
- if(isStaff())it.push(["reports","chart","Reports"]);
- if(isMonitor())it.push(["audit","shield","Audit log","Audit"]);
- if(isAdmin())it.push(["accounts","users","Accounts","Users"]);
- if(isStaff())it.push(["guide","help","User guide","Guide"]);
- return it;
+ var all=[];navSections().forEach(function(sec){all=all.concat(sec[1])});return all;
+}
+function navSections(){
+ var sec=[];
+ sec.push([null,[isStaff()?["dashboard","dash","Dashboard","Home"]:["dashboard","dash","My complaints","Complaints"]]]);
+ var work=isStaff()?[["tickets","list","Complaints","Cases"],["new","plus","New complaint"],["calendar","cal","Calendar"]]:[["new","plus","New complaint"],["calendar","cal","Calendar"]];
+ sec.push([T("Workspace"),work]);
+ var insight=[];
+ if(isStaff())insight.push(["reports","chart","Reports"]);
+ if(isMonitor())insight.push(["audit","shield","Audit log","Audit"]);
+ if(insight.length)sec.push([T("Insights"),insight]);
+ if(isAdmin())sec.push([T("Administration"),[["accounts","users","Accounts","Users"]]]);
+ sec.push([T("Help"),[["guide","help","User guide","Guide"]]]);
+ return sec;
 }
 function titleOf(){
  var m={dashboard:isStaff()?"Status dashboard":"My complaints",tickets:isStaff()?"All complaints":"My complaints",new:"New complaint",calendar:"Calendar",guide:"User guide",reports:"Reports",audit:"Audit log",accounts:"Accounts",ticket:"Complaint"};
@@ -1311,7 +1319,8 @@ function renderChrome(){
  if(!S.me||root.dataset.mode!=="app")return;
  var nav=$("#nav");if(!nav)return;
  nav.innerHTML='<div class="brand" role="img" aria-label="SYSHHB IT Helpdesk System"><span class="mark"><img src="'+LOGO+'" alt=""></span></div>'+
-  navItems().map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span>'+((i[0]==="tickets"&&isStaff())||(i[0]==="dashboard"&&!isStaff())?navBadge():'')+'</button>'}).join("")+
+  navSections().map(function(sec){return (sec[0]?'<div class="nv-sec-h">'+esc(sec[0])+'</div>':'')+
+   sec[1].map(function(i){return '<button class="nv'+(i[0]==="new"?" nv-new":"")+(i[0]==="guide"&&isStaff()?" nv-gstaff":"")+(S.view===i[0]||(S.view==="ticket"&&i[0]==="tickets")||(S.view==="ticket"&&!isStaff()&&i[0]==="dashboard")?" on":"")+'" data-act="nav" data-v="'+i[0]+'">'+ico(i[1])+'<span class="lf">'+i[2]+'</span><span class="ls">'+(i[3]||i[2])+'</span>'+((i[0]==="tickets"&&isStaff())||(i[0]==="dashboard"&&!isStaff())?navBadge():'')+'</button>'}).join("")}).join("")+
   '<div class="sp"></div><div class="who"><b>'+esc(S.me.name)+'</b>'+ROLES[S.me.role]+'</div>';
  var h=hij(new Date());
  var dark=(document.documentElement.dataset.theme==="dark")||(!document.documentElement.dataset.theme&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
@@ -2217,6 +2226,10 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Workspace":"Ruang Kerja",
+"Insights":"Analisis",
+"Administration":"Pentadbiran",
+"Help":"Bantuan",
 "Change":"Tukar",
 "Add their email":"Tambah e-mel mereka",
 "No email on file":"Tiada e-mel direkodkan",
@@ -3062,7 +3075,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-22 v89";
+var BUILD="2026-11-23 v90";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}

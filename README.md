@@ -581,3 +581,19 @@ breadcrumb at the top and "Previous" / "Next" links at the bottom that also move
 On a phone, the sidebar becomes a slide-in panel opened with a **Contents** button; picking a topic
 closes it automatically. Nothing about the guide's actual content changed, including which sections
 each role can see — only how it's browsed.
+
+---------------------------------------------------------------------------
+## Part 32. The whole system's navigation now follows the GitBook pattern
+
+The left sidebar (and the same menu, as a bottom bar on phones) is grouped into labelled sections, the
+way a documentation site's navigation tree is, instead of one flat list of buttons:
+* **Dashboard** / **My complaints** on its own at the top.
+* **Workspace:** Complaints, New complaint, Calendar.
+* **Insights:** Reports, Audit log (whoever can see each one still only sees that one).
+* **Administration:** Accounts (administrators only).
+* **Help:** User guide.
+
+This applies everywhere, for every role, and on phones the section labels are left out of the bottom
+bar (a flat row of icons doesn't have room for them). The colours, the green header, and every page's
+own content are unchanged — this is a navigation and structure change only, to make the system read
+like a connected set of sections rather than a flat menu.
