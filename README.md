@@ -535,3 +535,36 @@ one also makes that the owner, so the real person can see the complaint as their
 **Delete moved out of the row of everyday buttons.** It used to sit at the end of Update.../Comment and
 could be cramped or pushed out of view on some phones. It is now its own clearly marked row underneath,
 so it is easy to find and hard to tap by accident.
+
+---------------------------------------------------------------------------
+## Part 30. Fixed: new complaints and replies weren't emailing every technician
+
+The email for a new complaint, a reply from the person who complained, a reopened complaint, or an
+escalation used to go only to the helpdesk mailbox, the one technician already assigned (if any), any
+cover technician, and supervisors. A brand-new complaint has no assigned technician yet, so in practice
+**no technician was emailed at all** until someone picked it up by hand.
+
+Every one of those emails now goes to the helpdesk mailbox, **every active technician, supervisor and
+administrator**, and any cover technician — the same full list the once-a-day pending reminder already
+used. The person who just did the action is still left off their own notification.
+
+On the server-backed version, a person who only has their own account (everyone except staff) cannot read
+the account list directly, so their browser now uses the same small shared staff directory that already
+carried the supervisors list — it now carries every technician and administrator too, kept in sync by an
+administrator's browser.
+
+---------------------------------------------------------------------------
+## Part 30. Every staff member is told about a case update, not just new cases
+
+New complaints already reached every administrator, technician and supervisor (and any cover
+technician). Case **updates** did not: only the person who complained was told. Now, whenever a
+technician, supervisor or administrator updates a complaint (status, progress, assignment, expected
+completion, priority, or a message) — including to a complaint they didn't create — every other staff
+member gets:
+* **A notification** in the bell, just like for a new complaint.
+* **An email**, subject starting with "[ALERT]", showing what changed and any message.
+
+The person who made the update doesn't get a copy of their own notification (they already know).
+Escalating to High or Urgent priority still sends its own, more specific "Escalated to..." alert
+instead of the generic one — never both for the same update. The requester's own notification and
+email are unchanged.

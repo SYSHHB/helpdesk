@@ -847,7 +847,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-pEOSFsELxPfHvjCScG2EI7hxNfW403A/LNw2qWagqkA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-ndzvPWrqYDexdZwbSRlZii35w9Xni1ZdHdr23takKGk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -1724,13 +1724,15 @@ var F={
   if(t.createdBy!==S.me.username)await notify(t.createdBy,text,t.id,"update");
   if(patch.assignedTo&&patch.assignedTo!==S.me.username)await notify(patch.assignedTo,"You were assigned "+t.id+": "+t.title,t.id,"assign");
   for(var j=0;j<au.length;j++)await log(au[j][0],t.id,au[j][1]);
-  if(patch.priority==="urgent"||patch.priority==="high"){await notify("staff",t.id+" escalated to "+prLbl(patch.priority)+" by "+S.me.name+": "+t.title,t.id,"new");mailStaff("staffesc",Object.assign({},t,patch),{by:S.me.name})}
+  var chg=[];if(patch.status)chg.push({k:"status",v:patch.status});if("progress" in patch&&!patch.status)chg.push({k:"progress",v:patch.progress});
+  if("assignedTo" in patch)chg.push(patch.assignedTo?{k:"assign",v:patch.assignedName}:{k:"unassign"});
+  if("due" in patch)chg.push(patch.due?{k:"due",v:patch.due}:{k:"nodue"});
+  if("priority" in patch)chg.push({k:"priority",v:patch.priority});
+  var escalated=patch.priority==="urgent"||patch.priority==="high";
+  if(escalated){await notify("staff",t.id+" escalated to "+prLbl(patch.priority)+" by "+S.me.name+": "+t.title,t.id,"new");mailStaff("staffesc",Object.assign({},t,patch),{by:S.me.name})}
+  else{await notify("staff",text,t.id,"update");mailStaff("staffupdate",Object.assign({},t,patch),{by:S.me.name,changes:chg,msg:msg})}
   if(msg)await log("update.message",t.id,msg.length>120?msg.slice(0,120)+"…":msg);
   if(t.createdBy!==S.me.username){
-   var chg=[];if(patch.status)chg.push({k:"status",v:patch.status});if("progress" in patch&&!patch.status)chg.push({k:"progress",v:patch.progress});
-   if("assignedTo" in patch)chg.push(patch.assignedTo?{k:"assign",v:patch.assignedName}:{k:"unassign"});
-   if("due" in patch)chg.push(patch.due?{k:"due",v:patch.due}:{k:"nodue"});
-   if("priority" in patch)chg.push({k:"priority",v:patch.priority});
    var kind2=patch.status==="closed"?"closed":patch.status==="resolved"?"resolved":(chg.length?"update":"comment");
    mailSafe(kind2,Object.assign({},t,patch),{by:S.me.name,changes:chg,msg:msg});
   }
@@ -3004,7 +3006,8 @@ function mailBlock(lang,kind,t,o){
   "closed":en?"Your complaint has been marked Completed by "+by+". Thank you.":"Aduan anda telah ditandakan Selesai oleh "+by+". Terima kasih.",
   "staffnew":en?"A new complaint was submitted by <b>"+by+"</b>.":"Aduan baharu dihantar oleh <b>"+by+"</b>.",
   "staffreply":en?"<b>"+by+"</b> replied on this complaint.":"<b>"+by+"</b> telah membalas pada aduan ini.",
-  "staffesc":en?"<b>"+by+"</b> escalated this complaint to <b>"+esc(prLbl(t.priority))+"</b>.":"<b>"+by+"</b> telah meningkatkan keutamaan aduan ini kepada <b>"+esc(Tm(prLbl(t.priority)))+"</b>."
+  "staffesc":en?"<b>"+by+"</b> escalated this complaint to <b>"+esc(prLbl(t.priority))+"</b>.":"<b>"+by+"</b> telah meningkatkan keutamaan aduan ini kepada <b>"+esc(Tm(prLbl(t.priority)))+"</b>.",
+  "staffupdate":en?"<b>"+by+"</b> updated this complaint.":"<b>"+by+"</b> telah mengemas kini aduan ini."
  }[kind];
  var row=function(k,v){return '<tr><td style="padding:5px 12px 5px 0;color:#55665A;white-space:nowrap;vertical-align:top">'+k+'</td><td style="padding:5px 0"><b>'+v+'</b></td></tr>'};
  var cat=en?t.category:Tm(t.category),pri=en?prLbl(t.priority):Tm(prLbl(t.priority)),st=en?stLbl(t.status):Tm(stLbl(t.status));
@@ -3017,8 +3020,8 @@ function mailBlock(lang,kind,t,o){
  return h;
 }
 function buildMail(kind,t,o){
- var staffK=kind==="staffnew"||kind==="staffreply"||kind==="staffesc";
- var sub=staffK?(kind==="staffnew"?"New complaint from "+(o.by||""):kind==="staffesc"?"Escalated to "+prLbl(t.priority):(o.by||"")+" replied"):{"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah diselesaikan","closed":"Your complaint is completed | Aduan anda telah selesai"}[kind];
+ var staffK=kind==="staffnew"||kind==="staffreply"||kind==="staffesc"||kind==="staffupdate";
+ var sub=staffK?(kind==="staffnew"?"New complaint from "+(o.by||""):kind==="staffesc"?"Escalated to "+prLbl(t.priority):kind==="staffupdate"?(o.by||"")+" updated a complaint":(o.by||"")+" replied"):{"new":"Complaint received | Aduan diterima","update":"Update on your complaint | Kemas kini aduan anda","comment":"New comment on your complaint | Komen baharu pada aduan anda","resolved":"Your complaint is resolved | Aduan anda telah diselesaikan","closed":"Your complaint is completed | Aduan anda telah selesai"}[kind];
  var link=pageUrl()+"#t="+encodeURIComponent(fmtIds(t.id));
  var html='<div style="font-family:Segoe UI,Arial,sans-serif;max-width:580px;margin:0 auto;color:#13241A">'+
   '<table role="presentation" style="width:100%;border-collapse:collapse;background:#1D8A3A;border-radius:10px 10px 0 0"><tr><td style="padding:12px 0 12px 18px;width:52px;vertical-align:middle"><img src="'+(MAILMODE==="graph"?"cid:hdlogo":esc(pageUrl()+"app-icon-192.png"))+'" width="44" height="44" alt="" style="display:block;border-radius:50%;background:#fff;border:2px solid #A89464"></td><td style="padding:12px 18px 12px 12px;vertical-align:middle;color:#fff;font-size:18px;font-weight:700">SYSHHB IT Helpdesk System</td></tr></table>'+
@@ -3059,7 +3062,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-21 v87";
+var BUILD="2026-11-21 v88";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
