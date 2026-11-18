@@ -568,3 +568,16 @@ The person who made the update doesn't get a copy of their own notification (the
 Escalating to High or Urgent priority still sends its own, more specific "Escalated to..." alert
 instead of the generic one — never both for the same update. The requester's own notification and
 email are unchanged.
+
+---------------------------------------------------------------------------
+## Part 31. The User guide now looks like a documentation site (GitBook style)
+
+The guide used to be a single swipeable card, one step at a time. It's now a two-pane layout like a
+docs site: a left sidebar lists every section ("Using the helpdesk", "For technicians", and, for the
+people who can see them, "For supervisors" and "For administrators") with all of that section's topics
+underneath, and the right-hand pane shows the full page for whichever topic is selected, with a
+breadcrumb at the top and "Previous" / "Next" links at the bottom that also move between sections.
+
+On a phone, the sidebar becomes a slide-in panel opened with a **Contents** button; picking a topic
+closes it automatically. Nothing about the guide's actual content changed, including which sections
+each role can see — only how it's browsed.
