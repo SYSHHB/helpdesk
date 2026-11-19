@@ -861,7 +861,7 @@ body::before{background:#509e52}
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-wpX7JhHSymorsuBlTG6Qvr2zyrKsdfV98BxwfDCitTs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-9H7z0FMtbTM/51cZfAOz7wm3Mz86m2bsZMCYs2pGo4I=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -1843,6 +1843,16 @@ var A={
  actsort:function(){S.actNewest=!(S.actNewest!==false);renderContent()},
  guidego:function(el){S.guide={tab:el.dataset.t,i:+el.dataset.i};S.gtocOpen=false;renderContent();var c=document.getElementById("gcard");if(c)c.scrollIntoView({block:"start"})},
  toctoggle:function(){S.gtocOpen=!S.gtocOpen;renderContent()},
+ mslogin:function(){S.err="";if(msalApp)msalApp.loginRedirect(loginRequest())},
+ mslogout:function(){if(msalApp){try{sessionStorage.clear()}catch(e){}msalApp.logoutRedirect({account:msalApp.getActiveAccount(),postLogoutRedirectUri:pageUrl()})}},
+ reload:function(){location.reload()},
+ shareacct:function(el){return inviteSafe(el.dataset.u,true)},
+ testmail:function(){return testMail()},
+ delacct:function(el){
+  var u=el.dataset.u;if(!u||u===S.me.username)return;
+  if(!window.confirm(T("Delete this account? The person can sign in again later and will be added as a normal user.")+"\n\n"+u))return;
+  return withBusy(async function(){await S.db.doc("accounts/"+u).delete();await log("account.delete",u,"");toast("Account deleted.")});
+ },
  editmail:function(el){
   if(!isAdmin())return;
   var t=S.tickets.filter(function(x){return x.id===el.dataset.id})[0];if(!t)return;
@@ -3075,7 +3085,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-23 v90";
+var BUILD="2026-11-24 v94";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3272,8 +3282,15 @@ function tryOpenWanted(){
  var w;try{w=sessionStorage.getItem("hd.open")}catch(e){w=null}
  if(!w||!S.me)return;
  var t=findTicketByAnyId(w);
- try{sessionStorage.removeItem("hd.open")}catch(e){}
- if(t)setTimeout(function(){openTicket(t.id);var c=document.getElementById("c-text");if(c)c.scrollIntoView({block:"center"})},50);
+ if(t){
+  try{sessionStorage.removeItem("hd.open")}catch(e){}
+  setTimeout(function(){openTicket(t.id);var c=document.getElementById("c-text");if(c)c.scrollIntoView({block:"center"})},50);
+  return;
+ }
+ /* the complaint list can deliver once, briefly empty, before the real data arrives - keep the link
+    pending and try again on the next update, rather than giving up on that first empty moment */
+ if(!S._openSince)S._openSince=Date.now();
+ if(Date.now()-S._openSince>15000){try{sessionStorage.removeItem("hd.open")}catch(e){}}
 }
 
 /* ============ activity: comments and history ============ */
@@ -3755,8 +3772,7 @@ function securityPanel(){
 /* ============ WhatsApp message with the complaint details ============ */
 function waMessage(t){
  var ms=LANG==="ms",L=[];
- var hj=function(ts){try{var h=fmtH(ts);return h?" ("+h+")":""}catch(e){return ""}};
- var dt=function(ts){return fmtG(ts)+", "+tF.format(new Date(ts))+hj(ts)};
+ var dt=function(ts){return fmtG(ts)+", "+tF.format(new Date(ts))};
  var dueTs=t.due?new Date(t.due+"T12:00:00").getTime():0;
  var who=(S.me&&S.me.name)||"";
  L.push(ms?"Salam "+t.createdByName+",":"Hello "+t.createdByName+",");
@@ -3772,8 +3788,10 @@ function waMessage(t){
  if(t.assignedName)L.push((ms?"Ditugaskan kepada: ":"Assigned to: ")+t.assignedName);
  L.push((ms?"Dihantar: ":"Submitted: ")+dt(t.createdAt));
  if(t.attendedAt)L.push((ms?"Mula diambil tindakan: ":"First attended: ")+dt(t.attendedAt)+(t.attendedByName?(ms?" oleh ":" by ")+t.attendedByName:""));
- if(dueTs)L.push((ms?"Jangkaan Siap: ":"Expected Completion: ")+fmtG(dueTs)+hj(dueTs));
+ if(dueTs)L.push((ms?"Jangkaan Siap: ":"Expected Completion: ")+fmtG(dueTs));
  L.push((ms?"Kemajuan: ":"Progress: ")+(t.progress||0)+"%");
+ L.push("");
+ L.push((ms?"Untuk kemas kini atau komen, buka: ":"To update or comment, open: ")+pageUrl()+"#t="+encodeURIComponent(fmtIds(t.id)));
  L.push("");
  L.push(ms?"Terima kasih.":"Thank you.");
  if(who&&who!=="IT Helpdesk")L.push(who);
