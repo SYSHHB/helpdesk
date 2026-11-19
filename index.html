@@ -891,6 +891,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 .up-t{font-size:1.4rem;margin-bottom:12px}
 .up-list{margin:0;padding-left:18px;display:grid;gap:8px}
 .up-list li::marker{color:var(--brand)}
+/* align header, title and form on one column */
+.content{margin:0 auto}
+.top{flex-direction:column;align-items:stretch;gap:0;padding:0;min-height:0}
+.pghd,.top>.pg-title{width:100%;max-width:1120px;margin:0 auto;box-sizing:border-box;padding-left:clamp(18px,4vw,52px);padding-right:clamp(18px,4vw,52px)}
+.top>.pg-title{padding-top:4px;padding-bottom:14px;text-align:left}
 </style>
 </head>
 <body>
@@ -899,7 +904,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-CxStC1u5/+8d5Xy/90ImlaYp70EI2Zi+pKS2faidmq4=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-wuBDpkyZBPI4LK/RFsLiGCqnRdouHW3vW58PCp3Ikxs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -1042,9 +1047,10 @@ var S={db:null,userCap:null,me:null,accounts:[],tickets:[],notifs:[],audit:[],co
  auth:"login",noAccounts:false,bell:false,unsubs:[],cUnsub:null,canWrite:true,busy:false,err:"",loading:true,
  sessionStart:Date.now(),lastSeen:0,acctEdit:"",auditQ:"",auditN:80,notifReady:false,sheet:false,remPending:{},staleShown:false,staleTimer:null,holder:"",att:{new:[],comment:[]},upBusy:0,imgCache:{},imgLoading:{},newPrio:null,assetsCap:undefined};
 var root=document.getElementById("root");
-function isStaff(){return !!S.me&&(S.me.role==="admin"||S.me.role==="technician"||S.me.role==="supervisor")}
-function isSup(){return !!S.me&&S.me.role==="supervisor"}
-function isMonitor(){return !!S.me&&(S.me.role==="admin"||S.me.role==="supervisor")}
+function roleOf(){return String(S.me&&S.me.role||"").trim().toLowerCase()}
+function isStaff(){return !!S.me&&(roleOf()==="admin"||roleOf()==="technician"||roleOf()==="supervisor")}
+function isSup(){return !!S.me&&roleOf()==="supervisor"}
+function isMonitor(){return !!S.me&&(roleOf()==="admin"||roleOf()==="supervisor")}
 function RK(r){var k={admin:0,supervisor:1,technician:2}[r];return k===undefined?3:k}
 /* every active technician, supervisor and administrator, by account — what staff themselves can always see */
 function staffFromAccounts(){return (S.accounts||[]).filter(function(a){return a.active!==false&&(a.role==="technician"||a.role==="admin"||a.role==="supervisor")}).map(function(a){return String(a.mail||a.username||"").toLowerCase()}).filter(function(m){return ID_EMAIL.test(m)})}
@@ -1057,7 +1063,7 @@ function syncTeam(){
  S.teamBusy=true;
  S.db.doc("settings/team").set({staff:want}).then(function(){S.team=want}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
 }
-function isAdmin(){return !!S.me&&S.me.role==="admin"}
+function isAdmin(){return !!S.me&&roleOf()==="admin"}
 function isActive(t){return t.status!=="resolved"&&t.status!=="closed"}
 function todayKey(){return ymd(new Date())}
 function isOverdue(t){return isActive(t)&&!!t.due&&t.due<todayKey()}
@@ -1523,13 +1529,13 @@ function onBehalfOptions(){
   .map(function(a){return '<option value="'+esc(a.username)+'">'+esc(a.name)+' \u00b7 '+esc(a.username)+'</option>'}).join("");
 }
 function onBehalfPanel(){
- if(!isAdmin())return "";
+ if(!isStaff())return "";
  return '<label class="fld"><span>Submit on behalf of</span><select id="n-onbehalf" name="onbehalf" data-keep><option value="">Myself</option>'+onBehalfOptions()+'<option value="__other__">Someone not listed\u2026</option></select></label>'+
   '<div id="n-onbehalf-new" class="grid2" style="display:none"><label class="fld"><span>Their email</span><input id="n-ob-email" name="obemail" maxlength="160" data-keep placeholder="name@syayasan.edu.bn"></label>'+
   '<label class="fld"><span>Their name</span><input id="n-ob-name" name="obname" maxlength="120" data-keep placeholder="Full name"></label></div>';
 }
 function resolveOnBehalf(v){
- if(!isAdmin()||!v.onbehalf)return null;
+ if(!isStaff()||!v.onbehalf)return null;
  if(v.onbehalf==="__other__"){
   var em=(v.obemail||"").trim().toLowerCase(),nm=(v.obname||"").trim(),dom=(CFG.ALLOWED_DOMAIN||"").toLowerCase();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)||(dom&&em.slice(em.lastIndexOf("@")+1)!==dom))return {error:T("Enter a valid")+(dom?" @"+dom:"")+" "+T("email address for them.")};
@@ -3571,7 +3577,7 @@ function newReady(){
  var f=document.querySelector("form[data-form=newticket]");
  if(!f)return null;
  var g=function(id){var e=document.getElementById(id);return e?String(e.value||"").trim():""};
- var ob=isAdmin()&&g("n-onbehalf")==="__other__";
+ var ob=isStaff()&&g("n-onbehalf")==="__other__";
  return !!(g("n-title")&&g("n-cat")&&g("n-loc")&&g("n-room")&&g("n-desc")&&(S.att.new||[]).length>0&&!S.upBusy&&(!ob||(g("n-ob-email")&&g("n-ob-name"))));
 }
 function syncNew(){

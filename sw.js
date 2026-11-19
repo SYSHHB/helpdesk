@@ -7,7 +7,7 @@
    - The new version takes over at once (skipWaiting), and the page shows a banner
      ("A new version is ready") from update.js so the person can reload.
    - To release an update: change the version number below and upload the changed files. */
-var CACHE = "syshhb-helpdesk-v11";
+var CACHE = "syshhb-helpdesk-v12";
 var SHELL = ["./", "index.html", "config.js", "update.js", "manifest.json", "app-icon-192.png", "app-icon-512.png", "msal-browser.min.js"];
 
 self.addEventListener("install", function (e) {
