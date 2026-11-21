@@ -3111,6 +3111,7 @@ function buildMail(kind,t,o){
   '<div style="border:1px solid #D6DBC9;border-top:0;padding:20px;border-radius:0 0 10px 10px">'+
   mailBlock("en",kind,t,o)+
   '<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#1D8A3A;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;line-height:1.3;text-align:center">Reply or view in the helpdesk<br><span style="font-weight:400">Balas atau lihat di helpdesk</span></a></p>'+
+  '<div style="margin:0 0 18px;border-left:4px solid #A89464;background:#F0F4EC;padding:10px 14px;font-size:13px;line-height:1.5;color:#13241A"><b>For faster assistance, please use the helpdesk system.</b><br>You may reply, add further details, or track the progress of your complaint there. Your update will reach our IT team immediately and be kept in one complete record.<br><br><b>Untuk bantuan yang lebih pantas, sila gunakan sistem helpdesk.</b><br>Anda boleh membalas, menambah butiran lanjut atau menjejaki kemajuan aduan anda di sana. Kemas kini anda akan diterima terus oleh pasukan IT kami dan disimpan dalam satu rekod yang lengkap.</div>'+
   '<hr style="border:0;border-top:1px solid #D6DBC9;margin:18px 0">'+mailBlock("ms",kind,t,o)+
   '<p style="margin:20px 0 0;color:#55665A;font-size:12px">This is an automatic message. | Ini ialah mesej automatik.</p></div></div>';
  return {subject:fmtIds(staffK?"[ALERT] "+sub+" "+t.id:"["+t.id+"] "+sub),html:fmtIds(html)};
@@ -3289,7 +3290,7 @@ function htmlToText(h){
 }
 function replyPart(text){
  var lines=String(text||"").split("\n"),out=[];
- var stop=[/^\s*(from|dari|daripada|sent|dihantar)\s*:/i,/^\s*on .{4,}wrote:\s*$/i,/wrote:\s*$/i,/^\s*pada .{4,}menulis:\s*$/i,/original message/i,/^\s*_{6,}/,/^\s*-{6,}/,/^\s*>/,/SYSHHB IT Helpdesk/i,/^\s*get outlook for/i,/^\s*sent from my/i];
+ var stop=[/^\s*(from|dari|daripada|sent|dihantar)\s*:/i,/^\s*on .{4,}wrote:\s*$/i,/wrote:\s*$/i,/^\s*pada .{4,}menulis:\s*$/i,/original message/i,/^\s*_{6,}/,/^\s*-{6,}/,/^\s*>/,/SYSHHB IT Helpdesk/i,/^\s*get outlook for/i,/^\s*sent from\b/i,/^\s*dihantar dari\b/i,/^\s*(dapatkan|get) outlook/i,/^\s*sent from my/i];
  for(var i=0;i<lines.length;i++){var l=lines[i];if(stop.some(function(r){return r.test(l)}))break;out.push(l)}
  return out.join("\n").replace(/\n{3,}/g,"\n\n").trim().slice(0,4000);
 }
