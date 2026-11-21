@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>SYSHHB IT Helpdesk System</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#509e52">
@@ -904,7 +905,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-wuBDpkyZBPI4LK/RFsLiGCqnRdouHW3vW58PCp3Ikxs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-pZ3+AP9GAOYULJO3itnwAvSxpOsPkxQTgnZDiJFTdL0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+if(c.MSAL_LOCAL===true)POLICY=POLICY.replace(/\s*https:\/\/cdn\.jsdelivr\.net/g,"");
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
 var sri=(!local&&c.MSAL_SRI)?String(c.MSAL_SRI).replace(/[^A-Za-z0-9+\/=_ -]/g,""):"";
@@ -2959,7 +2961,7 @@ async function msInit(){
  if(!msConfigured())throw new Error("Setup needed: add your Application (client) ID and Tenant ID to config.js.");
  msalApp=new msal.PublicClientApplication({
   auth:{clientId:CFG.CLIENT_ID,authority:"https://login.microsoftonline.com/"+(CFG.TENANT_ID||"organizations"),redirectUri:pageUrl(),postLogoutRedirectUri:pageUrl(),navigateToLoginRequestUrl:false},
-  cache:{cacheLocation:"localStorage"}
+  cache:{cacheLocation:(CFG.TOKEN_CACHE==="local"?"localStorage":"sessionStorage")}
  });
  if(msalApp.initialize)await msalApp.initialize();
  var res=await msalApp.handleRedirectPromise();
@@ -2994,6 +2996,10 @@ async function afterLogin(acct){
  idleTouch();
  var email=String(acct.username||"").toLowerCase(),name=acct.name||email;
  var dom=String(CFG.ALLOWED_DOMAIN||"").toLowerCase();
+ var tid=String(CFG.TENANT_ID||"").toLowerCase();
+ if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(tid)&&acct.tenantId&&String(acct.tenantId).toLowerCase()!==tid){
+  fatal("This page is only for accounts of this organisation. Sign in with your school Microsoft account.","Wrong account");return;
+ }
  if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom){
   fatal("This page is only for @"+dom+" accounts. You signed in as "+email+".","Wrong account");return;
  }
@@ -3252,7 +3258,7 @@ function normPhone(x){
 function waLinks(p,t){
  if(!p)return "";
  var d=String(p).replace(/\D/g,"");
- return '<span class="phone" translate="no">'+esc(p)+'</span> <a class="wa" href="https://wa.me/'+d+(t?'?text='+encodeURIComponent(waMessage(t)):'')+'" target="_blank" rel="noopener">WhatsApp</a> <a class="wa call" href="tel:+'+d+'">Call</a>';
+ return '<span class="phone" translate="no">'+esc(p)+'</span> <a class="wa" href="https://wa.me/'+d+(t?'?text='+encodeURIComponent(waMessage(t)):'')+'" target="_blank" rel="noopener noreferrer">WhatsApp</a> <a class="wa call" href="tel:+'+d+'">Call</a>';
 }
 function mailFor(t){var e=(t.createdByMail||"").trim();if(e)return e;return ID_EMAIL.test(t.createdBy||"")?t.createdBy:""}
 function emailRow(t){
@@ -3282,6 +3288,12 @@ function catIcon(c){
 /* ============ email replies become comments ============ */
 function replyTo(){return String(CFG.REPLY_TO||(CFG.ADMIN_EMAILS||[])[0]||"").toLowerCase()}
 function emailRepliesOn(){return CFG.EMAIL_REPLIES===true&&!!replyTo()}
+/* only emails from these domains may become comments (blocks spoofed outside senders) */
+function replyDomains(){
+ var d=CFG.REPLY_DOMAINS;d=Array.isArray(d)?d.slice():(d?[d]:[]);
+ if(!d.length){[CFG.ALLOWED_DOMAIN,replyTo().split("@")[1]].forEach(function(x){if(x)d.push(x)})}
+ return d.map(function(x){return String(x).toLowerCase().replace(/^@/,"")});
+}
 function htmlToText(h){
  h=String(h||"").replace(/<br\s*\/?>/gi,"\n").replace(/<\/(p|div|tr|li|h\d|table|blockquote)>/gi,"\n").replace(/<hr[^>]*>/gi,"\n______________\n");
  var d=new DOMParser().parseFromString(h,"text/html");
@@ -3315,6 +3327,8 @@ async function processInbox(){
    var subj=String(m.subject||""),from=m.from&&m.from.emailAddress?m.from.emailAddress.address:m.from;
    from=String(from||"").toLowerCase().replace(/^.*<|>.*$/g,"");
    if(/^\s*((re|fw|fwd):\s*)*\[alert\]/i.test(subj)){await del();continue}
+   var okDom=replyDomains();
+   if(okDom.length&&okDom.indexOf(from.slice(from.lastIndexOf("@")+1))<0){await del();log("email.ignored","","Reply from "+from+" ignored: sender domain not allowed");continue}
    var idm=subj.match(/\bIT-\d{4}-\d{4,}\b|SYSHHB-IT-\d{4,}|\d{4,}-IT-SYSHHB/i);
    var t=idm?findTicketByAnyId(idm[0].toUpperCase()):null;
    if(!t){if(S.tickets.length){await del();log("email.ignored",idm?idm[0]:"","No matching complaint for reply from "+from)}continue}
@@ -3761,7 +3775,7 @@ function fitCats(width,min,max){var size=max;for(;size>min;size-=0.25){var w=0;C
 function fitOne(c,width,min,max){var size=max;for(;size>min;size-=0.25){if(catWidth(c||"Select…",size)<=width)break}return size}
 
 /* ============ security: sign out after inactivity ============ */
-function idleLimit(){var m=(window.HELPDESK_CONFIG||{}).IDLE_MINUTES;if(typeof m!=="number")m=0;return m>0?m*60000:0}
+function idleLimit(){var m=(window.HELPDESK_CONFIG||{}).IDLE_MINUTES;if(typeof m!=="number")m=30;return m>0?m*60000:0}
 function clearMsalCache(){
  [localStorage,sessionStorage].forEach(function(st){try{Object.keys(st).forEach(function(k){if(k.indexOf("msal.")===0||(CFG.CLIENT_ID&&k.indexOf(CFG.CLIENT_ID)>=0))st.removeItem(k)})}catch(e){}});
 }
@@ -3976,6 +3990,10 @@ function loginRequest(){
 async function afterLoginApi(acct){
  var email=String(acct.username||"").toLowerCase(),name=acct.name||email;
  var dom=String(CFG.ALLOWED_DOMAIN||"").toLowerCase();
+ var tid=String(CFG.TENANT_ID||"").toLowerCase();
+ if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(tid)&&acct.tenantId&&String(acct.tenantId).toLowerCase()!==tid){
+  fatal("This page is only for accounts of this organisation. Sign in with your school Microsoft account.","Wrong account");return;
+ }
  if(dom&&email.slice(email.lastIndexOf("@")+1)!==dom){fatal("This page is only for @"+dom+" accounts. You signed in as "+email+".","Wrong account");return}
  try{
   S.db=makeApiDb();
