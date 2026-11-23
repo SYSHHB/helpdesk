@@ -37,11 +37,8 @@ window.HELPDESK_CONFIG = {
      The technician assigned to the complaint is always added. */
   NOTIFY_EMAILS: ["it.helpdesk@syayasan.edu.bn"],
 
-  /* REPLY BY EMAIL: when a person replies to a helpdesk email, the reply is added to the complaint
-     as a comment. The helpdesk reads the mailbox below. The technicians and admins who run this need
-     Full Access to that mailbox (Exchange admin centre). */
-  EMAIL_REPLIES: true,
-  REPLY_TO: "it.helpdesk@syayasan.edu.bn",
+  /* Set to true only after you build the reply flow (README, part 9). */
+  EMAIL_REPLIES: false,
 
   /* Hijri date on the login page. Signed-in people always see the dates from the calendar
      settings. A phone that has never signed in cannot read them, so copy the two lines shown in
