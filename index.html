@@ -908,7 +908,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-pZ3+AP9GAOYULJO3itnwAvSxpOsPkxQTgnZDiJFTdL0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-OZD74pCJ+VcPfL23B/ryXWwFqUbf2W5myQ7f6rdzgPE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.MSAL_LOCAL===true)POLICY=POLICY.replace(/\s*https:\/\/cdn\.jsdelivr\.net/g,"");
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
@@ -1913,6 +1913,8 @@ var A={
  reload:function(){location.reload()},
  shareacct:function(el){return inviteSafe(el.dataset.u,true)},
  testmail:function(){return testMail()},
+ checkinbox:function(){S.mbHalt=false;S.mbNeed=false;try{sessionStorage.removeItem("hd.mbAsked")}catch(e){}return processInbox().then(function(){if(S.view==="accounts")renderContent()})},
+ mbconsent:function(){return mbConsent()},
  delacct:function(el){
   var u=el.dataset.u;if(!u||u===S.me.username)return;
   if(!window.confirm(T("Delete this account? The person can sign in again later and will be added as a normal user.")+"\n\n"+u))return;
@@ -2301,6 +2303,8 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"Reply by email":"Balas melalui e-mel","You can also answer from your inbox. Reply to the helpdesk email and write above the older text. Keep the complaint number in the subject. Your reply is added to the complaint as a comment.":"Anda juga boleh menjawab dari peti masuk. Balas e-mel helpdesk dan tulis di atas teks lama. Kekalkan nombor aduan pada subjek. Balasan anda akan ditambah pada aduan sebagai komen.",
+"To read email replies, the helpdesk needs your permission to open the helpdesk mailbox. You will go to Microsoft once and come straight back. Continue?":"Untuk membaca balasan e-mel, helpdesk memerlukan kebenaran anda untuk membuka peti mel helpdesk. Anda akan dibawa ke Microsoft sekali sahaja dan kembali serta-merta. Teruskan?",
 "Workspace":"Ruang Kerja",
 "Insights":"Analisis",
 "Administration":"Pentadbiran",
@@ -3103,7 +3107,7 @@ function mailBlock(lang,kind,t,o){
  }[kind];
  var row=function(k,v){return '<tr><td style="padding:5px 12px 5px 0;color:#55665A;white-space:nowrap;vertical-align:top">'+k+'</td><td style="padding:5px 0"><b>'+v+'</b></td></tr>'};
  var cat=en?t.category:Tm(t.category),pri=en?prLbl(t.priority):Tm(prLbl(t.priority)),st=en?stLbl(t.status):Tm(stLbl(t.status));
- var h='<p style="margin:0 0 12px;font-size:15px">'+intro+'</p>'+(emailRepliesOn()?'<p style="margin:0 0 12px;font-size:13px;color:#55665A">'+(en?"You can reply to this email. Your reply is added to the complaint as a comment.":"Anda boleh membalas e-mel ini. Balasan anda akan ditambah pada aduan sebagai komen.")+'</p>':'')+'<table style="border-collapse:collapse;font-size:14px">'+
+ var h='<p style="margin:0 0 12px;font-size:15px">'+intro+'</p>'+(emailRepliesOn()?'<p style="margin:0 0 12px;font-size:13px;color:#55665A">'+(en?"You can reply to this email. Your reply is added to the complaint as a comment. Please keep the complaint number in the subject.":"Anda boleh membalas e-mel ini. Balasan anda akan ditambah pada aduan sebagai komen. Sila kekalkan nombor aduan pada subjek.")+'</p>':'')+'<table style="border-collapse:collapse;font-size:14px">'+
   row(L.id,esc(t.id))+row(L.title,esc(t.title))+row(L.cat,esc(cat))+(kind==="new"?"":row(L.pri,esc(pri)))+(t.location?row(L.loc,esc(t.location)):"")+row(L.st,esc(st))+
   (t.assignedName?row(L.tech,esc(t.assignedName)):"")+row(L.sub,esc(bnStamp(t.createdAt))+(hOK?" ("+esc(fmtH(t.createdAt))+")":""))+'</table>';
  if(o.changes&&o.changes.length)h+='<p style="margin:14px 0 4px;font-weight:700">'+L.chg+'</p><ul style="margin:0;padding-left:20px;font-size:14px">'+o.changes.map(function(c){return '<li>'+esc(en?chEn(c):chMs(c))+'</li>'}).join("")+'</ul>';
@@ -3155,7 +3159,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-24 v94";
+var BUILD="2026-11-24 v95";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3171,7 +3175,8 @@ async function testMail(){
 function mailPanel(){
  var m=MAILMODE==="off"?"OFF":MAILMODE==="graph"?"ON, sent directly from the person who acts":"ON, outbox folder and Power Automate";
  var r=S.mailResult?'<div style="flex:1 1 100%;padding:8px 10px;border-radius:8px;background:'+(S.mailResult.bad?'rgba(190,59,42,.14)':'rgba(29,138,58,.14)')+'"><b>Last test:</b> '+esc(S.mailResult.t)+'</div>':'';
- return '<div class="note" translate="no" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>Email notifications:</b> '+esc(m)+'</span><button class="btn sm" data-act="testmail">Send a test email to me</button><span class="muted small">Version '+BUILD+'</span>'+r+'</div>';
+ var ms=S.mbStatus,er=emailRepliesOn()?(API_MODE?('<div style="flex:1 1 100%;padding:8px 10px;border-radius:8px;background:'+(ms&&ms.bad?'rgba(190,59,42,.14)':'rgba(29,138,58,.14)')+'"><b>Email replies:</b> ON, reading '+esc(replyTo())+'. '+(ms?(ms.bad?esc(ms.t):'Last check '+esc(BNTM.format(new Date(ms.at)))+', '+(ms.added||0)+' new this session.'):'Waiting for the first check.')+' <button class="btn sm" data-act="checkinbox">Check now</button>'+(S.mbNeed?' <button class="btn sm primary" data-act="mbconsent">Allow reading replies</button>':'')+'</div>'):''):'<div style="flex:1 1 100%" class="muted small"><b>Email replies:</b> OFF. In config.js set EMAIL_REPLIES to true and REPLY_TO to the helpdesk mailbox.</div>';
+ return '<div class="note" translate="no" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>Email notifications:</b> '+esc(m)+'</span><button class="btn sm" data-act="testmail">Send a test email to me</button><span class="muted small">Version '+BUILD+'</span>'+r+er+'</div>';
 }
 
 /* ============ login screen effects ============ */
@@ -3215,7 +3220,7 @@ function idApply(el){
 }
 
 /* ============ user guide ============ */
-var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],sup:[{"ic": "dash", "t": "Watch the whole helpdesk", "d": "The dashboard shows every complaint: open, in progress, on hold, resolved and completed. The banner and Needs attention show the complaints that have waited over 1 day.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "bell", "t": "Get the same alerts as the administrators", "d": "You are told about new complaints, replies, reopened and escalated complaints, and the daily reminder for complaints still pending after 1 day. They arrive in the bell and by email.", "go": "", "gl": ""}, {"ic": "users", "t": "Assign a complaint to a technician", "d": "Open a complaint, tap Update and choose the technician under Assigned to. Save the update. The technician is told and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "chart", "t": "Create reports", "d": "Open Reports, choose the report type, the period and the technician, then read it on the screen or print it.", "go": "reports", "gl": "Open the reports"}, {"ic": "shield", "t": "Check the audit log", "d": "The Audit log shows every sign-in, change and email, with the time and the person. You can read it. Only administrators manage accounts and settings.", "go": "audit", "gl": "Open the audit log"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
+var GUIDE={user:[{"ic": "plus", "t": "Report a problem", "d": "Tap the green + button or New complaint. Write what is wrong and choose the category and the location. Then tap Submit complaint. The technician will set how urgent it is.", "go": "new", "gl": "Open the complaint form"}, {"ic": "img", "t": "Add photos", "d": "On the complaint form, tap Add photo to attach up to 4 pictures of the problem. Photos help the technician understand it faster.", "go": "", "gl": ""}, {"ic": "list", "t": "Keep your complaint number", "d": "After you submit, you get a number such as IT-2026-0005 on the screen and in your email. Use it whenever you ask about your complaint.", "go": "", "gl": ""}, {"ic": "dash", "t": "Follow the progress", "d": "Your complaints are listed with their status: Open, In progress, On hold, Resolved or Completed. Tap a complaint to see the details, the progress and the technician handling it.", "go": "dashboard", "gl": "Show my complaints"}, {"ic": "users", "t": "Reply to the technician", "d": "Open a complaint and write in Add a comment, then tap Post comment. The technician sees it straight away.", "go": "", "gl": ""}, {"ic": "bell", "t": "Reply by email", "d": "You can also answer from your inbox. Reply to the helpdesk email and write above the older text. Keep the complaint number in the subject. Your reply is added to the complaint as a comment.", "go": "", "gl": ""}, {"ic": "bell", "t": "Get notified", "d": "The bell at the top shows new updates. You also get an email when a technician updates, comments on, resolves or closes your complaint.", "go": "", "gl": ""}, {"ic": "wrench", "t": "If the problem comes back", "d": "If a resolved complaint is not really fixed, open it and tap Reopen this complaint. The technicians are told immediately.", "go": "", "gl": ""}, {"ic": "cal", "t": "Handy settings", "d": "BM switches the language to Bahasa Melayu. The sun or moon switches light and dark mode. The calendar shows Gregorian and Hijri dates. To install the app, open the Edge or Chrome menu and choose Install app.", "go": "calendar", "gl": "Open the calendar"}],tech:[{"ic": "dash", "t": "See what needs attention", "d": "The dashboard shows complaints waiting, unassigned, overdue and urgent. A red banner means a complaint has waited over 1 day without a technician.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "wrench", "t": "Start work", "d": "Open a complaint and tap Start work. It is assigned to you and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "list", "t": "Update the requester", "d": "Tap Update to change the status, urgency, progress, technician or expected completion, and write a message. The requester gets an email with the changes. Set the urgency to High or Urgent to escalate.", "go": "", "gl": ""}, {"ic": "users", "t": "Comment or internal note", "d": "Comments are emailed to the requester. Tick Internal note to keep a message between staff only.", "go": "", "gl": ""}, {"ic": "bell", "t": "Resolve and complete", "d": "Mark the complaint Resolved when it is fixed, then Completed when it is confirmed. The requester is emailed each time.", "go": "", "gl": ""}, {"ic": "chart", "t": "Reports", "d": "Open Reports, choose the period and the report type, then print it or download it.", "go": "reports", "gl": "Open reports"}],sup:[{"ic": "dash", "t": "Watch the whole helpdesk", "d": "The dashboard shows every complaint: open, in progress, on hold, resolved and completed. The banner and Needs attention show the complaints that have waited over 1 day.", "go": "dashboard", "gl": "Open the dashboard"}, {"ic": "bell", "t": "Get the same alerts as the administrators", "d": "You are told about new complaints, replies, reopened and escalated complaints, and the daily reminder for complaints still pending after 1 day. They arrive in the bell and by email.", "go": "", "gl": ""}, {"ic": "users", "t": "Assign a complaint to a technician", "d": "Open a complaint, tap Update and choose the technician under Assigned to. Save the update. The technician is told and the person who reported it gets an email.", "go": "tickets", "gl": "Open the complaints"}, {"ic": "chart", "t": "Create reports", "d": "Open Reports, choose the report type, the period and the technician, then read it on the screen or print it.", "go": "reports", "gl": "Open the reports"}, {"ic": "shield", "t": "Check the audit log", "d": "The Audit log shows every sign-in, change and email, with the time and the person. You can read it. Only administrators manage accounts and settings.", "go": "audit", "gl": "Open the audit log"}],admin:[{"ic": "users", "t": "Manage people", "d": "On Accounts, new people appear automatically after their first sign-in. Search and filter, change a role or staff group with Edit, or use Disable and Delete.", "go": "accounts", "gl": "Open accounts"}, {"ic": "bell", "t": "Check the emails", "d": "On Accounts, tap Send a test email to me to check that email notifications are working.", "go": "accounts", "gl": "Open accounts"}, {"ic": "shield", "t": "Audit log", "d": "The Audit log records every sign-in, change, export and email, with the time and the person.", "go": "audit", "gl": "Open the audit log"}, {"ic": "cal", "t": "Brunei Hijri calendar", "d": "In Calendar, open Brunei calendar settings to enter the official first day of each Hijri month.", "go": "calendar", "gl": "Open the calendar"}]};
 function guideTabs(){
  var t=[["user",T("Using the helpdesk")]];if(isStaff())t.push(["tech",T("For technicians")]);if(isSup())t.push(["sup",T("For supervisors")]);if(isAdmin())t.push(["admin",T("For administrators")]);
  return t;
@@ -3351,6 +3356,124 @@ async function processInbox(){
    if(await del())log("comment.email",t.id,from+": "+snip);
   }
  }catch(e){console.warn("inbox",e)}
+ finally{S.inboxBusy=false}
+}
+
+
+/* ============ email replies in server mode ============
+   In server mode (BACKEND "api") the helpdesk mailbox (REPLY_TO) is read through Microsoft Graph by a technician or
+   administrator whose page is open. Every reply that carries a complaint number in its subject is saved as a comment.
+   Needs in config.js: EMAIL_MODE "graph", EMAIL_REPLIES true, REPLY_TO "it.helpdesk@...".
+   Needs in Microsoft 365: the staff who read it have Full Access to that mailbox. */
+var MBOX_SCOPE="Mail.ReadWrite.Shared",MB_DONE="Helpdesk-done",MB_SKIP="Helpdesk-ignored";
+function mbBase(){return "/users/"+encodeURIComponent(replyTo())}
+async function mbToken(){
+ var acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
+ return (await msalApp.acquireTokenSilent({scopes:[MBOX_SCOPE],account:acct})).accessToken;
+}
+async function mbf(path,opt){
+ var t=await mbToken();opt=opt||{};
+ opt.headers=Object.assign({Authorization:"Bearer "+t},opt.headers||{});
+ return fetch(GR+path,opt);
+}
+function mbSay(t,bad,added){
+ var o=S.mbStatus||{},chg=o.t!==t||!!o.bad!==!!bad||(added||0)!==(o.added||0);
+ S.mbStatus={t:t,bad:!!bad,at:Date.now(),added:added||0};
+ if(chg&&S.view==="accounts"&&isAdmin())renderContent();
+}
+function mbConsent(){var acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];return msalApp.acquireTokenRedirect({scopes:[MBOX_SCOPE],account:acct})}
+function mbAsk(){
+ var k="hd.mbAsked";try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){}
+ if(window.confirm(T("To read email replies, the helpdesk needs your permission to open the helpdesk mailbox. You will go to Microsoft once and come straight back. Continue?")))mbConsent();
+}
+function h53(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0,c;i<s.length;i++){c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+ h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+ return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
+async function mbMark(m,cat){
+ try{
+  var r=await mbf(mbBase()+"/messages/"+encodeURIComponent(m.id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:(m.categories||[]).concat([cat]),isRead:true})});
+  return r.ok;
+ }catch(e){return false}
+}
+/* out-of-office replies, bounces and our own alert emails never become comments */
+function mbAuto(m){
+ var s=String(m.subject||"");
+ if(/^\s*((re|fw|fwd)\s*:\s*)*\[alert\]/i.test(s))return true;
+ if(/^\s*(automatic reply|auto[- ]?reply|balasan automatik|out of office|undeliverable|delivery status notification|mail delivery|returned mail)/i.test(s))return true;
+ return (m.internetMessageHeaders||[]).some(function(h){
+  var n=String(h.name||"").toLowerCase(),v=String(h.value||"").toLowerCase();
+  return (n==="auto-submitted"&&v&&v!=="no")||n==="x-autoreply"||n==="x-autorespond"||(n==="precedence"&&/bulk|junk|auto_reply|list/.test(v));
+ });
+}
+async function processInboxApi(){
+ if(!S.me||!isStaff()||S.inboxBusy||S.mbHalt||!S.db||!emailRepliesOn())return;
+ S.inboxBusy=true;var added=0;
+ try{
+  var since=new Date(Date.now()-(+CFG.REPLY_DAYS||14)*864e5).toISOString().replace(/\.\d+Z$/,"Z");
+  var q="?$top=50&$orderby="+encodeURIComponent("receivedDateTime desc")+"&$filter="+encodeURIComponent("receivedDateTime ge "+since)+
+   "&$select="+encodeURIComponent("id,subject,from,receivedDateTime,body,categories,internetMessageId,internetMessageHeaders");
+  var r;
+  try{r=await mbf(mbBase()+"/mailFolders/inbox/messages"+q,{headers:{Prefer:'outlook.body-content-type="text"'}})}
+  catch(e){
+   if(/interaction_required|consent_required|login_required|InteractionRequired/i.test(((e&&e.errorCode)||"")+" "+((e&&e.name)||"")+" "+((e&&e.message)||""))){
+    S.mbNeed=true;S.mbHalt=true;mbSay("Permission needed: this account has not yet allowed the helpdesk to read the mailbox "+replyTo()+".",true);mbAsk();return;
+   }
+   throw e;
+  }
+  if(!r.ok){
+   var er=await gerr(r);
+   if(r.status===401||r.status===403||r.status===404){
+    S.mbHalt=true;
+    mbSay("This account cannot open the mailbox "+replyTo()+" ("+r.status+"). Give it Full Access to that mailbox in the Exchange admin centre, then press Check now.",true);
+    if(isAdmin()&&!S.mbWarned){S.mbWarned=1;toast("This account cannot read the helpdesk mailbox "+replyTo()+". See Email replies on the Accounts page.",{kind:"warn",ms:10000})}
+   }else mbSay("Could not read the mailbox: "+er.message.slice(0,160),true);
+   return;
+  }
+  var list=(await r.json()).value||[],okDom=replyDomains(),box=replyTo();
+  for(var i=0;i<list.length;i++){
+   var m=list[i];
+   try{
+    if((m.categories||[]).some(function(c){return c===MB_DONE||c===MB_SKIP}))continue;
+    var from=String(m.from&&m.from.emailAddress&&m.from.emailAddress.address||"").toLowerCase();
+    if(!from||from===box||mbAuto(m)){await mbMark(m,MB_SKIP);continue}
+    if(okDom.length&&okDom.indexOf(from.slice(from.lastIndexOf("@")+1))<0){await mbMark(m,MB_SKIP);log("email.ignored","","Reply from "+from+" ignored: sender domain not allowed");continue}
+    var idm=String(m.subject||"").match(/\bIT-\d{4}-\d{4,}\b|SYSHHB-IT-\d{4,}|\d{4,}-IT-SYSHHB/i);
+    var t=idm?findTicketByAnyId(idm[0].toUpperCase()):null;
+    if(!t){if(S.tickets.length){await mbMark(m,MB_SKIP);log("email.ignored",idm?idm[0]:"","No matching complaint for reply from "+from)}continue}
+    var acct=S.accounts.filter(function(a){return a.username===from||a.mail===from})[0]||null;
+    var requester=[String(t.createdBy||"").toLowerCase(),String(t.createdByMail||"").toLowerCase(),String(addrFor(t)||"").toLowerCase()].indexOf(from)>=0;
+    var staffSender=!!acct&&(acct.role==="technician"||acct.role==="admin"||acct.role==="supervisor");
+    if(!requester&&!staffSender){await mbMark(m,MB_SKIP);log("email.ignored",t.id,"Reply from "+from+" is not the requester or staff");continue}
+    var raw=String((m.body&&m.body.content)||"").replace(/\r/g,""),isHtml=!!(m.body&&String(m.body.contentType).toLowerCase()==="html");
+    var body=replyPart(isHtml?htmlToText(raw):raw);
+    if(!body){await mbMark(m,MB_SKIP);continue}
+    var ts=Date.parse(m.receivedDateTime||"")||Date.now(),who=acct?acct.name:(requester?t.createdByName:from);
+    var role=acct?acct.role:"user",by=acct?acct.username:t.createdBy,cid="em-"+h53(m.internetMessageId||m.id);
+    var cref=S.db.doc("tickets/"+t.id+"/comments/"+cid),ex=await cref.get();
+    if(!ex.exists){
+     await cref.set({type:"comment",text:body,by:by,byName:who,role:role,ts:ts,internal:false,via:"email"});
+     await S.db.doc("tickets/"+t.id).update({updatedAt:Date.now(),lastActAt:Date.now(),lastActBy:by,lastActByName:who,lastActKind:"email",lastActText:body.slice(0,140),lastActInternal:false});
+     var snip=body.length>80?body.slice(0,80)+"…":body;
+     if(staffSender&&!requester)mailSafe("comment",t,{by:who,msg:body});
+     else{
+      await S.db.doc("notifs/"+cid).set({ts:Date.now(),to:t.assignedTo||"staff",text:who+" replied by email on "+t.id+": "+snip,ticketId:t.id,kind:"comment",by:"email",byName:who});
+      mailStaff("staffreply",t,{by:who,msg:body});
+     }
+     log("comment.email",t.id,from+": "+snip);
+     added++;
+    }
+    await mbMark(m,MB_DONE);
+   }catch(e){
+    console.warn("email reply",e);
+    if(e&&(e.status===400||e.status===401||e.status===403)){
+     S.mbHalt=true;
+     mbSay("The server refused to save an email reply as a comment ("+String(e.message||e).slice(0,140)+"). Send this message to the person who looks after the server.",true,added);
+     return;
+    }
+   }
+  }
+  mbSay("OK",false,(S.mbStatus&&S.mbStatus.added||0)+added);
+ }catch(e){console.warn("inbox",e);mbSay("Could not check the mailbox: "+String((e&&e.message)||e).slice(0,160),true)}
  finally{S.inboxBusy=false}
 }
 
@@ -4080,7 +4203,7 @@ if(API_MODE){
   var acct=msalApp.getActiveAccount()||msalApp.getAllAccounts()[0];
   return (await msalApp.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken;
  };
- makeDb=makeApiDb;resolveStorage=async function(){};afterLogin=afterLoginApi;processInbox=async function(){};
+ makeDb=makeApiDb;resolveStorage=async function(){};afterLogin=afterLoginApi;processInbox=processInboxApi;
  signupPanel=function(){return ""};autoLink=async function(){};inviteSafe=async function(){};
 }
 
