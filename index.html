@@ -908,7 +908,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-BTzBp2RCKZvw/0GeW/6BAuhJDi5sASsYncn/Svp6tGg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-LCSDfvxLMhWnD9QijuWI0leB0uoapIJctboFVvexAtU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.MSAL_LOCAL===true)POLICY=POLICY.replace(/\s*https:\/\/cdn\.jsdelivr\.net/g,"");
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
@@ -1574,7 +1574,7 @@ function pgTicket(){
  var meta='<dl class="meta"><div><dt>Requested by</dt><dd>'+esc(t.createdByName)+(isStaff()&&phoneFor(t)?'<div class="small" style="margin-top:4px">'+waLinks(phoneFor(t),t)+'</div>':'')+(isStaff()?emailRow(t):'')+'</dd></div><div><dt>Location</dt><dd>'+esc(t.location||"Not given")+'</dd></div>'+
  '<div><dt>Category</dt><dd>'+catHTML(t.category)+'</dd></div><div><dt>Assigned to</dt><dd>'+esc(t.assignedName||"Not assigned yet")+'</dd></div><div><dt>First attended</dt><dd>'+(t.attendedAt?dualT(t.attendedAt)+'<br><span class="muted small">by '+esc(t.attendedByName||"")+'</span>':'Not yet')+'</dd></div>'+
  '<div><dt>Submitted</dt><dd>'+dualT(t.createdAt)+'</dd></div><div><dt>Expected Completion</dt><dd>'+dualYmd(t.due)+(isOverdue(t)?' <span class="over">Overdue</span>':'')+'</dd></div>'+
- '<div style="grid-column:1/-1"><dt>Progress '+(t.progress||0)+'%</dt><dd><div class="progress" role="progressbar" aria-valuenow="'+(t.progress||0)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+(t.progress||0)+'%"></i></div></dd></div></dl>';
+ '</dl>';
  var reopen=(!staff&&mineT&&!isActive(t))?'<button class="btn" data-act="reopen">Reopen this complaint</button>':'';
  var composer=composerHTML(t,reopen);
  var main='<div class="tmain"><div class="panel"><div class="thead"><span class="tid">'+esc(t.id)+'</span><h1 translate="no">'+esc(t.title)+'</h1><div class="meta-line">'+pill(t.status)+prio(t.priority)+'</div></div>'+
@@ -1585,7 +1585,7 @@ function pgTicket(){
   side='<aside class="sheet'+(S.sheet?" open":"")+'"><div class="grab" data-act="closesheet"></div><form class="panel upd" id="updpanel" data-form="update"><h2>Technician update</h2>'+
   '<label class="fld"><span>Urgency</span><select id="u-prio" data-keep>'+PRIORITIES.map(function(p){return '<option value="'+p[0]+'"'+((t.priority||"medium")===p[0]?" selected":"")+'>'+p[1]+'</option>'}).join("")+'</select></label>'+
   '<label class="fld"><span>Status</span><select id="u-status" data-keep>'+STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(t.status===s[0]?" selected":"")+'>'+s[1]+'</option>'}).join("")+'</select></label>'+
-  '<label class="fld"><span>Progress<output id="u-prog-v">'+(t.progress||0)+'%</output></span><input type="range" id="u-prog" min="0" max="100" step="5" value="'+(t.progress||0)+'" data-keep></label>'+
+  
   '<label class="fld"><span>Assigned to</span><select id="u-asg" data-keep><option value="">Unassigned</option>'+techs().map(function(a){return '<option value="'+esc(a.username)+'"'+(t.assignedTo===a.username?" selected":"")+'>'+esc(a.name)+'</option>'}).join("")+'</select>'+
   (isSup()?'':'<button type="button" class="link small" style="align-self:flex-start" data-act="assignme">Assign to me</button>')+'</label>'+
   '<label class="fld"><span>Expected Completion</span><input type="date" id="u-due" value="'+esc(t.due||"")+'" data-keep><span class="hint" id="u-due-h">'+(t.due&&hOK?"Hijri: "+esc(fmtH(fromYmd(t.due).getTime())):"")+'</span></label>'+
@@ -1791,7 +1791,7 @@ var F={
  });if(cl)pr.then(function(){var t=curTicket();if(t&&t.status!=="closed")return A.quick({dataset:{s:"closed"}})});return pr},
  update:function(){return withBusy(async function(){
   var t=curTicket();if(!t||!isStaff())return;
-  var status=$("#u-status").value,pri=$("#u-prio").value,prog=+$("#u-prog").value,asg=$("#u-asg").value,due=$("#u-due").value||null,msg=$("#u-msg").value.trim();
+  var status=$("#u-status").value,pri=$("#u-prio").value,prog=(curTicket()&&curTicket().progress)||0,asg=$("#u-asg").value,due=$("#u-due").value||null,msg=$("#u-msg").value.trim();
   var patch={},ev=[],sum=[],now=Date.now(),au=[];
   if(status!==t.status){patch.status=status;ev.push("Status changed from "+stLbl(t.status)+" to "+stLbl(status));sum.push("status is now "+stLbl(status));au.push(["ticket.status",stLbl(t.status)+" to "+stLbl(status)]);
    if(status==="resolved"){patch.resolvedAt=now;prog=100}else if(status==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;prog=100}else patch.resolvedAt=null}
