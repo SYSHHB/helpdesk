@@ -530,6 +530,13 @@ html,body{max-width:100%;overflow-x:clip}
 .crow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .crow .vis{width:auto;padding:8px 10px;font-weight:600}
 .crow .clip{cursor:pointer}
+.tickbox{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;color:var(--muted);position:relative}
+.tickbox input{position:absolute;opacity:0;width:1px;height:1px}
+.tickbox .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);background:var(--surface);flex:none;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.tickbox input:checked+.bx{background:var(--brand);border-color:var(--brand)}
+.tickbox input:checked+.bx::after{content:"";width:6px;height:11px;border:solid var(--brand-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.tickbox input:checked~.sw-t{color:var(--text);font-weight:600}
+.tickbox input:focus-visible+.bx{outline:2px solid var(--brand);outline-offset:2px}
 .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;color:var(--muted);position:relative}
 .switch input{position:absolute;opacity:0;width:1px;height:1px}
 .switch .sl{width:40px;height:22px;border-radius:11px;background:var(--line);position:relative;transition:background .2s;flex:none}
@@ -908,7 +915,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-LCSDfvxLMhWnD9QijuWI0leB0uoapIJctboFVvexAtU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-uWSYNguNSOebmGgr1i7gBjLbCkHradD+5xW/wsnhMmA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.MSAL_LOCAL===true)POLICY=POLICY.replace(/\s*https:\/\/cdn\.jsdelivr\.net/g,"");
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
@@ -1726,6 +1733,19 @@ function withTimeout(p,ms,msg){
   Promise.resolve(p).then(function(v){clearTimeout(t);res(v)},function(e){clearTimeout(t);rej(e)});
  });
 }
+/* save a complaint change and its comment/history lines in ONE write (comments live in tickets.json) */
+async function saveTicketBatch(id,patch,comments){
+ if(typeof API_MODE!=="undefined"&&API_MODE){
+  await S.db.doc("tickets/"+id).update(patch);
+  for(var i=0;i<comments.length;i++)await col("tickets/"+id+"/comments").add(comments[i]);
+  return;
+ }
+ var base="tickets/"+id;
+ await gMutate("tickets.json",function(docs){
+  docs[base]=Object.assign({},docs[base]||{},clone(patch));
+  comments.forEach(function(c){docs[base+"/comments/"+rid()]=clone(c)});
+ });
+}
 async function withBusy(fn){
  if(S.busy)return;S.busy=true;render();
  try{await withTimeout(fn(),45000)}catch(e){if(e&&e.message&&!e.code){if(S.me)toast(e.message,{kind:"warn"});else S.err=e.message}else errToast(e)}
@@ -1775,18 +1795,22 @@ var F={
  comment:function(f){var v=fd(f),cl=!!v.closeonsend&&isStaff();var pr=withBusy(async function(){
   var t=curTicket();if(!t)return;var text=v.text.trim(),imgs=S.att.comment.map(function(x){return {k:x.k,id:x.id,n:x.n}});if(S.upBusy){toast("Wait for the photos to finish uploading.",{kind:"warn"});return}if(!text&&!imgs.length)return;
   var internal=!!v.internal&&isStaff();
-  await col("tickets/"+t.id+"/comments").add({type:"comment",text:text,by:S.me.username,byName:S.me.name,role:S.me.role,ts:Date.now(),internal:internal,images:imgs});
   var up=Object.assign({updatedAt:Date.now()},lastActPatch("comment",text||"Photo",internal));if(isStaff()&&!t.attendedAt){up.attendedAt=up.updatedAt;up.attendedBy=S.me.username;up.attendedByName=S.me.name}
-  await S.db.doc("tickets/"+t.id).update(up);
+  var me=S.me;
+  await saveTicketBatch(t.id,up,[{type:"comment",text:text,by:me.username,byName:me.name,role:me.role,ts:Date.now(),internal:internal,images:imgs}]);
+  /* clear the box straight away; notifications, audit log and emails continue in the background */
+  S.att.comment=[];var ta0=$("#c-text");if(ta0)ta0.value="";var ck0=$("#c-int");if(ck0)ck0.value="";var cc0=$("#c-close");if(cc0&&!cl)cc0.checked=false;
   var snip=text.length>80?text.slice(0,80)+"…":text;
-  if(internal){if(t.assignedTo&&t.assignedTo!==S.me.username)await notify(t.assignedTo,S.me.name+" added an internal note on "+t.id+": "+snip,t.id,"note")}
-  else if(isStaff()){
-   if(t.createdBy!==S.me.username)await notify(t.createdBy,S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
-   if(t.assignedTo&&t.assignedTo!==S.me.username)await notify(t.assignedTo,S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
-  }else await notify(t.assignedTo||"staff",S.me.name+" commented on "+t.id+": "+snip,t.id,"comment");
-  await log(internal?"comment.internal":"comment.public",t.id,snip);
-  if(!internal&&isStaff()&&t.createdBy!==S.me.username&&text)mailSafe("comment",t,{by:S.me.name,msg:text});
-  if(!isStaff()&&(text||imgs.length))mailStaff("staffreply",t,{by:S.me.name,msg:text||"(photo)"});
+  if(!internal&&isStaff()&&t.createdBy!==me.username&&text)mailSafe("comment",t,{by:me.name,msg:text});
+  if(!isStaff()&&(text||imgs.length))mailStaff("staffreply",t,{by:me.name,msg:text||"(photo)"});
+  (async function(){
+   if(internal){if(t.assignedTo&&t.assignedTo!==me.username)await notify(t.assignedTo,me.name+" added an internal note on "+t.id+": "+snip,t.id,"note")}
+   else if(isStaff()){
+    if(t.createdBy!==me.username)await notify(t.createdBy,me.name+" commented on "+t.id+": "+snip,t.id,"comment");
+    if(t.assignedTo&&t.assignedTo!==me.username)await notify(t.assignedTo,me.name+" commented on "+t.id+": "+snip,t.id,"comment");
+   }else await notify(t.assignedTo||"staff",me.name+" commented on "+t.id+": "+snip,t.id,"comment");
+  })().catch(function(e){console.warn(e)});
+  log(internal?"comment.internal":"comment.public",t.id,snip);
   S.att.comment=[];var ta=$("#c-text");if(ta)ta.value="";var ck=$("#c-int");if(ck)ck.value="";var cc=$("#c-close");if(cc)cc.checked=false;
  });if(cl)pr.then(function(){var t=curTicket();if(t&&t.status!=="closed")return A.quick({dataset:{s:"closed"}})});return pr},
  update:function(){return withBusy(async function(){
@@ -1803,27 +1827,36 @@ var F={
   if(!Object.keys(patch).length&&!msg){toast("Nothing to update yet.",{kind:"warn"});return}
   if(!t.attendedAt&&!isSup()){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
   patch.updatedAt=now;Object.assign(patch,lastActPatch("update",msg||sum.join(", "),false));
-  await S.db.doc("tickets/"+t.id).update(patch);
-  for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
-  if(msg)await col("tickets/"+t.id+"/comments").add({type:"comment",text:msg,by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+ev.length+1,internal:false});
+  /* ONE save to OneDrive for the complaint and all its history lines (was one slow save for each) */
+  var cms=ev.map(function(e,i){return {type:"event",text:e,by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i}});
+  if(msg)cms.push({type:"comment",text:msg,by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+ev.length+1,internal:false});
+  await saveTicketBatch(t.id,patch,cms);
+  /* the person sees it done straight away; notifications, audit log and emails continue in the background */
+  document.querySelectorAll("#updpanel [data-keep]").forEach(function(el){el.removeAttribute("data-keep")});
+  S.sheet=false;toast("Update saved. The requester has been notified.");
   var text=t.id+" updated by "+S.me.name+(sum.length?": "+sum.join(", "):"")+(msg?". “"+(msg.length>70?msg.slice(0,70)+"…":msg)+"”":"");
-  if(t.createdBy!==S.me.username)await notify(t.createdBy,text,t.id,"update");
-  if(patch.assignedTo&&patch.assignedTo!==S.me.username)await notify(patch.assignedTo,"You were assigned "+t.id+": "+t.title,t.id,"assign");
-  for(var j=0;j<au.length;j++)await log(au[j][0],t.id,au[j][1]);
   var chg=[];if(patch.status)chg.push({k:"status",v:patch.status});if("progress" in patch&&!patch.status)chg.push({k:"progress",v:patch.progress});
   if("assignedTo" in patch)chg.push(patch.assignedTo?{k:"assign",v:patch.assignedName}:{k:"unassign"});
   if("due" in patch)chg.push(patch.due?{k:"due",v:patch.due}:{k:"nodue"});
   if("priority" in patch)chg.push({k:"priority",v:patch.priority});
   var escalated=patch.priority==="urgent"||patch.priority==="high";
-  if(escalated){await notify("staff",t.id+" escalated to "+prLbl(patch.priority)+" by "+S.me.name+": "+t.title,t.id,"new");mailStaff("staffesc",Object.assign({},t,patch),{by:S.me.name})}
-  else{await notify("staff",text,t.id,"update");mailStaff("staffupdate",Object.assign({},t,patch),{by:S.me.name,changes:chg,msg:msg})}
-  if(msg)await log("update.message",t.id,msg.length>120?msg.slice(0,120)+"…":msg);
-  if(t.createdBy!==S.me.username){
-   var kind2=patch.status==="closed"?"closed":patch.status==="resolved"?"resolved":(chg.length?"update":"comment");
-   mailSafe(kind2,Object.assign({},t,patch),{by:S.me.name,changes:chg,msg:msg});
-  }
-  document.querySelectorAll("#updpanel [data-keep]").forEach(function(el){el.removeAttribute("data-keep")});
-  S.sheet=false;toast("Update saved. The requester has been notified.");
+  var merged=Object.assign({},t,patch),me=S.me;
+  var kind2=patch.status==="closed"?"closed":patch.status==="resolved"?"resolved":(chg.length?"update":"comment");
+  /* emails first: they do not touch the OneDrive data files */
+  if(escalated)mailStaff("staffesc",merged,{by:me.name});else mailStaff("staffupdate",merged,{by:me.name,changes:chg,msg:msg});
+  if(t.createdBy!==me.username)mailSafe(kind2,merged,{by:me.name,changes:chg,msg:msg});
+  /* notifications and the audit log go to different files, so they run side by side */
+  var bgN=(async function(){
+   if(t.createdBy!==me.username)await notify(t.createdBy,text,t.id,"update");
+   if(patch.assignedTo&&patch.assignedTo!==me.username)await notify(patch.assignedTo,"You were assigned "+t.id+": "+t.title,t.id,"assign");
+   if(escalated)await notify("staff",t.id+" escalated to "+prLbl(patch.priority)+" by "+me.name+": "+t.title,t.id,"new");
+   else await notify("staff",text,t.id,"update");
+  })();
+  var bgL=(async function(){
+   for(var j=0;j<au.length;j++)await log(au[j][0],t.id,au[j][1]);
+   if(msg)await log("update.message",t.id,msg.length>120?msg.slice(0,120)+"…":msg);
+  })();
+  bgN.catch(function(e){console.warn(e)});bgL.catch(function(e){console.warn(e)});
  })},
  account:function(f){var v=fd(f);return withBusy(async function(){
   var email=(v.email||"").trim().toLowerCase(),name=(v.name||"").trim();
@@ -1980,14 +2013,19 @@ var A={
   if(st==="resolved"){patch.resolvedAt=now;patch.progress=100}else if(st==="closed"){if(!t.resolvedAt)patch.resolvedAt=now;patch.progress=100}else patch.resolvedAt=null;
   if(st==="progress"&&!t.assignedTo&&!isSup()){patch.assignedTo=S.me.username;patch.assignedName=S.me.name;patch.assignedMail=S.me.mail||S.me.username;ev.push("Assigned to "+S.me.name)}
   if(!t.attendedAt&&!isSup()){patch.attendedAt=now;patch.attendedBy=S.me.username;patch.attendedByName=S.me.name}
-  await S.db.doc("tickets/"+t.id).update(patch);
-  for(var i=0;i<ev.length;i++)await col("tickets/"+t.id+"/comments").add({type:"event",text:ev[i],by:S.me.username,byName:S.me.name,role:S.me.role,ts:now+i});
-  if(t.createdBy!==S.me.username)await notify(t.createdBy,t.id+" updated by "+S.me.name+": status is now "+stLbl(st),t.id,"update");
-  await log("ticket.status",t.id,stLbl(t.status)+" to "+stLbl(st));
-  if(t.createdBy!==S.me.username){var ch2=[{k:"status",v:st}];if(patch.assignedTo)ch2.push({k:"assign",v:patch.assignedName});mailSafe(st==="closed"?"closed":st==="resolved"?"resolved":"update",Object.assign({},t,patch),{by:S.me.name,changes:ch2})}
-  if(patch.assignedTo)await log("ticket.assign",t.id,S.me.name);
+  var me=S.me;
+  await saveTicketBatch(t.id,patch,ev.map(function(e,i){return {type:"event",text:e,by:me.username,byName:me.name,role:me.role,ts:now+i}}));
   document.querySelectorAll("#updpanel [data-keep]").forEach(function(x){x.removeAttribute("data-keep")});
   buzz([12,30,12]);toast(t.id+" is now "+stLbl(st)+".");
+  /* the rest continues in the background so the button does not hang */
+  if(t.createdBy!==me.username){var ch2=[{k:"status",v:st}];if(patch.assignedTo)ch2.push({k:"assign",v:patch.assignedName});mailSafe(st==="closed"?"closed":st==="resolved"?"resolved":"update",Object.assign({},t,patch),{by:me.name,changes:ch2})}
+  (async function(){
+   if(t.createdBy!==me.username)await notify(t.createdBy,t.id+" updated by "+me.name+": status is now "+stLbl(st),t.id,"update");
+  })().catch(function(e){console.warn(e)});
+  (async function(){
+   await log("ticket.status",t.id,stLbl(t.status)+" to "+stLbl(st));
+   if(patch.assignedTo)await log("ticket.assign",t.id,me.name);
+  })().catch(function(e){console.warn(e)});
  })},
  editacct:function(el){S.acctEdit=el.dataset.u||"";if(!S.acctEdit)S.acctFormOpen=false;clearKeep();renderContent();var f=$("#acctform");if(f&&S.acctEdit)f.scrollIntoView({block:"nearest"})},
  toggleacct:function(el){return withBusy(async function(){
@@ -3454,7 +3492,7 @@ function composerHTML(t,reopen){
  return '<form class="composer" data-form="comment"><textarea id="c-text" name="text" rows="2" data-keep placeholder="'+(staff?"Type a comment…":"Type a reply to the technician…")+'"></textarea>'+thumbs+
   '<div class="crow">'+(staff?'<select id="c-int" name="internal" class="vis" data-keep aria-label="Who can see it"><option value="">Public</option><option value="1">Internal</option></select>':'')+
   (L.length<4?'<label class="icon-btn clip" title="Add photo" aria-label="Add photo">'+ico("clip")+'<input type="file" accept="image/*" multiple hidden data-up="comment"></label>':'')+
-  (staff?'<label class="switch"><input type="checkbox" name="closeonsend" id="c-close" data-keep><span class="sl"></span><span class="sw-t">Complete on send</span></label>':'')+
+  (staff?'<label class="tickbox"><input type="checkbox" name="closeonsend" id="c-close" data-keep><span class="bx" aria-hidden="true"></span><span class="sw-t">Complete on send</span></label>':'')+
   '<button class="btn primary send" aria-label="Send"'+(S.busy?" disabled":"")+'>'+ico("send")+'</button></div>'+(reopen?'<div>'+reopen+'</div>':'')+'</form>';
 }
 
