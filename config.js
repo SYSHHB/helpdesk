@@ -37,8 +37,18 @@ window.HELPDESK_CONFIG = {
      The technician assigned to the complaint is always added. */
   NOTIFY_EMAILS: ["it.helpdesk@syayasan.edu.bn"],
 
-  /* Set to true only after you build the reply flow (README, part 9). */
-  EMAIL_REPLIES: false,
+  /* EMAIL REPLIES: when true, a person can answer a helpdesk email with a normal reply and the
+     reply is added to the complaint as a comment (and the other side is emailed).
+     Replies are sent to REPLY_TO, so that mailbox must be able to receive them. */
+  EMAIL_REPLIES: true,
+  /* The mailbox that receives the replies. */
+  REPLY_TO: "it.helpdesk@syayasan.edu.bn",
+  /* "mailbox" = the helpdesk reads the REPLY_TO mailbox itself (no Power Automate needed; technicians
+                  need Full Access to that mailbox, see SETUP-EMAIL-REPLY.md).
+     "flow"    = a Power Automate flow saves each reply as a file in the OneDrive "inbox" folder. */
+  EMAIL_REPLY_SOURCE: "mailbox",
+  /* Optional: extra domains allowed to reply. Default is syayasan.edu.bn only. */
+  /* REPLY_DOMAINS: ["syayasan.edu.bn"], */
 
   /* Hijri date on the login page. Signed-in people always see the dates from the calendar
      settings. A phone that has never signed in cannot read them, so copy the two lines shown in
