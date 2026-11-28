@@ -582,7 +582,7 @@ html,body{max-width:100%;overflow-x:clip}
 .au.k-auth{--kc:var(--s-progress)}.au.k-tkt{--kc:var(--s-resolved)}.au.k-cmt{--kc:var(--brand)}.au.k-acct{--kc:var(--s-hold)}.au.k-mail{--kc:var(--sun)}.au.k-bad{--kc:var(--s-open)}
 .au .act{background:color-mix(in srgb,var(--kc) 16%,transparent);color:var(--kc);white-space:normal}
 .au-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.au-top time{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;flex:none}
+.au-top time{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
 .au-who{display:flex;gap:10px;align-items:center;min-width:0}
 .au-who>div{min-width:0;overflow-wrap:anywhere}
 .av.sm{width:32px;height:32px;font-size:.8rem;flex:none}
@@ -915,7 +915,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);b
 <script src="config.js"></script>
 <script>(function(){var c=window.HELPDESK_CONFIG||{};
 if(c.ALLOW_FRAMING!==true&&window.top!==window.self){window.__framed=1;try{window.top.location=window.self.location}catch(x){}document.write('<style>html{display:none!important}</style>');return}
-var POLICY="default-src 'none'; script-src 'self' 'sha256-1UHuTwQmlJVcSBdnuctKmg4rWkaY8K+SIoPrE8HdAvU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
+var POLICY="default-src 'none'; script-src 'self' 'sha256-F9wCvM8LxYpIaJnyvR/wlRKjjuIQRezVzJbCcf0fszc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com https://cdn.jsdelivr.net; frame-src https://login.microsoftonline.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com; object-src 'none'";
 if(c.MSAL_LOCAL===true)POLICY=POLICY.replace(/\s*https:\/\/cdn\.jsdelivr\.net/g,"");
 if(c.CSP!==false){var pm=document.createElement("meta");pm.httpEquiv="Content-Security-Policy";pm.content=POLICY;document.head.insertBefore(pm,document.head.firstChild)}
 var local=c.MSAL_LOCAL===true;
@@ -3560,7 +3560,7 @@ function auditCards(list){
   var d=new Date(a.ts),k=ymd(d);
   if(k!==day){day=k;out+='<li class="au-day"><span>'+(k===today?"Today":k===yest?"Yesterday":esc(fmtG(a.ts)))+'</span>'+(hOK?'<small translate="no">'+esc(fmtH(a.ts))+'</small>':'')+'</li>'}
   var kind=auditKind(a),who=a.actorName||a.actor||"",tk=(a.target&&/IT-SYSHHB|SYSHHB-IT|^IT-\d{4}-\d+/i.test(a.target))?findTicketByAnyId(String(a.target).toUpperCase()):null;
-  out+='<li class="au k-'+kind+'"><div class="au-top"><span class="act">'+esc(ACTIONS[a.action]||a.action)+'</span><time translate="no">'+tF.format(d)+'</time></div>'+
+  out+='<li class="au k-'+kind+'"><div class="au-top"><span class="act">'+esc(ACTIONS[a.action]||a.action)+'</span><time translate="no" datetime="'+d.toISOString()+'">'+esc(fmtG(a.ts))+', '+tF.format(d)+'</time></div>'+
    '<div class="au-who"><span class="av sm" style="background:'+avColor(who)+'" aria-hidden="true">'+esc(initials(who))+'</span><div><b translate="no">'+esc(who)+'</b>'+(ROLES[a.role]?' <span class="muted small">'+esc(ROLES[a.role])+'</span>':'')+(a.actor&&a.actor!==who?'<div class="muted small" translate="no">'+esc(a.actor)+'</div>':'')+'</div></div>'+
    (a.target?'<div class="au-row"><span class="lbl">Target</span>'+(tk?'<span><button class="link" data-act="open" data-id="'+esc(tk.id)+'" translate="no">'+esc(fmtIds(a.target))+'</button></span>':'<span translate="no">'+esc(fmtIds(a.target))+'</span>')+'</div>':'')+
    (a.detail?'<div class="au-row"><span class="lbl">Details</span><span translate="no">'+esc(fmtIds(a.detail))+'</span></div>':'')+'</li>';
