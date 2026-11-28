@@ -932,7 +932,7 @@ var CATS=["Computer / Laptop","Monitor / Keyboard / Mouse / Headsets","Network /
 function normCat(c){return {"Network / WiFi / Lan / Internet":CATS[2],"Computer / laptop":CATS[0],"Computer / Laptop (Hak Milik Sekolah)":CATS[0],"Monitor / Keyboard / Mouse / Headsets (Hak Milik Sekolah)":CATS[1],"Network / Wi-Fi":CATS[2],"Printer / scanner":CATS[3],"Printer (Hak Milik Sekolah)":CATS[3],"Projector / Screen":CATS[4],"Projector / AV":CATS[4],"Projector / Projector Screen / Projector Socket / Projector Cable":CATS[4],"VM (Finance)":CATS[6],"Account / access":CATS[6],"Biztrack System (FINANCE COUNTER ONLY)":CATS[5],"VM - Virtual Machine (FINANCE COUNTER ONLY)":CATS[6]}[c]||c}
 var ROLES={user:"User",technician:"Technician",supervisor:"Supervisor",admin:"Admin"};
 var ACTIONS={"auth.login":"Signed in","auth.logout":"Signed out","auth.failed":"Failed sign-in","auth.register":"Registered",
-"cover.add":"Cover technician added","cover.stop":"Cover technician stopped","settings.counter":"Ticket numbering changed","alert.stale":"Pending alert sent","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
+"mail.pause":"Emails paused (on leave)","mail.resume":"Emails resumed","cover.add":"Cover technician added","cover.stop":"Cover technician stopped","settings.counter":"Ticket numbering changed","alert.stale":"Pending alert sent","account.create":"Account created","account.update":"Account updated","account.delete":"Account deleted","email.sent":"Email sent","email.failed":"Email failed","account.enable":"Account enabled","account.disable":"Account disabled",
 "ticket.create":"Complaint submitted","ticket.status":"Status changed","auth.idle":"Signed out (inactive)","settings.signup":"Sign-up link created","ticket.priority":"Urgency changed","ticket.assign":"Assignment changed","ticket.due":"Expected Completion changed",
 "ticket.progress":"Progress changed","ticket.reopen":"Complaint reopened","comment.public":"Comment added","comment.email":"Comment by email","email.ignored":"Email reply ignored","comment.internal":"Internal note added",
 "update.message":"Technician update","settings.hijri":"Calendar setting","export":"Export"};
@@ -1066,14 +1066,19 @@ function isMonitor(){return !!S.me&&(roleOf()==="admin"||roleOf()==="supervisor"
 function RK(r){var k={admin:0,supervisor:1,technician:2}[r];return k===undefined?3:k}
 /* every active technician, supervisor and administrator, by account — what staff themselves can always see */
 function staffFromAccounts(){return (S.accounts||[]).filter(function(a){return a.active!==false&&(a.role==="technician"||a.role==="admin"||a.role==="supervisor")}).map(function(a){return String(a.mail||a.username||"").toLowerCase()}).filter(function(m){return ID_EMAIL.test(m)})}
+/* on leave: the administrator can switch a person's helpdesk emails off, for good or until a date (that last day included) */
+function mailPaused(a){return !!a&&a.mailPause===true&&(!a.mailUntil||String(a.mailUntil)>=todayBn())}
+function pausedMap(){var m={};(S.accounts||[]).forEach(function(a){if(a.mailPause!==true||a.active===false)return;[a.mail,a.username].forEach(function(x){x=String(x||"").toLowerCase();if(x)m[x]=a.mailUntil||""})});return m}
+function isPausedMail(x,m){x=String(x||"").toLowerCase();if(!Object.prototype.hasOwnProperty.call(m,x))return false;return m[x]===""||String(m[x])>=todayBn()}
+function selfPaused(){var a=S.me&&(S.accounts||[]).filter(function(x){return x.username===S.me.username})[0];return mailPaused(a)}
 /* a requester's browser cannot read the account list on the server-backed version, so it uses a small shared
    directory of staff e-mails kept up to date by the administrator's browser, in both modes */
 function syncTeam(){
  if(!isAdmin()||!S.teamLoaded||S.teamBusy||!S.accounts||!S.accounts.length)return;
- var want=staffFromAccounts().sort(),have=(S.team||[]).slice().sort();
- if(JSON.stringify(want)===JSON.stringify(have))return;
+ var want=staffFromAccounts().sort(),have=(S.team||[]).slice().sort(),wantP=pausedMap(),haveP=S.teamPaused||{};
+ if(JSON.stringify(want)===JSON.stringify(have)&&JSON.stringify(wantP,Object.keys(wantP).sort())===JSON.stringify(haveP,Object.keys(haveP).sort()))return;
  S.teamBusy=true;
- S.db.doc("settings/team").set({staff:want}).then(function(){S.team=want}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
+ S.db.doc("settings/team").set({staff:want,paused:wantP}).then(function(){S.team=want;S.teamPaused=wantP}).catch(function(e){console.warn(e)}).then(function(){S.teamBusy=false});
 }
 function isAdmin(){return !!S.me&&roleOf()==="admin"}
 function isActive(t){return t.status!=="resolved"&&t.status!=="closed"}
@@ -1256,7 +1261,7 @@ function startSubs(){
  seenMap();
  S.dataReady=false;clearTimeout(S.dataT);S.dataT=setTimeout(function(){if(!S.dataReady){S.dataReady=true;render()}},6000);
  stopSubs();S.notifReady=false;S.staleShown=false;S.remPending={};S.syncErr="";if(isStaff())S.staleTimer=setInterval(checkStale,300000);if(isStaff()){S.inboxTimer=setInterval(processInbox,60000);setTimeout(processInbox,4000)}
- S.unsubs.push(S.db.doc("settings/team").onSnapshot(function(sn){S.team=(sn.exists&&sn.data().staff)||[];S.teamLoaded=true;syncTeam()},function(e){console.warn(e)}));
+ S.unsubs.push(S.db.doc("settings/team").onSnapshot(function(sn){S.team=(sn.exists&&sn.data().staff)||[];S.teamPaused=(sn.exists&&sn.data().paused)||{};S.teamLoaded=true;syncTeam()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/cover").onSnapshot(function(sn){S.cover=(sn.exists&&sn.data().items)||[];if(S.view==="accounts")renderContent()},function(e){console.warn(e)}));
  S.unsubs.push(S.db.doc("settings/hijri").onSnapshot(function(sn){var d=sn.exists?sn.data():{};hOff=typeof d.adj==="number"?d.adj:-1;hStarts=d.starts||{};try{localStorage.setItem("hd.hijri",JSON.stringify({adj:hOff,starts:hStarts}))}catch(e){}render()},function(e){console.warn(e)}));
  var tq=isStaff()?col("tickets").orderBy("createdAt","desc").limit(1000):col("tickets").where("createdBy","==",S.me.username);
@@ -1268,7 +1273,7 @@ function startSubs(){
   S.notifReady=true;checkStale();
   added.forEach(function(n){
    if(n.ts<S.sessionStart||n.by===S.me.username)return;
-   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isMonitor())){var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(notifLine(n),{kind:hot?"new":"",ticket:n.ticketId})}
+   if(n.to===S.me.username||(n.to==="staff"&&isStaff())||(n.to==="admin"&&isMonitor())){if(selfPaused())return;var hot=n.kind==="new"||n.kind==="overdue";buzz(hot?[30,60,30]:15);toast(notifLine(n),{kind:hot?"new":"",ticket:n.ticketId})}
   });
   renderChrome();
  },"notifications"));
@@ -1698,9 +1703,11 @@ function pgAccounts(){
   var self=a.username===S.me.username,isNew=a.createdAt&&a.createdAt>week,off=a.active===false;
   return '<li class="pc'+(off?" off":"")+'"><div class="pc-top"><span class="av" style="background:'+avColor(a.name)+'" aria-hidden="true">'+esc(initials(a.name))+'</span><div class="pc-id"><b translate="no">'+esc(a.name)+'</b>'+(self?' <span class="muted small">(you)</span>':'')+'<div class="muted small" translate="no">'+esc(a.username)+'</div></div></div>'+
    '<div class="pc-tags"><span class="pill rp-'+esc(a.role)+'">'+ROLES[a.role]+'</span>'+(off?'<span class="pill s-closed">Disabled</span>':'<span class="pill s-resolved">Active</span>')+(isNew?'<span class="pill s-progress">New</span>':'')+(a.dept?'<span class="muted small">'+esc(a.dept)+'</span>':'')+'</div>'+
+   (a.role!=="user"?'<div class="small" style="margin-top:6px">'+(mailPaused(a)?'<span class="pill s-hold">'+T("On leave: emails off")+'</span> <span class="muted">'+(a.mailUntil?T("Until")+' '+esc(fmtG(fromYmd(a.mailUntil).getTime())):T("Until you resume"))+'</span>':'<span class="muted">'+T("Emails on")+'</span>')+'</div>':'')+
    (a.phone?'<div class="pc-phone">'+waLinks(a.phone)+'</div>':'<div class="muted small">No phone number</div>')+
    (a.createdAt?'<div class="muted small">Joined '+fmtG(a.createdAt)+'</div>':'')+
    '<div class="pc-acts"><button class="btn sm" data-act="editacct" data-u="'+esc(a.username)+'">Edit</button>'+
+   (a.role!=="user"?'<button class="btn sm" data-act="mailpause" data-u="'+esc(a.username)+'">'+(mailPaused(a)?T("Resume emails"):T("Pause emails (on leave)"))+'</button>':'')+
    (self?'':'<button class="btn sm" data-act="toggleacct" data-u="'+esc(a.username)+'">'+(off?"Enable":"Disable")+'</button>')+
    (G.mode!=="share"&&!API_MODE?'<button class="btn sm" data-act="shareacct" data-u="'+esc(a.username)+'">Share access</button>':'')+
    (self?'':'<button class="btn sm danger" data-act="delacct" data-u="'+esc(a.username)+'">Delete</button>')+'</div></li>';
@@ -2028,6 +2035,14 @@ var A={
   })().catch(function(e){console.warn(e)});
  })},
  editacct:function(el){S.acctEdit=el.dataset.u||"";if(!S.acctEdit)S.acctFormOpen=false;clearKeep();renderContent();var f=$("#acctform");if(f&&S.acctEdit)f.scrollIntoView({block:"nearest"})},
+ mailpause:function(el){return withBusy(async function(){
+  var u=el.dataset.u,a=S.accounts.filter(function(x){return x.username===u})[0];if(!a)return;
+  if(mailPaused(a)){await S.db.doc("accounts/"+u).update({mailPause:false,mailUntil:null});await log("mail.resume",u,"");toast(T("Emails resumed")+" - "+a.name);return}
+  var d=window.prompt(T("Last day of leave (YYYY-MM-DD). Leave empty to keep emails off until you resume them."),"");
+  if(d===null)return;d=d.trim();
+  if(d&&(!/^\d{4}-\d{2}-\d{2}$/.test(d)||d<todayBn())){toast(T("Enter a date that is not in the past, like 2026-12-15."),{kind:"warn"});return}
+  await S.db.doc("accounts/"+u).update({mailPause:true,mailUntil:d||null});await log("mail.pause",u,d?"until "+d:"until resumed");toast(T("Emails paused")+" - "+a.name);
+ })},
  toggleacct:function(el){return withBusy(async function(){
   var u=el.dataset.u,a=S.accounts.filter(function(x){return x.username===u})[0];if(!a||u===S.me.username)return;
   var on=a.active===false;await S.db.doc("accounts/"+u).update({active:on});await log(on?"account.enable":"account.disable",u,"");
@@ -2339,6 +2354,7 @@ function deptSel(id,name,cur,req){
 }
 /* ============ language: English / Bahasa Melayu ============ */
 var MS={
+"On leave: emails off":"Bercuti: e-mel dimatikan","Emails on":"E-mel dihidupkan","Until you resume":"Sehingga anda sambung semula","Resume emails":"Sambung e-mel","Pause emails (on leave)":"Henti e-mel (bercuti)","Emails resumed":"E-mel disambung semula","Emails paused":"E-mel dihentikan","Last day of leave (YYYY-MM-DD). Leave empty to keep emails off until you resume them.":"Hari terakhir cuti (TTTT-BB-HH). Biarkan kosong untuk mematikan e-mel sehingga anda menyambungnya semula.","Enter a date that is not in the past, like 2026-12-15.":"Masukkan tarikh yang bukan tarikh lepas, contohnya 2026-12-15.","Emails paused (on leave)":"E-mel dihentikan (bercuti)",
 "Workspace":"Ruang Kerja",
 "Insights":"Analisis",
 "Administration":"Pentadbiran",
@@ -3195,7 +3211,7 @@ function mailSafe(kind,t,o){
 document.addEventListener("input",function(e){var t=e.target;if(t.dataset&&t.dataset.filter==="acq"){S.acctF=S.acctF||{};S.acctF.q=t.value;renderContent()}});
 document.addEventListener("change",function(e){var t=e.target,k=t.dataset&&t.dataset.filter;if(k==="acrole"||k==="acstatus"||k==="acdept"){S.acctF=S.acctF||{};S.acctF[k.slice(2)]=t.value;renderContent()}});
 
-var BUILD="2026-11-24 v94";
+var BUILD="2026-11-28 v95";
 async function testMail(){
  var res=function(txt,bad){S.mailResult={t:txt,bad:!!bad,at:Date.now()};if(S.view==="accounts")renderContent();toast(txt,{kind:bad?"bad":"",ms:20000})};
  if(MAILMODE==="off"){res("Email notifications are OFF. In config.js set EMAIL_MODE to \"graph\", upload it to GitHub, wait 2 minutes and reload this page.",true);return}
@@ -3531,7 +3547,7 @@ function auditKind(a){
  var x=String(a.action||"");
  if(/failed|ignored/.test(x))return "bad";
  if(x.indexOf("auth.")===0)return "auth";
- if(x.indexOf("account.")===0||x.indexOf("settings.")===0||x.indexOf("cover.")===0)return "acct";
+ if(x.indexOf("account.")===0||x.indexOf("settings.")===0||x.indexOf("cover.")===0||x.indexOf("mail.")===0)return "acct";
  if(x.indexOf("email.")===0||x.indexOf("alert.")===0)return "mail";
  if(x.indexOf("comment.")===0||x==="update.message")return "cmt";
  if(x.indexOf("ticket.")===0)return "tkt";
@@ -3568,7 +3584,8 @@ function allStaffEmails(){
  var base=(CFG.NOTIFY_EMAILS&&CFG.NOTIFY_EMAILS.length?CFG.NOTIFY_EMAILS:CFG.ADMIN_EMAILS)||[];
  var list=base.concat(isStaff()?staffFromAccounts():(S.team||[]));
  coverEmails().forEach(function(x){list.push(x)});
- return list;
+ var pm=isStaff()?pausedMap():(S.teamPaused||{});
+ return list.filter(function(x){return !isPausedMail(x,pm)});
 }
 function staffRecipients(t){
  var me=S.me?[String(S.me.mail||"").toLowerCase(),String(S.me.username||"").toLowerCase()]:[],seen={},out=[];
